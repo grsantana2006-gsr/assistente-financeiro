@@ -73,14 +73,6 @@ function DespesasFixas({ fixas, bancos, aoAdicionar, aoAlternar, aoRemover, aoAt
                     value={t.data_compra || ''}
                     onChange={(e) => aoAtualizar(t.id, { data_compra: e.target.value })}
                     aria-label={`Data de ${t.descricao}`}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '4px 8px',
-                      color: 'var(--text-muted)',
-                      fontSize: '0.85rem'
-                    }}
                   />
                   <span className="fixas__valor">{formatarMoeda(t.valor)}</span>
 

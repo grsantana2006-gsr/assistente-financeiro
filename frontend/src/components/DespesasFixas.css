@@ -133,3 +133,33 @@
 .fixas__form input#fixa-descricao {
   flex: 2 1 200px;
 }
+
+.fixas__data-edit {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.fixas__data-edit:focus {
+  border-color: var(--primary);
+}
+
+@media (max-width: 600px) {
+  .fixas__item {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .fixas__info {
+    flex: 1 1 100%; /* Ocupa a linha toda, empurrando o resto pra baixo */
+  }
+
+  .fixas__data-edit {
+    flex: 1 1 auto;
+    font-size: 0.95rem;
+  }
+}

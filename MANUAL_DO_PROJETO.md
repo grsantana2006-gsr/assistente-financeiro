@@ -1,10 +1,5 @@
 # 📖 Manual Completo: Assistente Financeiro Pessoal
 
-Bem-vindo ao manual avançado do seu projeto! Este documento foi criado para que você não apenas use o aplicativo que construímos, mas **entenda profundamente como cada peça da engrenagem funciona**. 
-
-Se você quer aprender programação, desenvolvimento web e como a internet funciona de verdade, este é o seu mapa do tesouro.
-
----
 
 ## 🏗️ 1. A Arquitetura do Sistema (Como a Mágica Acontece)
 
