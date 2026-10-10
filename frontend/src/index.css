@@ -1,0 +1,175 @@
+/* =====================================================
+   SISTEMA DE DESIGN
+   Todas as cores, espaçamentos e raios ficam aqui como
+   "variáveis CSS". Para mudar o visual do app inteiro,
+   basta alterar estes valores.
+   ===================================================== */
+:root {
+  /* Cores de fundo (tema escuro) */
+  --bg: #0b0b14;
+  --bg-elevated: #14141f;
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.09);
+
+  /* Texto */
+  --text: #f3f3f8;
+  --text-muted: #9a9ab0;
+
+  /* Cores de destaque */
+  --primary: #8b5cf6; /* roxo (remete ao Nubank) */
+  --primary-soft: rgba(139, 92, 246, 0.16);
+  --success: #34d399; /* receitas / saldo positivo */
+  --warning: #fbbf24; /* limite perto do fim */
+  --danger: #fb7185; /* despesas / limite estourado */
+
+  /* Gradientes */
+  --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #22d3ee 100%);
+
+  /* Medidas */
+  --radius: 18px;
+  --radius-sm: 10px;
+  --gap: 20px;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+
+  /* Fontes */
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-display: 'Outfit', system-ui, sans-serif;
+
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =====================================================
+   RESET: remove margens padrão do navegador
+   ===================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  /* Brilhos coloridos ao fundo, dão profundidade ao tema escuro */
+  background-image:
+    radial-gradient(ellipse 60% 40% at 15% 0%, rgba(139, 92, 246, 0.22), transparent),
+    radial-gradient(ellipse 50% 40% at 90% 10%, rgba(34, 211, 238, 0.12), transparent);
+  background-attachment: fixed;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* =====================================================
+   COMPONENTES REUTILIZÁVEIS
+   ===================================================== */
+
+/* "Card" de vidro (glassmorphism): usado por todos os módulos */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+  transition: transform var(--transition), background var(--transition), border-color var(--transition);
+}
+
+.card:hover {
+  background: var(--surface-hover);
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.card-title {
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.card-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Cores semânticas para valores */
+.positive {
+  color: var(--success);
+}
+.negative {
+  color: var(--danger);
+}
+
+/* Animação de entrada: elementos "sobem" suavemente */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  /* "backwards" aplica o estado inicial durante o atraso, mas não prende
+     o transform no final (senão o efeito hover dos cards não funcionaria) */
+  animation: fade-up 0.6s backwards;
+}
+
+/* Botões */
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.btn:hover {
+  background: var(--surface-hover);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+  transform: none;
+}
+
+.btn--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.btn--primary:hover {
+  background: #7c3aed;
+}

@@ -1,0 +1,13 @@
+.secao__cabecalho {
+  margin-bottom: 20px;
+}
+
+.secao__cabecalho h2 {
+  font-size: 1.5rem;
+}
+
+.painel-cartoes__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: var(--gap);
+}

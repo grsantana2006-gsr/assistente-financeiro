@@ -1,0 +1,219 @@
+.forecast:hover {
+  transform: none;
+}
+
+.forecast {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ---------- Destaque ---------- */
+.forecast__destaque {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 22px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+
+.forecast__percentual {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.forecast__destaque--ok {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.25);
+}
+.forecast__destaque--ok .forecast__percentual {
+  color: var(--success);
+}
+.forecast__destaque--warning {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.25);
+}
+.forecast__destaque--warning .forecast__percentual {
+  color: var(--warning);
+}
+.forecast__destaque--danger {
+  background: rgba(251, 113, 133, 0.1);
+  border-color: rgba(251, 113, 133, 0.25);
+}
+.forecast__destaque--danger .forecast__percentual {
+  color: var(--danger);
+}
+
+.forecast__controles {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- Gráfico ---------- */
+.forecast__grafico {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.forecast__grade {
+  stroke: rgba(255, 255, 255, 0.07);
+  stroke-dasharray: 3 5;
+}
+
+.forecast__eixo,
+.forecast__rotulo {
+  fill: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--font-body);
+  text-transform: capitalize;
+}
+
+.forecast__renda {
+  stroke: var(--success);
+  stroke-width: 2;
+  stroke-dasharray: 8 6;
+  pointer-events: none;
+}
+
+.forecast__renda-texto {
+  fill: var(--success);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* As barras "crescem" de baixo para cima na entrada */
+@keyframes crescer {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.forecast__barra {
+  transform-box: fill-box; /* o transform usa a própria barra como referência */
+  transform-origin: bottom;
+  animation: crescer 0.7s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+  transition: opacity var(--transition), filter var(--transition);
+  opacity: 0.55;
+}
+
+.forecast__coluna--ativa .forecast__barra {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.55));
+}
+
+.forecast__coluna--ativa .forecast__rotulo {
+  fill: var(--text);
+  font-weight: 600;
+}
+
+.forecast__coluna rect[role='button'] {
+  cursor: pointer;
+  outline: none;
+}
+
+/* ---------- Legenda ---------- */
+.forecast__legenda {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.forecast__legenda li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.forecast__cor {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.forecast__cor--fixas {
+  background: linear-gradient(#a78bfa, #6366f1);
+}
+.forecast__cor--parcelas {
+  background: linear-gradient(#22d3ee, #0ea5e9);
+}
+.forecast__cor--renda {
+  height: 0;
+  width: 18px;
+  border-top: 2px dashed var(--success);
+  border-radius: 0;
+}
+
+/* ---------- Detalhe do mês ---------- */
+.forecast__detalhe {
+  padding: 20px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+
+.forecast__detalhe h3 {
+  margin-bottom: 14px;
+}
+
+.forecast__detalhe h3::first-letter {
+  text-transform: uppercase;
+}
+
+.forecast__numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.forecast__numeros dt {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.forecast__numeros dd {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.forecast__parcelas {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.forecast__parcelas li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.forecast__parcelas small {
+  color: var(--text-muted);
+}
+
+.forecast__nota {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 600px) {
+  .forecast__destaque {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}

@@ -1,0 +1,147 @@
+.fixas:hover {
+  transform: none; /* card grande: sem "pulo" ao passar o mouse */
+}
+
+.fixas__total {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.fixas__total-valor {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.fixas__lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.fixas__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  transition: background var(--transition), opacity var(--transition), border-color var(--transition);
+}
+
+.fixas__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border);
+}
+
+/* Despesa pausada fica apagada e com o nome riscado */
+.fixas__item--pausada {
+  opacity: 0.45;
+}
+.fixas__item--pausada .fixas__nome {
+  text-decoration: line-through;
+}
+
+.fixas__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fixas__nome {
+  font-weight: 500;
+}
+
+.fixas__valor {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.fixas__vazio {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 24px 0;
+}
+
+.fixas__remover {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+}
+
+.fixas__remover:hover {
+  background: rgba(251, 113, 133, 0.15);
+  color: var(--danger);
+}
+
+/* ---------- Interruptor (toggle) ---------- */
+.interruptor {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+
+.interruptor::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform var(--transition);
+}
+
+.interruptor--ligado {
+  background: var(--primary);
+}
+
+.interruptor--ligado::after {
+  transform: translateX(18px);
+}
+
+/* ---------- Formulário ---------- */
+.fixas__form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.fixas__form input,
+.fixas__form select {
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.fixas__form input:focus,
+.fixas__form select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.fixas__form input#fixa-descricao {
+  flex: 2 1 200px;
+}

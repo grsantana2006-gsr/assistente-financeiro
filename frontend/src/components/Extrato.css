@@ -1,0 +1,111 @@
+.extrato:hover {
+  transform: none; /* card grande: sem "pulo" ao passar o mouse */
+}
+
+.extrato__lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 0;
+}
+
+.extrato__vazio {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 24px 0;
+}
+
+.extrato__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  border-left-width: 4px; /* para a cor do banco */
+  transition: background var(--transition), opacity var(--transition), border-color var(--transition);
+}
+
+.extrato__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border);
+}
+
+.extrato__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.extrato__nome {
+  font-weight: 500;
+}
+
+.extrato__detalhes {
+  display: flex;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.extrato__valor {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.extrato__remover {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.extrato__remover:hover {
+  background: rgba(251, 113, 133, 0.15);
+  color: var(--danger);
+}
+
+/* ---------- Formulário ---------- */
+.extrato__form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.extrato__form input,
+.extrato__form select {
+  flex: 1 1 120px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  color: inherit;
+}
+
+.extrato__form input:focus,
+.extrato__form select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.extrato__form input[type="text"]:first-of-type {
+  flex: 2 1 180px;
+}
