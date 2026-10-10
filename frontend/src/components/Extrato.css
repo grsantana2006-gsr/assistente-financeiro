@@ -91,19 +91,6 @@
 .extrato__form select {
   flex: 1 1 120px;
   min-width: 0;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--bg-elevated);
-  outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition);
-  color: inherit;
-}
-
-.extrato__form input:focus,
-.extrato__form select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 .extrato__form input[type="text"]:first-of-type {
