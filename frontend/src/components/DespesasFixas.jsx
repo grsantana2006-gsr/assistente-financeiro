@@ -6,11 +6,12 @@ import './DespesasFixas.css'
 // Os dados vivem no servidor; aqui só exibimos e avisamos o pai do que o usuário fez.
 // - fixas: lista já filtrada pela API (somente despesas fixas)
 // - bancos: usados no seletor e para mostrar o nome do banco
-function DespesasFixas({ fixas, bancos, aoAdicionar, aoAlternar, aoRemover }) {
+function DespesasFixas({ fixas, bancos, aoAdicionar, aoAlternar, aoRemover, aoAtualizar }) {
   // "Formulário controlado": cada campo tem seu estado, e o input mostra esse estado.
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
   const [bancoId, setBancoId] = useState(bancos[0]?.id ?? '')
+  const [dataCompra, setDataCompra] = useState(new Date().toISOString().split('T')[0])
   const [enviando, setEnviando] = useState(false)
 
   // Total mensal: soma só as que estão ativas
@@ -30,6 +31,7 @@ function DespesasFixas({ fixas, bancos, aoAdicionar, aoAlternar, aoRemover }) {
       descricao: descricao.trim(),
       valor: valorNumerico,
       banco_id: Number(bancoId),
+      data_compra: dataCompra || undefined,
     })
     setEnviando(false)
 
@@ -65,6 +67,21 @@ function DespesasFixas({ fixas, bancos, aoAdicionar, aoAlternar, aoRemover }) {
                     <span className="fixas__nome">{t.descricao}</span>
                     <span className="card-subtitle">{nomeDoBanco(t.banco_id)}</span>
                   </div>
+                  <input
+                    type="date"
+                    className="fixas__data-edit"
+                    value={t.data_compra || ''}
+                    onChange={(e) => aoAtualizar(t.id, { data_compra: e.target.value })}
+                    aria-label={`Data de ${t.descricao}`}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '4px 8px',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.85rem'
+                    }}
+                  />
                   <span className="fixas__valor">{formatarMoeda(t.valor)}</span>
 
                   {/* Interruptor ativar/pausar */}
@@ -110,6 +127,13 @@ function DespesasFixas({ fixas, bancos, aoAdicionar, aoAlternar, aoRemover }) {
             value={valor}
             onChange={(e) => setValor(e.target.value)}
             aria-label="Valor da despesa fixa"
+          />
+          <input
+            id="fixa-data"
+            type="date"
+            value={dataCompra}
+            onChange={(e) => setDataCompra(e.target.value)}
+            aria-label="Data de pagamento"
           />
           <select
             id="fixa-banco"

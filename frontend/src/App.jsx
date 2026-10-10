@@ -54,6 +54,7 @@ function App() {
   const adicionarReceita = (dados) => executar(() => api.criarTransacao(dados))
 
   const alternarFixa = (fixa) => executar(() => api.atualizarTransacao(fixa.id, { ativa: !fixa.ativa }))
+  const atualizarFixa = (id, dados) => executar(() => api.atualizarTransacao(id, dados))
 
   const removerFixa = (id) => executar(() => api.removerTransacao(id))
 
@@ -87,6 +88,7 @@ function App() {
         bancos={cartoes}
         aoAdicionar={adicionarFixa}
         aoAlternar={alternarFixa}
+        aoAtualizar={atualizarFixa}
         aoRemover={removerFixa}
       />
       <Extrato 
