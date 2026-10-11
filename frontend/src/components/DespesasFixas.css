@@ -2,18 +2,52 @@
   transform: none; /* card grande: sem "pulo" ao passar o mouse */
 }
 
-.fixas__total {
-  margin-bottom: 18px;
-  padding-bottom: 18px;
+/* ---------- Resumo do Mês (Checklist KPI) ---------- */
+.fixas__resumo {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
   border-bottom: 1px solid var(--border);
 }
 
-.fixas__total-valor {
+.fixas__resumo-cards {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fixas__resumo-item {
+  flex: 1 1 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+}
+
+.fixas__resumo-valor {
   font-family: var(--font-display);
-  font-size: 2rem;
+  font-size: 1.4rem;
   font-weight: 700;
 }
 
+.fixas__progresso-trilho {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.fixas__progresso-barra {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* ---------- Lista de Itens ---------- */
 .fixas__lista {
   list-style: none;
   display: flex;
@@ -25,7 +59,7 @@
 .fixas__item {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.03);
@@ -36,6 +70,11 @@
 .fixas__item:hover {
   background: rgba(255, 255, 255, 0.06);
   border-color: var(--border);
+}
+
+.fixas__item--pago {
+  border-left: 3px solid #10b981;
+  background: rgba(16, 185, 129, 0.03);
 }
 
 /* Despesa pausada fica apagada e com o nome riscado */
@@ -51,10 +90,29 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  gap: 2px;
+}
+
+.fixas__nome-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .fixas__nome {
   font-weight: 500;
+}
+
+.fixas__tag-prazo {
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  color: #38bdf8;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .fixas__valor {
@@ -66,6 +124,47 @@
   text-align: center;
   color: var(--text-muted);
   padding: 24px 0;
+}
+
+/* ---------- Botão de Status: Pago vs Pendente ---------- */
+.fixas__btn-status {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fixas__btn-status--pago {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.12);
+}
+
+.fixas__btn-status--pago:hover {
+  background: rgba(16, 185, 129, 0.28);
+  border-color: #34d399;
+  transform: translateY(-1px);
+}
+
+.fixas__btn-status--pendente {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+.fixas__btn-status--pendente:hover {
+  background: rgba(245, 158, 11, 0.24);
+  border-color: #fbbf24;
+  transform: translateY(-1px);
 }
 
 .fixas__remover {
@@ -118,19 +217,25 @@
 /* ---------- Formulário ---------- */
 .fixas__form {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 14px;
   padding-top: 18px;
   border-top: 1px solid var(--border);
 }
 
-.fixas__form input,
-.fixas__form select {
+.fixas__form-campos {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fixas__form-campos input,
+.fixas__form-campos select {
   flex: 1 1 140px;
   min-width: 0;
 }
 
-.fixas__form input#fixa-descricao {
+.fixas__form-campos input#fixa-descricao {
   flex: 2 1 200px;
 }
 
@@ -148,18 +253,73 @@
   border-color: var(--primary);
 }
 
+/* Duração / Prazo Determinado */
+.fixas__form-duracao {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fixas__checkbox-rotulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.fixas__checkbox-rotulo input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.fixas__duracao-inputs {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+}
+
+.fixas__duracao-campo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.fixas__duracao-campo input {
+  width: 80px;
+  padding: 6px 10px;
+}
+
 @media (max-width: 600px) {
+  .fixas__resumo-item {
+    flex: 1 1 100%;
+  }
+
   .fixas__item {
     flex-wrap: wrap;
     gap: 10px;
   }
 
   .fixas__info {
-    flex: 1 1 100%; /* Ocupa a linha toda, empurrando o resto pra baixo */
+    flex: 1 1 100%;
   }
 
   .fixas__data-edit {
     flex: 1 1 auto;
     font-size: 0.95rem;
+  }
+
+  .fixas__btn-status {
+    flex: 0 0 auto;
   }
 }

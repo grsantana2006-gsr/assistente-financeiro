@@ -50,7 +50,8 @@ export const api = {
   obterDashboard: (mes) => requisitar('GET', `/dashboard?mes=${mes}`),
   obterForecast: (mes, meses) => requisitar('GET', `/forecast?mes=${mes}&meses=${meses}`),
   obterCofre: () => requisitar('GET', '/cofre'),
-  listarDespesasFixas: () => requisitar('GET', '/transacoes?tipo=Despesa&categoria=Fixo'),
+  listarDespesasFixas: (mes) =>
+    requisitar('GET', `/transacoes?tipo=Despesa&categoria=Fixo${mes ? `&mes_referencia=${mes}` : ''}`),
   listarDespesasVariaveis: () => requisitar('GET', '/transacoes?tipo=Despesa&categoria=Variável'),
   listarReceitas: () => requisitar('GET', '/transacoes?tipo=Receita'),
 
@@ -58,6 +59,7 @@ export const api = {
   atualizarBanco: (id, dados) => requisitar('PATCH', `/bancos/${id}`, dados),
   criarTransacao: (dados) => requisitar('POST', '/transacoes', dados),
   atualizarTransacao: (id, dados) => requisitar('PATCH', `/transacoes/${id}`, dados),
+  alternarPagamentoFixa: (id, mes) => requisitar('POST', `/transacoes/${id}/alternar-pagamento`, { mes }),
   removerTransacao: (id) => requisitar('DELETE', `/transacoes/${id}`),
   criarCofre: (dados) => requisitar('POST', '/cofre', dados),
   atualizarCofre: (id, dados) => requisitar('PATCH', `/cofre/${id}`, dados),

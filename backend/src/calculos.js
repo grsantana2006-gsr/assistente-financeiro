@@ -14,8 +14,14 @@ const soma = (lista, campo = 'valor') => lista.reduce((total, item) => total + i
 // mesReferencia tem o formato "AAAA-MM".
 export function contaNaFatura(t, mesReferencia) {
   if (t.tipo !== 'Despesa' || !t.ativa) return false
-  if (t.categoria === 'Fixo') return true
-  if (t.total_parcelas > 1) return true
+  if (t.categoria === 'Fixo') {
+    if (t.total_parcelas > 1 && t.parcela_atual > t.total_parcelas) return false
+    return true
+  }
+  if (t.total_parcelas > 1) {
+    if (t.parcela_atual > t.total_parcelas) return false
+    return true
+  }
   return t.data_compra.startsWith(mesReferencia)
 }
 
@@ -45,13 +51,25 @@ export function montarCartoes(bancos, transacoes, mesReferencia) {
   })
 }
 
-// Projeta os próximos meses: renda fixa, despesas fixas e parcelas restantes.
+// Projeta os próximos meses: renda fixa, despesas fixas (contínuas e temporárias) e parcelas restantes.
 // Gastos variáveis à vista não são projetados (impossível prever).
 export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses) {
   const [ano, mes] = mesReferencia.split('-').map(Number)
 
-  const renda = soma(transacoes.filter((t) => t.tipo === 'Receita' && t.categoria === 'Fixo' && t.ativa))
-  const fixas = soma(transacoes.filter((t) => t.tipo === 'Despesa' && t.categoria === 'Fixo' && t.ativa))
+  const rendaContinuas = transacoes.filter(
+    (t) => t.tipo === 'Receita' && t.categoria === 'Fixo' && t.ativa && (t.total_parcelas === 1 || !t.total_parcelas),
+  )
+  const rendaTemporarias = transacoes.filter(
+    (t) => t.tipo === 'Receita' && t.categoria === 'Fixo' && t.ativa && t.total_parcelas > 1,
+  )
+
+  const fixasContinuas = transacoes.filter(
+    (t) => t.tipo === 'Despesa' && t.categoria === 'Fixo' && t.ativa && (t.total_parcelas === 1 || !t.total_parcelas),
+  )
+  const fixasTemporarias = transacoes.filter(
+    (t) => t.tipo === 'Despesa' && t.categoria === 'Fixo' && t.ativa && t.total_parcelas > 1,
+  )
+
   const parceladas = transacoes.filter(
     (t) => t.tipo === 'Despesa' && t.categoria !== 'Fixo' && t.total_parcelas > 1 && t.ativa,
   )
@@ -59,6 +77,13 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses) {
   const meses = []
   for (let k = 0; k < quantidadeDeMeses; k++) {
     const data = new Date(ano, mes - 1 + k, 1)
+
+    // Renda no mês k (contínua + temporárias ainda dentro do prazo)
+    const renda = soma(rendaContinuas) + soma(rendaTemporarias.filter((t) => t.parcela_atual + k <= t.total_parcelas))
+
+    // Despesas fixas no mês k (contínuas + temporárias que ainda não acabaram)
+    const fixasTemporariasNoMes = fixasTemporarias.filter((t) => t.parcela_atual + k <= t.total_parcelas)
+    const fixas = soma(fixasContinuas) + soma(fixasTemporariasNoMes)
 
     // No mês k, a parcela é (parcela_atual + k); só cobra se ainda não passou do total
     const detalhesParcelas = parceladas

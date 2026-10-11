@@ -3,6 +3,7 @@ import { db } from '../db.js'
 import { validar } from '../validacao.js'
 import { lerId, idInvalido, naoEncontrado, erroValidacao, inserir, atualizar, transacaoParaApi } from '../ajudantes.js'
 import { dataLocalISO } from '../datas.js'
+import { obterMesReferencia } from '../config.js'
 
 const router = Router()
 
@@ -27,9 +28,16 @@ const regrasFiltro = {
   banco_id: regras.banco_id,
   ativa: regras.ativa,
   mes: { tipo: 'texto', regex: /^\d{4}-(0[1-9]|1[0-2])$/ },
+  mes_referencia: { tipo: 'texto', regex: /^\d{4}-(0[1-9]|1[0-2])$/ },
 }
 
-const buscarPorId = async (id) => await db.prepare('SELECT * FROM transacoes WHERE id = ?').get(id)
+const buscarPorId = async (id, mesRef = obterMesReferencia()) =>
+  await db.prepare(`
+    SELECT t.*, (CASE WHEN pf.id IS NOT NULL THEN 1 ELSE 0 END) AS pago
+    FROM transacoes t
+    LEFT JOIN pagamentos_fixas pf ON pf.transacao_id = t.id AND pf.mes = ?
+    WHERE t.id = ?
+  `).get(mesRef, id)
 
 async function verificarConsistencia(t) {
   const erros = []
@@ -47,21 +55,30 @@ router.get('/', async (req, res) => {
   const { dados: filtros, erros } = validar(req.query, regrasFiltro, { parcial: true, coagir: true })
   if (erros.length) return erroValidacao(res, erros)
 
+  const mesRef = filtros.mes_referencia || obterMesReferencia()
+
   const condicoes = []
-  const valores = []
+  const valores = [mesRef]
   for (const campo of ['tipo', 'categoria', 'banco_id', 'ativa']) {
     if (filtros[campo] !== undefined) {
-      condicoes.push(`${campo} = ?`)
+      condicoes.push(`t.${campo} = ?`)
       valores.push(filtros[campo])
     }
   }
   if (filtros.mes) {
-    condicoes.push('data_compra LIKE ?')
+    condicoes.push('t.data_compra LIKE ?')
     valores.push(`${filtros.mes}%`)
   }
 
   const where = condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : ''
-  const linhas = await db.prepare(`SELECT * FROM transacoes ${where} ORDER BY data_compra DESC, id DESC`).all(...valores)
+  const sql = `
+    SELECT t.*, (CASE WHEN pf.id IS NOT NULL THEN 1 ELSE 0 END) AS pago
+    FROM transacoes t
+    LEFT JOIN pagamentos_fixas pf ON pf.transacao_id = t.id AND pf.mes = ?
+    ${where}
+    ORDER BY t.data_compra DESC, t.id DESC
+  `
+  const linhas = await db.prepare(sql).all(...valores)
   res.json(linhas.map(transacaoParaApi))
 })
 
@@ -99,6 +116,32 @@ router.patch('/:id', async (req, res) => {
 
   await atualizar('transacoes', id, dados)
   res.json(transacaoParaApi(await buscarPorId(id)))
+})
+
+router.post('/:id/alternar-pagamento', async (req, res) => {
+  const id = lerId(req)
+  if (!id) return idInvalido(res)
+  const mes = req.body?.mes || obterMesReferencia()
+  const t = await buscarPorId(id, mes)
+  if (!t) return naoEncontrado(res, 'Transação')
+
+  const existente = await db.prepare('SELECT id FROM pagamentos_fixas WHERE transacao_id = ? AND mes = ?').get(id, mes)
+
+  let marcarComoPago = false
+  if (typeof req.body?.pago === 'boolean') {
+    marcarComoPago = req.body.pago
+  } else {
+    marcarComoPago = !existente
+  }
+
+  if (marcarComoPago) {
+    await db.prepare('INSERT INTO pagamentos_fixas (transacao_id, mes) VALUES (?, ?) ON CONFLICT (transacao_id, mes) DO NOTHING').run(id, mes)
+  } else {
+    await db.prepare('DELETE FROM pagamentos_fixas WHERE transacao_id = ? AND mes = ?').run(id, mes)
+  }
+
+  const atualizado = await buscarPorId(id, mes)
+  res.json(transacaoParaApi(atualizado))
 })
 
 router.delete('/:id', async (req, res) => {

@@ -23,7 +23,7 @@ function App() {
 
   // ---------- Leitura: 3 chamadas à API ----------
   const dashboard = useDados(() => api.obterDashboard(MES_REFERENCIA), [versao])
-  const fixas = useDados(() => api.listarDespesasFixas(), [versao])
+  const fixas = useDados(() => api.listarDespesasFixas(MES_REFERENCIA), [versao])
   const extrato = useDados(() => api.listarDespesasVariaveis(), [versao])
   const receitas = useDados(() => api.listarReceitas(), [versao])
   const cofre = useDados(() => api.obterCofre(), [versao])
@@ -45,8 +45,11 @@ function App() {
 
   const salvarLimite = (bancoId, limite) => executar(() => api.atualizarBanco(bancoId, { limite_total: limite }))
 
-  const adicionarFixa = ({ descricao, valor, banco_id }) =>
-    executar(() => api.criarTransacao({ descricao, valor, banco_id, tipo: 'Despesa', categoria: 'Fixo' }))
+  const adicionarFixa = (dados) =>
+    executar(() => api.criarTransacao({ ...dados, tipo: 'Despesa', categoria: 'Fixo' }))
+
+  const alternarPagamentoFixa = (id) =>
+    executar(() => api.alternarPagamentoFixa(id, MES_REFERENCIA))
 
   const adicionarVariavel = (dados) =>
     executar(() => api.criarTransacao({ ...dados, tipo: 'Despesa', categoria: 'Variável' }))
@@ -86,9 +89,11 @@ function App() {
       <DespesasFixas
         fixas={fixas.dados}
         bancos={cartoes}
+        mesReferencia={MES_REFERENCIA}
         aoAdicionar={adicionarFixa}
         aoAlternar={alternarFixa}
         aoAtualizar={atualizarFixa}
+        aoAlternarPagamento={alternarPagamentoFixa}
         aoRemover={removerFixa}
       />
       <Extrato 

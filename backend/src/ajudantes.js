@@ -19,7 +19,11 @@ export function naoEncontrado(res, entidade) {
 }
 
 export function transacaoParaApi(linha) {
-  return { ...linha, ativa: linha.ativa === 1 }
+  return {
+    ...linha,
+    ativa: linha.ativa === 1,
+    pago: linha.pago !== undefined ? (linha.pago === 1 || linha.pago === true) : false,
+  }
 }
 
 export async function inserir(tabela, dados) {
