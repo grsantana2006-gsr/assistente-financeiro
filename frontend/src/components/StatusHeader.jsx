@@ -17,8 +17,8 @@ function StatusHeader({
   const indicadores = [
     { id: 'cofre', rotulo: 'Dinheiro no Cofre', valor: totalCofre, icone: '🏦', classe: '' },
     { id: 'receita', rotulo: 'Receita do Mês', valor: receitaMes, icone: '📈', classe: 'positive' },
-    { id: 'faturas', rotulo: 'Faturas de Cartão', valor: faturasCartao, icone: '💳', classe: 'warning' },
-    { id: 'debito-pix', rotulo: 'Débito & PIX (Conta)', valor: despesasContaPix, icone: '⚡', classe: 'negative' },
+    { id: 'faturas', rotulo: 'Faturas de Cartão', valor: faturasCartao, icone: '💳', classe: 'negative' },
+    { id: 'debito-pix', rotulo: 'Débito & PIX (Conta)', valor: despesasContaPix, icone: '⚡', classe: 'warning' },
   ]
 
   return (

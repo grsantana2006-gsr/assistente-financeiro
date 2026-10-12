@@ -136,6 +136,9 @@ button {
 .negative {
   color: var(--danger);
 }
+.warning {
+  color: var(--warning);
+}
 
 /* Animação de entrada: elementos "sobem" suavemente */
 @keyframes fade-up {
