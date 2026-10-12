@@ -74,11 +74,27 @@ function App() {
     return erro ? <TelaErro mensagem={erro.message} aoTentarNovamente={recarregar} /> : <TelaCarregando />
   }
 
-  const { total_cofre, receita_mes, faturas_abertas, cartoes } = dashboard.dados
+  const {
+    total_cofre,
+    receita_mes,
+    faturas_cartao,
+    faturas_abertas,
+    despesas_conta_pix,
+    saldo_mes,
+    status_mes,
+    cartoes,
+  } = dashboard.dados
 
   return (
     <main className="app">
-      <StatusHeader totalCofre={total_cofre} receitaMes={receita_mes} faturasAbertas={faturas_abertas} />
+      <StatusHeader
+        totalCofre={total_cofre}
+        receitaMes={receita_mes}
+        faturasCartao={faturas_cartao ?? faturas_abertas}
+        despesasContaPix={despesas_conta_pix ?? 0}
+        saldoMes={saldo_mes ?? (receita_mes - (faturas_abertas ?? 0))}
+        statusMes={status_mes ?? (saldo_mes >= 0 ? 'positivo' : 'negativo')}
+      />
       <Receitas
         receitas={receitas.dados}
         bancos={cartoes}

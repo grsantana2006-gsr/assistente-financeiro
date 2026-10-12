@@ -19,6 +19,7 @@ function DespesasFixas({
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
   const [bancoId, setBancoId] = useState(bancos[0]?.id ?? '')
+  const [formaPagamento, setFormaPagamento] = useState('PIX')
   const [dataCompra, setDataCompra] = useState(new Date().toISOString().split('T')[0])
   const [temPrazo, setTemPrazo] = useState(false)
   const [totalParcelas, setTotalParcelas] = useState('12')
@@ -48,6 +49,7 @@ function DespesasFixas({
       descricao: descricao.trim(),
       valor: valorNumerico,
       banco_id: Number(bancoId),
+      forma_pagamento: formaPagamento,
       data_compra: dataCompra || undefined,
       total_parcelas: temPrazo && Number(totalParcelas) > 1 ? Number(totalParcelas) : 1,
       parcela_atual: temPrazo && Number(parcelaAtual) >= 1 ? Number(parcelaAtual) : 1,
@@ -59,6 +61,7 @@ function DespesasFixas({
     if (deuCerto) {
       setDescricao('')
       setValor('')
+      setFormaPagamento('PIX')
       setTemPrazo(false)
       setTotalParcelas('12')
       setParcelaAtual('1')
@@ -135,6 +138,20 @@ function DespesasFixas({
                     onChange={(e) => aoAtualizar(t.id, { data_compra: e.target.value })}
                     aria-label={`Data de ${t.descricao}`}
                   />
+
+                  {/* Seletor de forma de pagamento na linha da despesa */}
+                  <select
+                    className="fixas__forma-select"
+                    value={t.forma_pagamento || 'Crédito'}
+                    onChange={(e) => aoAtualizar(t.id, { forma_pagamento: e.target.value })}
+                    aria-label={`Forma de pagamento de ${t.descricao}`}
+                    title="Forma de pagamento (altere quando quiser)"
+                  >
+                    <option value="PIX">⚡ PIX</option>
+                    <option value="Débito">🏦 Débito/Conta</option>
+                    <option value="Crédito">💳 Crédito</option>
+                    <option value="Dinheiro">💵 Dinheiro</option>
+                  </select>
 
                   <span className="fixas__valor">{formatarMoeda(t.valor)}</span>
 
@@ -218,6 +235,17 @@ function DespesasFixas({
                   {b.nome}
                 </option>
               ))}
+            </select>
+            <select
+              id="fixa-forma"
+              value={formaPagamento}
+              onChange={(e) => setFormaPagamento(e.target.value)}
+              aria-label="Forma de pagamento da despesa fixa"
+            >
+              <option value="PIX">⚡ PIX / Transferência</option>
+              <option value="Débito">🏦 Débito em Conta (Limite Especial)</option>
+              <option value="Crédito">💳 Cartão de Crédito</option>
+              <option value="Dinheiro">💵 Dinheiro</option>
             </select>
           </div>
 

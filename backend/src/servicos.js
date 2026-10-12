@@ -13,13 +13,32 @@ export async function calcularDashboard(mes) {
   const result = await db.prepare('SELECT COALESCE(SUM(saldo_atual), 0) AS total FROM cofre').get()
   const cofre = Number(result?.total || 0)
 
+  const receitaMes = calcularReceitaDoMes(transacoes, mes)
+  const despesasMes = transacoes.filter((t) => t.tipo === 'Despesa' && contaNaFatura(t, mes))
+
+  // Faturas de Cartão de Crédito (apenas forma Crédito)
+  const faturasCartao = despesasMes
+    .filter((t) => t.forma_pagamento === 'Crédito')
+    .reduce((soma, t) => soma + t.valor, 0)
+
+  // Saídas da Conta Corrente (PIX, Débito em Conta, Limite Especial, Dinheiro)
+  const despesasContaPix = despesasMes
+    .filter((t) => t.forma_pagamento !== 'Crédito')
+    .reduce((soma, t) => soma + t.valor, 0)
+
+  const totalDespesas = faturasCartao + despesasContaPix
+  const saldoMes = receitaMes - totalDespesas
+
   return {
     mes,
     total_cofre: arredondar(cofre),
-    receita_mes: arredondar(calcularReceitaDoMes(transacoes, mes)),
-    faturas_abertas: arredondar(
-      transacoes.filter((t) => contaNaFatura(t, mes)).reduce((soma, t) => soma + t.valor, 0),
-    ),
+    receita_mes: arredondar(receitaMes),
+    faturas_cartao: arredondar(faturasCartao),
+    faturas_abertas: arredondar(faturasCartao), // mantido para compatibilidade
+    despesas_conta_pix: arredondar(despesasContaPix),
+    total_despesas: arredondar(totalDespesas),
+    saldo_mes: arredondar(saldoMes),
+    status_mes: saldoMes >= 0 ? 'positivo' : 'negativo',
     cartoes: montarCartoes(bancos, transacoes, mes),
   }
 }
