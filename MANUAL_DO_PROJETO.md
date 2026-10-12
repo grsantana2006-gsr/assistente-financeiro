@@ -43,20 +43,31 @@ Cada seção da tela do aplicativo foi projetada como um **componente independen
 
 ### 🌟 Setor 1: Header de Indicadores Globais (`StatusHeader.jsx`)
 
-Localizado no topo da aplicação, este setor funciona como o **painel de bordo (cockpit)** da sua vida financeira. Ele resume instantaneamente a sua saúde financeira atual através de três cartões de destaque:
+Localizado no topo da aplicação, este setor funciona como o **painel de bordo (cockpit)** da sua vida financeira. Ele resume instantaneamente a sua saúde financeira atual através do **Banner Executivo de Veredito** e de **quatro cartões de indicadores**:
 
+#### A. Banner de Veredito: No Azul (Superávit) vs. No Vermelho (Déficit)
+Logo abaixo da saudação, uma barra visual inteligente calcula a equação fundamental das finanças:
+$$\text{Saldo Real do Mês} = \text{Receita} - (\text{Faturas no Cartão} + \text{Gastos em Débito/PIX})$$
+* 🟢 **No Azul (Superávit):** Se suas receitas forem maiores que suas saídas, o banner se acende em verde indicando exatamente quanto dinheiro você tem de folga/lucro livre neste mês.
+* 🔴 **No Vermelho (Déficit):** Se seus compromissos superarem suas entradas, o banner dispara um alerta vermelho com o valor negativo exato do prejuízo, avisando que você está gastando mais do que ganha.
+
+#### B. Os Quatro Indicadores Chave:
 1. **🏦 Dinheiro no Cofre:**
    * **O que é:** O somatório de todo o dinheiro guardado em metas, reservas de emergência e objetivos.
    * **Origem do cálculo:** Calculado pelo backend somando a coluna `saldo_atual` da tabela `cofre`.
-   * **Função financeira:** Representa o seu patrimônio líquido líquido protegido, que não deve ser misturado com o dinheiro de giro do dia a dia.
+   * **Função financeira:** Representa o seu patrimônio líquido protegido, que não deve ser misturado com o dinheiro de giro do dia a dia.
 2. **📈 Receita Líquida do Mês:**
-   * **O que é:** Todo o dinheiro que entra na sua conta no mês de referência.
-   * **Origem do cálculo:** Função `calcularReceitaDoMes` no backend. Soma todas as receitas ativas com categoria `Fixo` (ex: Salário) mais qualquer receita avulsa pontual que tenha a data de compra dentro do mês.
-   * **Função financeira:** Estabelece o teto máximo de recursos disponíveis para cobrir seus custos e poupar.
-3. **💳 Faturas Abertas / Comprometimento:**
-   * **O que é:** A soma de todas as despesas que pesam financeiramente no mês de referência.
-   * **Origem do cálculo:** Função `contaNaFatura` no backend. Inclui todas as despesas fixas ativas, a parcela vigente das compras parceladas no cartão de crédito e as despesas variáveis à vista efetuadas no próprio mês.
-   * **Função financeira:** Mostra o passivo imediato que você precisará liquidar no fechamento do mês.
+   * **O que é:** Todo o dinheiro que entra na sua conta no mês de referência (salário fixo + rendimentos avulsos).
+   * **Origem do cálculo:** Função `calcularReceitaDoMes` no backend.
+   * **Função financeira:** Estabelece o teto máximo de recursos disponíveis.
+3. **💳 Faturas no Cartão (Crédito):**
+   * **O que é:** Exclusivamente as despesas e parcelas cobradas no cartão de crédito que vencem na fatura do mês.
+   * **Origem do cálculo:** Soma de todas as despesas do mês com `forma_pagamento === 'Crédito'`.
+   * **Função financeira:** Mostra o passivo de cartão que você precisará liquidar no fechamento da fatura.
+4. **⚡ Débito & PIX (Conta Corrente):**
+   * **O que é:** Todos os pagamentos que saem diretamente do saldo bancário (PIX, débito em conta, limite especial/cheque especial ou dinheiro).
+   * **Origem do cálculo:** Soma de todas as despesas do mês com `forma_pagamento !== 'Crédito'`.
+   * **Função financeira:** Evita o "ponto cego" de achar que sobrou dinheiro na conta quando na verdade já há contas em débito agendadas.
 
 ---
 
@@ -103,7 +114,17 @@ Nem toda conta fixa dura para sempre. Um curso de programação em 12x, um segur
   * O backend (`backend/src/calculos.js`) projeta a conta somente enquanto $\text{parcela\_atual} + k \le \text{total\_parcelas}$.
   * **Quando o curso acaba, o sistema retira automaticamente o valor das despesas fixas futuras**, fazendo com que o seu Saldo Projetado futuro suba automaticamente!
 
-#### D. Data de Pagamento / Vencimento
+#### D. Formas de Pagamento & Isolamento do Limite do Cartão
+Nem toda conta fixa é paga no cartão de crédito. Aluguel, condomínio e luz normalmente são pagos via PIX ou débito em conta (às vezes usando o limite especial do Banco do Brasil ou Itaú).
+* **Seletor de Forma de Pagamento:**
+  * Ao cadastrar (e editável diretamente em cada linha), você escolhe:
+    * ⚡ **PIX / Transferência:** Sai do saldo da conta, **NÃO consome** limite do cartão.
+    * 🏦 **Débito em Conta / Limite Especial:** Sai da conta corrente, **NÃO consome** limite do cartão.
+    * 💳 **Cartão de Crédito:** Entra na fatura mensal e consome o limite daquele banco.
+    * 💵 **Dinheiro:** Não consome limite de banco.
+* **Benefício:** O limite do seu cartão de crédito fica protegido e reflete apenas as compras reais de crédito!
+
+#### E. Data de Pagamento / Vencimento
 Cada conta possui um campo de data editável diretamente na linha (`<input type="date">`). Alterar a data dispara uma requisição `PATCH` imediata para o servidor, mantendo suas datas de pagamento sempre organizadas.
 
 ---
