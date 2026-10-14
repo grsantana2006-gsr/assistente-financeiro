@@ -2,19 +2,34 @@ import { useState } from 'react'
 import { formatarMoeda } from '../utils/format'
 import './DespesasFixas.css'
 
+function formatarMesAno(anoMes) {
+  if (!anoMes) return ''
+  const [ano, mes] = anoMes.split('-')
+  const meses = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ]
+  const idx = parseInt(mes, 10) - 1
+  return `${meses[idx] || mes}/${ano}`
+}
+
 // Módulo de Despesas Fixas:
 // - Checklist mensal inteligente (status Pago / Pendente por mês)
+// - Separação clara entre contas do mês atual e contas agendadas para início futuro
 // - Contas contínuas ou com prazo determinado (recorrência finita)
 // - Resumo em tempo real do total, pago no mês e a pagar
 function DespesasFixas({
-  fixas,
-  bancos,
+  fixas = [],
+  bancos = [],
+  mesReferencia,
   aoAdicionar,
   aoAlternar,
   aoRemover,
   aoAtualizar,
   aoAlternarPagamento,
 }) {
+  const mesAtualRef = mesReferencia || new Date().toISOString().slice(0, 7)
+
   // Formulário controlado
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
@@ -26,8 +41,17 @@ function DespesasFixas({
   const [parcelaAtual, setParcelaAtual] = useState('1')
   const [enviando, setEnviando] = useState(false)
 
-  // Cálculos de resumo do mês
-  const ativas = fixas.filter((t) => t.ativa)
+  // Separar contas ativas do mês atual vs contas agendadas para começar em meses futuros
+  const ehFutura = (t) => {
+    const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
+    return Boolean(mesInicio && mesInicio > mesAtualRef)
+  }
+
+  const despesasDoMes = fixas.filter((t) => !ehFutura(t))
+  const despesasFuturas = fixas.filter(ehFutura)
+
+  // Cálculos de resumo do mês (apenas contas do mês atual!)
+  const ativas = despesasDoMes.filter((t) => t.ativa)
   const totalMensal = ativas.reduce((soma, t) => soma + t.valor, 0)
   const totalPago = ativas.filter((t) => t.pago).reduce((soma, t) => soma + t.valor, 0)
   const totalPendente = Math.max(totalMensal - totalPago, 0)
@@ -39,6 +63,14 @@ function DespesasFixas({
     return bancos.find((b) => b.id === id)?.nome ?? '—'
   }
 
+  function aoMudarForma(novaForma) {
+    setFormaPagamento(novaForma)
+    if (novaForma === 'Voucher') {
+      const bancoBeneficio = bancos.find((b) => b.tipo === 'Benefício')
+      if (bancoBeneficio) setBancoId(bancoBeneficio.id)
+    }
+  }
+
   async function enviar(evento) {
     evento.preventDefault()
     const valorNumerico = Number(valor.replace(',', '.'))
@@ -48,7 +80,7 @@ function DespesasFixas({
     const dados = {
       descricao: descricao.trim(),
       valor: valorNumerico,
-      banco_id: Number(bancoId),
+      banco_id: Number(bancoId || bancos[0]?.id),
       forma_pagamento: formaPagamento,
       data_compra: dataCompra || undefined,
       total_parcelas: temPrazo && Number(totalParcelas) > 1 ? Number(totalParcelas) : 1,
@@ -82,7 +114,7 @@ function DespesasFixas({
         <div className="fixas__resumo">
           <div className="fixas__resumo-cards">
             <div className="fixas__resumo-item">
-              <span className="card-subtitle">Total Mensal</span>
+              <span className="card-subtitle">Total Mensal ({formatarMesAno(mesAtualRef)})</span>
               <span className="fixas__resumo-valor negative">{formatarMoeda(totalMensal)}</span>
             </div>
             <div className="fixas__resumo-item">
@@ -101,11 +133,12 @@ function DespesasFixas({
           </div>
         </div>
 
-        {fixas.length === 0 ? (
-          <p className="fixas__vazio">Nenhuma despesa fixa cadastrada ainda.</p>
+        {/* Lista de Contas do Mês Atual */}
+        {despesasDoMes.length === 0 ? (
+          <p className="fixas__vazio">Nenhuma despesa fixa ativa para este mês.</p>
         ) : (
           <ul className="fixas__lista">
-            {fixas.map((t) => {
+            {despesasDoMes.map((t) => {
               const ativa = t.ativa
               const ehTemporaria = t.total_parcelas > 1
 
@@ -137,6 +170,7 @@ function DespesasFixas({
                     value={t.data_compra || ''}
                     onChange={(e) => aoAtualizar(t.id, { data_compra: e.target.value })}
                     aria-label={`Data de ${t.descricao}`}
+                    title="Data de cobrança/início"
                   />
 
                   {/* Seletor de forma de pagamento na linha da despesa */}
@@ -150,6 +184,7 @@ function DespesasFixas({
                     <option value="PIX">⚡ PIX</option>
                     <option value="Débito">🏦 Débito/Conta</option>
                     <option value="Crédito">💳 Crédito</option>
+                    <option value="Voucher">🍽️ Voucher</option>
                     <option value="Dinheiro">💵 Dinheiro</option>
                   </select>
 
@@ -197,6 +232,103 @@ function DespesasFixas({
           </ul>
         )}
 
+        {/* Seção de Contas Agendadas para Início Futuro */}
+        {despesasFuturas.length > 0 && (
+          <div className="fixas__secao-futuras">
+            <div className="fixas__futuras-cabecalho">
+              <span className="fixas__badge-futuro">🗓️ Início Futuro ({despesasFuturas.length})</span>
+              <p className="card-subtitle">
+                Contas agendadas para começar nos próximos meses. Não impactam os gastos nem o total do mês atual ({formatarMesAno(mesAtualRef)}).
+              </p>
+            </div>
+            <ul className="fixas__lista fixas__lista--futuras">
+              {despesasFuturas.map((t) => {
+                const ativa = t.ativa
+                const ehTemporaria = t.total_parcelas > 1
+                const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : ''
+
+                return (
+                  <li
+                    key={t.id}
+                    className={`fixas__item fixas__item--futuro ${ativa ? '' : 'fixas__item--pausada'}`}
+                  >
+                    <div className="fixas__info">
+                      <div className="fixas__nome-linha">
+                        <span className="fixas__nome">{t.descricao}</span>
+                        <span
+                          className="fixas__tag-agendada"
+                          title={`Esta conta começará a ser cobrada a partir de ${formatarMesAno(mesInicio)}`}
+                        >
+                          🗓️ Inicia em {formatarMesAno(mesInicio)}
+                        </span>
+                        {ehTemporaria && (
+                          <span className="fixas__tag-prazo">
+                            ⏱️ {t.total_parcelas} meses
+                          </span>
+                        )}
+                      </div>
+                      <span className="card-subtitle">{nomeDoBanco(t.banco_id)}</span>
+                    </div>
+
+                    <input
+                      type="date"
+                      className="fixas__data-edit"
+                      value={t.data_compra || ''}
+                      onChange={(e) => aoAtualizar(t.id, { data_compra: e.target.value })}
+                      aria-label={`Data de início de ${t.descricao}`}
+                      title="Data de início da cobrança"
+                    />
+
+                    <select
+                      className="fixas__forma-select"
+                      value={t.forma_pagamento || 'Crédito'}
+                      onChange={(e) => aoAtualizar(t.id, { forma_pagamento: e.target.value })}
+                      aria-label={`Forma de pagamento de ${t.descricao}`}
+                    >
+                      <option value="PIX">⚡ PIX</option>
+                      <option value="Débito">🏦 Débito</option>
+                      <option value="Crédito">💳 Crédito</option>
+                      <option value="Voucher">🍽️ Voucher</option>
+                      <option value="Dinheiro">💵 Dinheiro</option>
+                    </select>
+
+                    <span className="fixas__valor">{formatarMoeda(t.valor)}</span>
+
+                    <span
+                      className="fixas__badge-status-agendado"
+                      title="Esta conta só passará para a lista de pagamentos ativos no mês de início estipulado"
+                    >
+                      ⏳ Agendada
+                    </span>
+
+                    <button
+                      id={`alternar-fixa-${t.id}`}
+                      type="button"
+                      role="switch"
+                      aria-checked={ativa}
+                      aria-label={`${ativa ? 'Pausar' : 'Ativar'} ${t.descricao}`}
+                      className={`interruptor ${ativa ? 'interruptor--ligado' : ''}`}
+                      onClick={() => aoAlternar(t)}
+                      title={ativa ? 'Pausar agendamento' : 'Ativar agendamento'}
+                    />
+
+                    <button
+                      id={`remover-fixa-${t.id}`}
+                      type="button"
+                      className="fixas__remover"
+                      aria-label={`Remover ${t.descricao}`}
+                      onClick={() => aoRemover(t.id)}
+                      title="Remover conta"
+                    >
+                      ✕
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+
         {/* Formulário de adicionar nova despesa fixa */}
         <form className="fixas__form" onSubmit={enviar}>
           <div className="fixas__form-campos">
@@ -222,7 +354,8 @@ function DespesasFixas({
               type="date"
               value={dataCompra}
               onChange={(e) => setDataCompra(e.target.value)}
-              aria-label="Data de pagamento"
+              aria-label="Data de início ou pagamento"
+              title="Data de pagamento ou início (se for mês futuro, ficará agendada)"
             />
             <select
               id="fixa-banco"
@@ -239,12 +372,13 @@ function DespesasFixas({
             <select
               id="fixa-forma"
               value={formaPagamento}
-              onChange={(e) => setFormaPagamento(e.target.value)}
+              onChange={(e) => aoMudarForma(e.target.value)}
               aria-label="Forma de pagamento da despesa fixa"
             >
               <option value="PIX">⚡ PIX / Transferência</option>
               <option value="Débito">🏦 Débito em Conta (Limite Especial)</option>
               <option value="Crédito">💳 Cartão de Crédito</option>
+              <option value="Voucher">🍽️ Voucher (Vale Refeição)</option>
               <option value="Dinheiro">💵 Dinheiro</option>
             </select>
           </div>

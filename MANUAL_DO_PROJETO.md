@@ -115,17 +115,30 @@ Nem toda conta fixa dura para sempre. Um curso de programação em 12x, um segur
   * **Quando o curso acaba, o sistema retira automaticamente o valor das despesas fixas futuras**, fazendo com que o seu Saldo Projetado futuro suba automaticamente!
 
 #### D. Formas de Pagamento & Isolamento do Limite do Cartão
-Nem toda conta fixa é paga no cartão de crédito. Aluguel, condomínio e luz normalmente são pagos via PIX ou débito em conta (às vezes usando o limite especial do Banco do Brasil ou Itaú).
+Nem toda conta fixa é paga no cartão de crédito. Aluguel, condomínio e luz normalmente são pagos via PIX ou débito em conta (às vezes usando o limite especial do Banco do Brasil ou Itaú). Além disso, despesas com alimentação corporativa podem ser vinculadas ao **Voucher (Vale Refeição)**.
 * **Seletor de Forma de Pagamento:**
   * Ao cadastrar (e editável diretamente em cada linha), você escolhe:
     * ⚡ **PIX / Transferência:** Sai do saldo da conta, **NÃO consome** limite do cartão.
     * 🏦 **Débito em Conta / Limite Especial:** Sai da conta corrente, **NÃO consome** limite do cartão.
-    * 💳 **Cartão de Crédito:** Entra na fatura mensal e consome o limite daquele banco.
+    * 💳 **Cartão de Crédito:** Entra na fatura mensal e consome o limite daquele banco (Nubank, Itaú, Banco do Brasil, PicPay).
+    * 🍽️ **Voucher (Vale Refeição):** Desconta do saldo do cartão de benefício, sem tocar no seu salário líquido.
     * 💵 **Dinheiro:** Não consome limite de banco.
 * **Benefício:** O limite do seu cartão de crédito fica protegido e reflete apenas as compras reais de crédito!
 
-#### E. Data de Pagamento / Vencimento
-Cada conta possui um campo de data editável diretamente na linha (`<input type="date">`). Alterar a data dispara uma requisição `PATCH` imediata para o servidor, mantendo suas datas de pagamento sempre organizadas.
+#### E. Contas Agendadas para Início Futuro (Pré-Agendamento Inteligente)
+Se você vai começar a pagar uma nova despesa fixa somente daqui a alguns meses (por exemplo, um curso ou assinatura que começa em **Dezembro**), você pode cadastrá-la hoje mesmo sem poluir o mês atual:
+* **Como Funciona:**
+  * Basta preencher o campo de data com o mês de início (ex: `01/12/2026`).
+  * O sistema reconhece automaticamente que a data é futura em relação ao mês de referência atual (`2026-10`).
+* **Visualização Separada:**
+  * A conta **NÃO** entra no cálculo de "Total Mensal" nem no "A Pagar" de Outubro.
+  * Ela é agrupada em uma seção dedicada: **🗓️ Início Futuro**, exibindo uma etiqueta destacada (ex: `🗓️ Inicia em Dezembro/2026`).
+  * O checklist de pagamento fica desativado até que o mês de início chegue.
+* **Integração com o Forecast:**
+  * No gráfico de previsão futura, a conta **só começa a ser contabilizada a partir do mês programado** (Dezembro em diante), mantendo sua projeção precisa e realista.
+
+#### F. Data de Pagamento / Vencimento
+Cada conta possui um campo de data editável diretamente na linha (`<input type="date">`). Alterar a data dispara uma requisição `PATCH` imediata para o servidor, mantendo suas datas de pagamento sempre organizadas. Se você alterar a data para um mês futuro, ela migra instantaneamente para a seção de agendadas!
 
 ---
 
@@ -133,9 +146,10 @@ Cada conta possui um campo de data editável diretamente na linha (`<input type=
 
 Este setor registra a dinâmica do dia a dia: alimentação, farmácia, transporte, lazer e compras parceladas no cartão de crédito.
 
-* **Formas de Pagamento:**
-  * **Crédito:** Abate o limite disponível do cartão selecionado.
-  * **Débito / PIX / Dinheiro:** Registra a despesa à vista sem comprometer limite de cartão.
+* **Formas de Pagamento Suportadas:**
+  * **💳 Crédito:** Abate o limite disponível do cartão selecionado (Nubank, Banco do Brasil, Itaú ou PicPay).
+  * **🏦 Débito / ⚡ PIX / 💵 Dinheiro:** Registra a despesa à vista sem comprometer limite de crédito.
+  * **🍽️ Voucher (Vale Refeição):** Dedicado exclusivamente a alimentação e refeições. Abate o saldo disponível do seu cartão **Vale Refeição**, sem descontar da conta corrente e sem gerar faturas de crédito no seu nome.
 * **Lógica de Parcelamento:**
   * Ao cadastrar uma compra parcelada (ex: um celular de R$ 1.200 em 10x):
     * Você informa o valor total (`1200`) e a quantidade de parcelas (`10`).
@@ -159,23 +173,33 @@ O Cofre é a blindagem do seu patrimônio. Ele funciona como uma carteira de obj
 
 ---
 
-### 💳 Setor 6: Painel de Cartões de Crédito & Bancos (`PainelCartoes.jsx` e `CartaoBanco.jsx`)
+### 💳 Setor 6: Painel de Cartões de Crédito, Benefícios & Bancos (`PainelCartoes.jsx` e `CartaoBanco.jsx`)
 
-Aqui você acompanha e gerencia os tetos operacionais de cada instituição financeira cadastrada (Nubank, Inter, Itaú, etc.).
+Aqui você acompanha e gerencia os tetos operacionais de cada instituição financeira cadastrada:
+* 🟣 **Nubank:** Cartão de crédito roxo (limite R$ 4.800).
+* 🟡 **Banco do Brasil:** Cartão múltiplo amarelo (limite R$ 1.000).
+* 🟠 **Itaú:** Cartão de crédito laranja (limite R$ 350).
+* 🟢 **PicPay:** Cartão de crédito verde PicPay (limite R$ 200).
+* 🌿 **Vale Refeição:** Cartão de benefício corporativo exclusivo (recarga mensal de R$ 600).
 
-* **Métricas por Banco:**
+* **Métricas por Cartão de Crédito:**
   * **Limite Total:** O limite concedido pela instituição.
   * **Limite Comprometido (Gasto):** Calculado pelo backend somando todas as compras no crédito vigentes no mês de referência.
   * **Limite Disponível:** $\text{Limite Total} - \text{Gasto}$.
   * **Percentual de Uso:** $\frac{\text{Gasto}}{\text{Limite Total}}$.
+* **Métricas para o Vale Refeição (Benefício):**
+  * **Recarga Mensal:** Saldo disponibilizado mensalmente (editável).
+  * **Gasto no Mês:** Total de compras feitas na função Voucher.
+  * **Saldo Restante:** Quanto ainda resta para gastar em alimentação até a próxima recarga.
+  * **Consumo (%):** Percentual consumido da sua recarga.
 * **Sistema de Semáforo de Alerta (`nivelDeAlerta`):**
   * 🟢 **Ok (Verde):** Uso até 70% do limite.
   * 🟡 **Warning (Amarelo):** Uso entre 70% e 90% (atenção redobrada).
   * 🔴 **Danger (Vermelho):** Uso acima de 90% (risco iminente de estourar o cartão).
-* **Ciclo da Fatura:**
-  * Exibe o dia de fechamento e o dia de vencimento de cada cartão.
+* **Ciclo da Fatura & Recarga:**
+  * Exibe o dia de fechamento e o dia de vencimento de cada cartão (ou dia de recarga no caso de benefícios).
 * **Ajuste de Teto em Tempo Real:**
-  * Ao clicar sobre o limite, abre-se um campo para digitar um novo limite. Ao salvar, uma chamada `PATCH /api/bancos/:id` persiste o novo valor no banco de dados.
+  * Ao clicar no botão **✏️ Editar limite** (ou **✏️ Editar recarga mensal**), abre-se um campo para digitar o novo valor. Ao salvar, uma chamada `PATCH /api/bancos/:id` persiste o novo valor no banco de dados.
 
 ---
 

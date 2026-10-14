@@ -101,21 +101,36 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
           <select
             value={bancoId}
             onChange={(e) => setBancoId(e.target.value)}
-            aria-label="Banco"
+            aria-label="Banco / Cartão de Origem"
           >
             {bancos.map((b) => (
-              <option key={b.id} value={b.id}>{b.nome}</option>
+              <option key={b.id} value={b.id}>
+                {b.tipo === 'Benefício' ? `🍽️ ${b.nome}` : b.nome}
+              </option>
             ))}
           </select>
           <select
             value={forma}
-            onChange={(e) => setForma(e.target.value)}
+            onChange={(e) => {
+              const novaForma = e.target.value
+              setForma(novaForma)
+              if (novaForma === 'Voucher') {
+                const vr = bancos.find(
+                  (b) =>
+                    b.tipo === 'Benefício' ||
+                    b.nome.toLowerCase().includes('refeição') ||
+                    b.nome.toLowerCase().includes('vale'),
+                )
+                if (vr) setBancoId(vr.id)
+              }
+            }}
             aria-label="Forma de Pagamento"
           >
-            <option value="Crédito">Crédito</option>
-            <option value="Débito">Débito</option>
-            <option value="PIX">PIX</option>
-            <option value="Dinheiro">Dinheiro</option>
+            <option value="Crédito">💳 Crédito</option>
+            <option value="Débito">🏦 Débito</option>
+            <option value="PIX">⚡ PIX</option>
+            <option value="Dinheiro">💵 Dinheiro</option>
+            <option value="Voucher">🍽️ Voucher (Vale Refeição)</option>
           </select>
           <select
             value={parcelas}
@@ -123,6 +138,7 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
             aria-label="Parcelas"
             title="Quantidade de parcelas"
             style={{ flex: '1 1 80px' }}
+            disabled={forma === 'Voucher'}
           >
             <option value="1">1x (À vista)</option>
             {[...Array(11)].map((_, i) => (

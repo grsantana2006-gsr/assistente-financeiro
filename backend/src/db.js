@@ -53,7 +53,7 @@ export async function criarTabelas() {
     CREATE TABLE IF NOT EXISTS bancos (
       id             SERIAL PRIMARY KEY,
       nome           TEXT    NOT NULL UNIQUE,
-      tipo           TEXT    NOT NULL CHECK (tipo IN ('Débito', 'Crédito', 'Múltiplo')),
+      tipo           TEXT    NOT NULL CHECK (tipo IN ('Débito', 'Crédito', 'Múltiplo', 'Benefício')),
       limite_total   REAL    NOT NULL DEFAULT 0 CHECK (limite_total >= 0),
       dia_fechamento INTEGER NOT NULL CHECK (dia_fechamento BETWEEN 1 AND 31),
       dia_vencimento INTEGER NOT NULL CHECK (dia_vencimento BETWEEN 1 AND 31),
@@ -68,7 +68,7 @@ export async function criarTabelas() {
       banco_id       INTEGER NOT NULL REFERENCES bancos(id) ON DELETE RESTRICT,
       categoria      TEXT    NOT NULL CHECK (categoria IN ('Fixo', 'Variável')),
       data_compra    TEXT    NOT NULL,
-      forma_pagamento TEXT   NOT NULL DEFAULT 'Crédito' CHECK (forma_pagamento IN ('Crédito', 'Débito', 'PIX', 'Dinheiro')),
+      forma_pagamento TEXT   NOT NULL DEFAULT 'Crédito' CHECK (forma_pagamento IN ('Crédito', 'Débito', 'PIX', 'Dinheiro', 'Voucher')),
       parcela_atual  INTEGER NOT NULL DEFAULT 1 CHECK (parcela_atual >= 1),
       total_parcelas INTEGER NOT NULL DEFAULT 1 CHECK (total_parcelas >= 1),
       ativa          INTEGER NOT NULL DEFAULT 1 CHECK (ativa IN (0, 1)),

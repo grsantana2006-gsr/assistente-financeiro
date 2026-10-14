@@ -15,7 +15,7 @@ const regras = {
   tipo: { tipo: 'enum', obrigatorio: true, valores: ['Receita', 'Despesa'] },
   banco_id: { tipo: 'inteiro', obrigatorio: true, min: 1 },
   categoria: { tipo: 'enum', obrigatorio: true, valores: ['Fixo', 'Variável'] },
-  forma_pagamento: { tipo: 'enum', padrao: 'Crédito', valores: ['Crédito', 'Débito', 'PIX', 'Dinheiro'] },
+  forma_pagamento: { tipo: 'enum', padrao: 'Crédito', valores: ['Crédito', 'Débito', 'PIX', 'Dinheiro', 'Voucher'] },
   data_compra: { tipo: 'data', padrao: hoje },
   parcela_atual: { tipo: 'inteiro', min: 1, padrao: 1 },
   total_parcelas: { tipo: 'inteiro', min: 1, padrao: 1 },

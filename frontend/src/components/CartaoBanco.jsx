@@ -16,6 +16,7 @@ function CartaoBanco({ cartao, aoSalvarLimite }) {
   const banco = cartao
   const { gasto, limite_disponivel: disponivel, uso } = cartao
   const alerta = nivelDeAlerta(uso)
+  const ehBeneficio = banco.tipo === 'Benefício'
 
   function iniciarEdicao() {
     setRascunho(String(banco.limite_total)) // começa com o valor atual
@@ -25,7 +26,7 @@ function CartaoBanco({ cartao, aoSalvarLimite }) {
   async function salvar(evento) {
     evento.preventDefault() // evita recarregar a página ao enviar o formulário
     const novoLimite = Number(rascunho.replace(',', '.'))
-    if (Number.isNaN(novoLimite) || novoLimite <= 0) return // ignora valor inválido
+    if (Number.isNaN(novoLimite) || novoLimite < 0) return // ignora valor inválido
 
     setSalvando(true)
     const deuCerto = await aoSalvarLimite(banco.id, novoLimite)
@@ -42,14 +43,18 @@ function CartaoBanco({ cartao, aoSalvarLimite }) {
             {banco.nome}
           </h3>
           <p className="card-subtitle">
-            {banco.tipo} · fecha dia {banco.dia_fechamento} · vence dia {banco.dia_vencimento}
+            {ehBeneficio
+              ? `Benefício Refeição · recarrega dia ${banco.dia_fechamento}`
+              : `${banco.tipo} · fecha dia ${banco.dia_fechamento} · vence dia ${banco.dia_vencimento}`}
           </p>
         </div>
-        <span className={`cartao__selo cartao__selo--${alerta}`}>{formatarPercentual(uso)} usado</span>
+        <span className={`cartao__selo cartao__selo--${alerta}`}>
+          {formatarPercentual(uso)} {ehBeneficio ? 'consumido' : 'usado'}
+        </span>
       </div>
 
       <div className="cartao__disponivel">
-        <p className="card-subtitle">Limite disponível</p>
+        <p className="card-subtitle">{ehBeneficio ? 'Saldo restante' : 'Limite disponível'}</p>
         <p className="cartao__valor">{formatarMoeda(disponivel)}</p>
       </div>
 
@@ -60,14 +65,14 @@ function CartaoBanco({ cartao, aoSalvarLimite }) {
         aria-valuenow={Math.round(uso * 100)}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label={`Uso do limite do ${banco.nome}`}
+        aria-label={`Uso do ${ehBeneficio ? 'saldo' : 'limite'} do ${banco.nome}`}
       >
         <div className={`barra__preenchimento barra__preenchimento--${alerta}`} style={{ width: `${uso * 100}%` }} />
       </div>
 
       <div className="cartao__detalhes">
         <span>Gasto: <strong>{formatarMoeda(gasto)}</strong></span>
-        <span>Limite: <strong>{formatarMoeda(banco.limite_total)}</strong></span>
+        <span>{ehBeneficio ? 'Recarga:' : 'Limite:'} <strong>{formatarMoeda(banco.limite_total)}</strong></span>
       </div>
 
       {/* Renderização condicional: mostra o formulário OU o botão */}
@@ -79,7 +84,7 @@ function CartaoBanco({ cartao, aoSalvarLimite }) {
             inputMode="decimal"
             value={rascunho}
             onChange={(e) => setRascunho(e.target.value)}
-            aria-label={`Novo limite total do ${banco.nome}`}
+            aria-label={`Novo ${ehBeneficio ? 'saldo mensal' : 'limite total'} do ${banco.nome}`}
             autoFocus
           />
           <button type="submit" className="btn btn--primary" disabled={salvando}>
@@ -91,7 +96,7 @@ function CartaoBanco({ cartao, aoSalvarLimite }) {
         </form>
       ) : (
         <button id={`editar-limite-${banco.id}`} className="btn" onClick={iniciarEdicao}>
-          ✏️ Editar limite
+          ✏️ {ehBeneficio ? 'Editar recarga mensal' : 'Editar limite'}
         </button>
       )}
     </article>

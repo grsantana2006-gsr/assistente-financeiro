@@ -7,7 +7,7 @@ const router = Router()
 
 const regras = {
   nome: { tipo: 'texto', obrigatorio: true, max: 60 },
-  tipo: { tipo: 'enum', obrigatorio: true, valores: ['Débito', 'Crédito', 'Múltiplo'] },
+  tipo: { tipo: 'enum', obrigatorio: true, valores: ['Débito', 'Crédito', 'Múltiplo', 'Benefício'] },
   limite_total: { tipo: 'numero', min: 0, padrao: 0 },
   dia_fechamento: { tipo: 'inteiro', obrigatorio: true, min: 1, max: 31 },
   dia_vencimento: { tipo: 'inteiro', obrigatorio: true, min: 1, max: 31 },

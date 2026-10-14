@@ -21,9 +21,14 @@ export async function calcularDashboard(mes) {
     .filter((t) => t.forma_pagamento === 'Crédito')
     .reduce((soma, t) => soma + t.valor, 0)
 
-  // Saídas da Conta Corrente (PIX, Débito em Conta, Limite Especial, Dinheiro)
+  // Saídas da Conta Corrente (PIX, Débito em Conta, Limite Especial, Dinheiro - excluindo Voucher)
   const despesasContaPix = despesasMes
-    .filter((t) => t.forma_pagamento !== 'Crédito')
+    .filter((t) => t.forma_pagamento !== 'Crédito' && t.forma_pagamento !== 'Voucher')
+    .reduce((soma, t) => soma + t.valor, 0)
+
+  // Gastos com Benefício (Voucher / Vale Refeição - não saem da conta bancária)
+  const despesasVoucher = despesasMes
+    .filter((t) => t.forma_pagamento === 'Voucher')
     .reduce((soma, t) => soma + t.valor, 0)
 
   const totalDespesas = faturasCartao + despesasContaPix
@@ -36,6 +41,7 @@ export async function calcularDashboard(mes) {
     faturas_cartao: arredondar(faturasCartao),
     faturas_abertas: arredondar(faturasCartao), // mantido para compatibilidade
     despesas_conta_pix: arredondar(despesasContaPix),
+    despesas_voucher: arredondar(despesasVoucher),
     total_despesas: arredondar(totalDespesas),
     saldo_mes: arredondar(saldoMes),
     status_mes: saldoMes >= 0 ? 'positivo' : 'negativo',

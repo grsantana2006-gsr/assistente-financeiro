@@ -322,6 +322,73 @@
   padding: 6px 10px;
 }
 
+/* ---------- Seção de Contas Agendadas para Início Futuro ---------- */
+.fixas__secao-futuras {
+  margin-top: 24px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: rgba(99, 102, 241, 0.04);
+  border: 1px dashed rgba(99, 102, 241, 0.25);
+}
+
+.fixas__futuras-cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.fixas__badge-futuro {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #a5b4fc;
+}
+
+.fixas__lista--futuras {
+  margin-bottom: 0;
+}
+
+.fixas__item--futuro {
+  border-left: 3px solid #818cf8;
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.fixas__item--futuro:hover {
+  background: rgba(99, 102, 241, 0.09);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.fixas__tag-agendada {
+  background: rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #c7d2fe;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.fixas__badge-status-agendado {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 @media (max-width: 600px) {
   .fixas__resumo-item {
     flex: 1 1 100%;
