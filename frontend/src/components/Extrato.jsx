@@ -174,7 +174,14 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
 
           {mesFaturaPrevista && bancoSelecionado && (
             <div className="extrato__dica-fatura">
-              ℹ️ Compras no <strong>{bancoSelecionado.nome}</strong> hoje entram na fatura de <strong>{rotuloMesFatura(mesFaturaPrevista)}</strong> (fecha dia {bancoSelecionado.dia_fechamento}, vence dia {bancoSelecionado.dia_vencimento})
+              <span className="extrato__dica-icone" aria-hidden="true">ℹ️</span>
+              <div className="extrato__dica-conteudo">
+                Compras no <strong>{bancoSelecionado.nome}</strong> hoje entram na fatura de{' '}
+                <strong className="extrato__dica-mes">{rotuloMesFatura(mesFaturaPrevista)}</strong>
+                <span className="extrato__dica-datas">
+                  {' '}(fecha dia {bancoSelecionado.dia_fechamento} • vence dia {bancoSelecionado.dia_vencimento})
+                </span>
+              </div>
             </div>
           )}
         </form>

@@ -116,16 +116,47 @@
 
 .extrato__dica-fatura {
   width: 100%;
-  font-size: 0.8rem;
-  color: #a5b4fc;
-  background: rgba(99, 102, 241, 0.06);
-  border: 1px dashed rgba(99, 102, 241, 0.25);
-  padding: 8px 12px;
+  font-size: 0.82rem;
+  color: #c7d2fe;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px dashed rgba(129, 140, 248, 0.35);
+  padding: 10px 14px;
   border-radius: var(--radius-sm);
   display: flex;
-  align-items: center;
-  gap: 6px;
-  line-height: 1.4;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.extrato__dica-icone {
+  font-size: 1.05rem;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.extrato__dica-conteudo {
+  flex: 1 1 auto;
+  color: #cbd5e1;
+  line-height: 1.45;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.extrato__dica-conteudo strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.extrato__dica-mes {
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+}
+
+.extrato__dica-datas {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  display: inline;
 }
 
 /* ---------- Responsividade Mobile (Vertical / Retrato) ---------- */
@@ -173,7 +204,23 @@
     flex: 1 1 100%;
   }
 
+  .extrato__dica-fatura {
+    order: 6;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    gap: 8px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+  }
+
+  .extrato__dica-datas {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.76rem;
+  }
+
   .extrato__form button[type="submit"] {
+    order: 7;
     width: 100%;
     padding: 12px;
     font-size: 1rem;
