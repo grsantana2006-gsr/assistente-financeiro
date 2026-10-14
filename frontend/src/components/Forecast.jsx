@@ -184,7 +184,7 @@ function Forecast({ projecao }) {
         {/* Legenda */}
         <ul className="forecast__legenda">
           <li><span className="forecast__cor forecast__cor--fixas" /> Despesas fixas</li>
-          <li><span className="forecast__cor forecast__cor--parcelas" /> Parcelas</li>
+          <li><span className="forecast__cor forecast__cor--parcelas" /> Faturas e Parcelas</li>
           <li><span className="forecast__cor forecast__cor--renda" /> Renda mensal</li>
         </ul>
 
@@ -197,7 +197,7 @@ function Forecast({ projecao }) {
               <dd>{formatarMoeda(mesAtivo.fixas)}</dd>
             </div>
             <div>
-              <dt>Parcelas</dt>
+              <dt>Faturas & Parcelas</dt>
               <dd>{formatarMoeda(mesAtivo.parcelas)}</dd>
             </div>
             <div>
@@ -214,21 +214,25 @@ function Forecast({ projecao }) {
 
           {mesAtivo.detalhesParcelas.length > 0 ? (
             <ul className="forecast__parcelas">
-              {mesAtivo.detalhesParcelas.map((p) => (
-                <li key={p.descricao}>
-                  <span>{p.descricao} <small>({p.numero}/{p.total})</small></span>
+              {mesAtivo.detalhesParcelas.map((p, idx) => (
+                <li key={`${p.descricao}-${idx}`}>
+                  <span>
+                    {p.descricao}{' '}
+                    <small>
+                      {p.total > 1 ? `(${p.numero}/${p.total})` : '(À vista / fatura)'}
+                    </small>
+                  </span>
                   <span>{formatarMoeda(p.valor)}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="card-subtitle">Nenhuma parcela neste mês. 🎉</p>
+            <p className="card-subtitle">Nenhuma fatura ou parcela neste mês. 🎉</p>
           )}
         </div>
 
         <p className="forecast__nota">
-          ℹ️ A projeção considera renda fixa, despesas fixas ativas e parcelas restantes. Gastos
-          variáveis à vista (iFood, Uber...) não são previsíveis e ficam de fora.
+          ℹ️ A projeção considera renda fixa, despesas fixas ativas e compras/parcelas de cartão de crédito. Compras à vista no débito ou PIX saem no ato e não geram faturas futuras.
         </p>
       </div>
     </section>
