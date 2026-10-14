@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { formatarMoeda } from '../utils/format'
+import { obterMesFatura, rotuloMesFatura } from '../utils/fatura'
 import './Extrato.css'
 
 function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
@@ -28,7 +29,7 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
     const deuCerto = await aoAdicionar({
       descricao: descricao.trim(),
       valor: valorNumerico / qtdeParcelas, // O banco espera o valor de CADA parcela
-      banco_id: Number(bancoId),
+      banco_id: Number(bancoId || bancos[0]?.id),
       forma_pagamento: forma,
       total_parcelas: qtdeParcelas
     })
@@ -44,6 +45,12 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
   // Pegamos apenas as 50 transações mais recentes para não poluir a tela
   const recentes = transacoes.slice(0, 50)
 
+  const bancoSelecionado = bancos.find((b) => b.id === Number(bancoId || bancos[0]?.id))
+  const mesFaturaPrevista =
+    forma === 'Crédito' && bancoSelecionado && bancoSelecionado.tipo !== 'Benefício'
+      ? obterMesFatura(new Date().toISOString(), bancoSelecionado.dia_fechamento, bancoSelecionado.dia_vencimento)
+      : null
+
   return (
     <section id="extrato-variaveis" aria-labelledby="titulo-extrato">
       <div className="secao__cabecalho">
@@ -56,29 +63,45 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
           <p className="extrato__vazio">Nenhum gasto variável registrado.</p>
         ) : (
           <ul className="extrato__lista">
-            {recentes.map((t) => (
-              <li key={t.id} className="extrato__item" style={{ borderLeftColor: corDoBanco(t.banco_id) }}>
-                <div className="extrato__info">
-                  <span className="extrato__nome">{t.descricao}</span>
-                  <div className="extrato__detalhes">
-                    <span>{new Date(t.data_compra).toLocaleDateString('pt-BR')}</span>
-                    <span>&bull;</span>
-                    <span>{nomeDoBanco(t.banco_id)}</span>
-                    <span>&bull;</span>
-                    <span>{t.forma_pagamento}</span>
+            {recentes.map((t) => {
+              const banco = bancos.find((b) => b.id === t.banco_id)
+              const mesFatura =
+                t.forma_pagamento === 'Crédito' && banco && banco.tipo !== 'Benefício'
+                  ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+                  : null
+
+              return (
+                <li key={t.id} className="extrato__item" style={{ borderLeftColor: corDoBanco(t.banco_id) }}>
+                  <div className="extrato__info">
+                    <span className="extrato__nome">{t.descricao}</span>
+                    <div className="extrato__detalhes">
+                      <span>{new Date(t.data_compra).toLocaleDateString('pt-BR')}</span>
+                      <span>&bull;</span>
+                      <span>{nomeDoBanco(t.banco_id)}</span>
+                      <span>&bull;</span>
+                      <span>{t.forma_pagamento}</span>
+                      {mesFatura && (
+                        <>
+                          <span>&bull;</span>
+                          <span className="extrato__tag-fatura" title={`Vence na fatura de ${rotuloMesFatura(mesFatura)}`}>
+                            📅 Fatura: {rotuloMesFatura(mesFatura)}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <span className="extrato__valor">{formatarMoeda(t.valor)}</span>
-                <button
-                  type="button"
-                  className="extrato__remover"
-                  aria-label={`Remover ${t.descricao}`}
-                  onClick={() => aoRemover(t.id)}
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
+                  <span className="extrato__valor">{formatarMoeda(t.valor)}</span>
+                  <button
+                    type="button"
+                    className="extrato__remover"
+                    aria-label={`Remover ${t.descricao}`}
+                    onClick={() => aoRemover(t.id)}
+                  >
+                    ✕
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         )}
 
@@ -148,6 +171,12 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
           <button type="submit" className="btn btn--primary" disabled={enviando}>
             {enviando ? 'Adicionando…' : '+ Adicionar'}
           </button>
+
+          {mesFaturaPrevista && bancoSelecionado && (
+            <div className="extrato__dica-fatura">
+              ℹ️ Compras no <strong>{bancoSelecionado.nome}</strong> hoje entram na fatura de <strong>{rotuloMesFatura(mesFaturaPrevista)}</strong> (fecha dia {bancoSelecionado.dia_fechamento}, vence dia {bancoSelecionado.dia_vencimento})
+            </div>
+          )}
         </form>
       </div>
     </section>

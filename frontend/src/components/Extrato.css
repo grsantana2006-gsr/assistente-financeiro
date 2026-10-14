@@ -96,3 +96,29 @@
 .extrato__form input[type="text"]:first-of-type {
   flex: 2 1 180px;
 }
+
+.extrato__tag-fatura {
+  color: #38bdf8;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+
+.extrato__dica-fatura {
+  width: 100%;
+  font-size: 0.8rem;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px dashed rgba(99, 102, 241, 0.25);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+

@@ -175,17 +175,24 @@ O Cofre é a blindagem do seu patrimônio. Ele funciona como uma carteira de obj
 
 ### 💳 Setor 6: Painel de Cartões de Crédito, Benefícios & Bancos (`PainelCartoes.jsx` e `CartaoBanco.jsx`)
 
-Aqui você acompanha e gerencia os tetos operacionais de cada instituição financeira cadastrada:
-* 🟣 **Nubank:** Cartão de crédito roxo (limite R$ 4.800).
-* 🟡 **Banco do Brasil:** Cartão múltiplo amarelo (limite R$ 1.000).
-* 🟠 **Itaú:** Cartão de crédito laranja (limite R$ 350).
-* 🟢 **PicPay:** Cartão de crédito verde PicPay (limite R$ 200).
-* 🌿 **Vale Refeição:** Cartão de benefício corporativo exclusivo (recarga mensal de R$ 600).
+Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cada instituição financeira cadastrada:
+* 🟣 **Nubank:** Cartão de crédito roxo (limite R$ 4.800) · **Fecha dia 27** · **Vence dia 03**.
+* 🟡 **Banco do Brasil:** Cartão múltiplo amarelo (limite R$ 1.000) · **Fecha dia 28** · **Vence dia 10**.
+* 🟠 **Itaú:** Cartão de crédito laranja (limite R$ 350) · **Fecha dia 03** · **Vence dia 10**.
+* 🟢 **PicPay:** Cartão de crédito verde PicPay (limite R$ 200) · **Fecha dia 04** · **Vence dia 10**.
+* 🌿 **Vale Refeição:** Cartão de benefício corporativo exclusivo (recarga mensal de R$ 600) · **Recarrega dia 01**.
+
+* **Automação Inteligente de Fechamento de Fatura:**
+  * O sistema agora calcula com precisão matemática em qual fatura cada compra no crédito vai cair:
+    * Se você fizer uma compra **antes ou no dia do fechamento**, ela entra no vencimento da fatura daquele ciclo.
+    * Se você fizer uma compra **no dia seguinte ao fechamento** (o "melhor dia de compra"), o sistema joga a despesa automaticamente para a fatura do mês seguinte!
+    * **Exemplo real:** A fatura do Banco do Brasil fecha dia 28 de outubro (com vencimento em 10 de novembro). Compras feitas no dia 29 de outubro já caem automaticamente na fatura de **Dezembro** (vencimento em 10 de dezembro)!
+  * **Etiqueta Visual no Extrato:** Cada compra no crédito ganha uma tag visual indicando em qual fatura ela vai vencer (ex: `📅 Fatura: Nov/26`), e o formulário avisa em tempo real qual fatura receberá as compras feitas hoje.
 
 * **Métricas por Cartão de Crédito:**
   * **Limite Total:** O limite concedido pela instituição.
-  * **Limite Comprometido (Gasto):** Calculado pelo backend somando todas as compras no crédito vigentes no mês de referência.
-  * **Limite Disponível:** $\text{Limite Total} - \text{Gasto}$.
+  * **Limite Comprometido (Gasto):** O total acumulado em aberto que está bloqueando o seu limite no banco.
+  * **Limite Disponível:** $\text{Limite Total} - \text{Gasto}$ (atualizado instantaneamente na hora que você compra).
   * **Percentual de Uso:** $\frac{\text{Gasto}}{\text{Limite Total}}$.
 * **Métricas para o Vale Refeição (Benefício):**
   * **Recarga Mensal:** Saldo disponibilizado mensalmente (editável).

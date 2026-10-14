@@ -1,10 +1,10 @@
 import { db } from './db.js'
 
 const bancos = [
-  { nome: 'Nubank', tipo: 'Crédito', limite_total: 4800, dia_fechamento: 3, dia_vencimento: 10, cor: '#8b5cf6' },
-  { nome: 'Banco do Brasil', tipo: 'Múltiplo', limite_total: 1000, dia_fechamento: 20, dia_vencimento: 27, cor: '#fbbf24' },
-  { nome: 'Itaú', tipo: 'Crédito', limite_total: 350, dia_fechamento: 15, dia_vencimento: 22, cor: '#fb923c' },
-  { nome: 'PicPay', tipo: 'Crédito', limite_total: 200, dia_fechamento: 1, dia_vencimento: 8, cor: '#11c76f' },
+  { nome: 'Nubank', tipo: 'Crédito', limite_total: 4800, dia_fechamento: 27, dia_vencimento: 3, cor: '#8b5cf6' },
+  { nome: 'Banco do Brasil', tipo: 'Múltiplo', limite_total: 1000, dia_fechamento: 28, dia_vencimento: 10, cor: '#fbbf24' },
+  { nome: 'Itaú', tipo: 'Crédito', limite_total: 350, dia_fechamento: 3, dia_vencimento: 10, cor: '#fb923c' },
+  { nome: 'PicPay', tipo: 'Crédito', limite_total: 200, dia_fechamento: 4, dia_vencimento: 10, cor: '#11c76f' },
   { nome: 'Vale Refeição', tipo: 'Benefício', limite_total: 600, dia_fechamento: 1, dia_vencimento: 1, cor: '#10b981' },
 ]
 

@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { db } from '../db.js'
 import { validar } from '../validacao.js'
 import { erroValidacao } from '../ajudantes.js'
 import { gerarForecast } from '../calculos.js'
@@ -24,9 +25,10 @@ router.get('/forecast', async (req, res) => {
   if (erros.length) return erroValidacao(res, erros)
 
   const transacoes = await carregarTransacoes()
+  const bancos = await db.prepare('SELECT * FROM bancos ORDER BY id').all()
   res.json({
     mes_base: dados.mes,
-    projecao: gerarForecast(transacoes, dados.mes, dados.meses),
+    projecao: gerarForecast(transacoes, dados.mes, dados.meses, bancos),
   })
 })
 

@@ -7,13 +7,82 @@ import { arredondar } from './ajudantes.js'
 
 const soma = (lista, campo = 'valor') => lista.reduce((total, item) => total + item[campo], 0)
 
-// Uma despesa entra na fatura do mês de referência quando:
+/**
+ * Calcula em qual mês de fatura (mês de vencimento) uma transação no cartão de crédito cai,
+ * respeitando com precisão matemática as datas de fechamento e vencimento de cada banco.
+ *
+ * Exemplo 1: Itaú (fecha 03, vence 10)
+ *   - Compra em 02/10 -> fatura 2026-10
+ *   - Compra em 04/10 (após o fechamento) -> fatura 2026-11
+ *
+ * Exemplo 2: Nubank (fecha 27, vence 03) / Banco do Brasil (fecha 28, vence 10)
+ *   - Compra em 14/10 -> fatura que vence em 10/11 (2026-11)
+ *   - Compra em 29/10 (após o fechamento de 28/out) -> fatura que vence em 10/12 (2026-12)
+ */
+export function obterMesFatura(dataStr, diaFechamento, diaVencimento) {
+  if (!dataStr) return null
+  const partes = dataStr.slice(0, 10).split('-')
+  let ano = Number(partes[0])
+  let mes = Number(partes[1])
+  const dia = Number(partes[2])
+
+  if (!diaFechamento || !diaVencimento) {
+    return `${ano}-${String(mes).padStart(2, '0')}`
+  }
+
+  if (diaFechamento < diaVencimento) {
+    // Fechamento e vencimento ocorrem no mesmo mês
+    if (dia > diaFechamento) {
+      mes += 1
+      if (mes > 12) {
+        mes = 1
+        ano += 1
+      }
+    }
+  } else {
+    // diaFechamento > diaVencimento (ex: Nubank fecha 27 e vence dia 3; BB fecha 28 e vence dia 10)
+    // O fechamento ocorre no final do mês anterior ao mês de vencimento.
+    if (dia <= diaFechamento) {
+      mes += 1
+      if (mes > 12) {
+        mes = 1
+        ano += 1
+      }
+    } else {
+      mes += 2
+      if (mes > 12) {
+        mes -= 12
+        ano += 1
+      }
+    }
+  }
+
+  return `${ano}-${String(mes).padStart(2, '0')}`
+}
+
+/**
+ * Retorna o mês em que a despesa deve ser efetivamente cobrada/paga.
+ * Para cartão de crédito: leva em conta o fechamento e vencimento da fatura.
+ * Para débito/PIX/dinheiro: é a data do pagamento em si.
+ */
+export function mesDaTransacao(t, banco) {
+  if (t.forma_pagamento === 'Crédito' && banco && banco.tipo !== 'Benefício') {
+    return obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+  }
+  return t.data_compra ? t.data_compra.slice(0, 7) : null
+}
+
+// Uma despesa entra na fatura ou pagamentos do mês de referência quando:
 //  - está ativa; e
-//  - é fixa e já iniciou (data_compra <= mês de referência), OU está parcelada,
-//    OU foi comprada dentro do próprio mês.
-// mesReferencia tem o formato "AAAA-MM".
-export function contaNaFatura(t, mesReferencia) {
+//  - é fixa e já iniciou (data_compra <= mês de referência), OU
+//  - é variável/parcelada e a parcela cai no mês de referência.
+export function contaNaFatura(t, mesReferencia, banco) {
   if (t.tipo !== 'Despesa' || !t.ativa) return false
+  const forma = t.forma_pagamento || 'Crédito'
+
+  // Voucher não entra em faturas de conta corrente nem de cartão
+  if (forma === 'Voucher') return false
+
   const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
 
   if (t.categoria === 'Fixo') {
@@ -34,24 +103,42 @@ export function contaNaFatura(t, mesReferencia) {
     return true
   }
 
+  // Despesa Variável (à vista ou parcelada)
+  const mesFatura1 = mesDaTransacao(t, banco)
+  if (!mesFatura1) return false
+
   if (t.total_parcelas > 1) {
-    if (t.parcela_atual > t.total_parcelas) return false
-    return true
+    const [anoRef, mRef] = mesReferencia.split('-').map(Number)
+    const [ano1, m1] = mesFatura1.split('-').map(Number)
+    const diffMeses = (anoRef - ano1) * 12 + (mRef - m1)
+    const numParcela = t.parcela_atual + diffMeses
+    return numParcela >= 1 && numParcela <= t.total_parcelas
   }
-  return t.data_compra.startsWith(mesReferencia)
+
+  // Compra à vista (1x)
+  return mesFatura1 === mesReferencia
 }
 
 export function calcularGastoDoBanco(transacoes, banco, mesReferencia) {
   const bancoId = typeof banco === 'object' ? banco.id : banco
   const ehBeneficio = typeof banco === 'object' && banco.tipo === 'Benefício'
 
+  if (ehBeneficio) {
+    return soma(
+      transacoes.filter((t) => {
+        if (!t.ativa || t.banco_id !== bancoId || t.forma_pagamento !== 'Voucher') return false
+        const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
+        if (mesInicio && mesInicio > mesReferencia) return false
+        return true
+      })
+    )
+  }
+
+  // Para cartões de crédito: o gasto que abate o limite é o passivo acumulado no cartão
+  // que ainda compromete o limite (fatura aberta + parcelas a vencer)
   return soma(
     transacoes.filter((t) => {
-      if (t.banco_id !== bancoId || !contaNaFatura(t, mesReferencia)) return false
-      if (ehBeneficio) {
-        // Para cartões de benefício (Vale Refeição), soma todas as despesas vinculadas a ele
-        return true
-      }
+      if (t.banco_id !== bancoId || !t.ativa) return false
       return t.forma_pagamento === 'Crédito'
     })
   )
@@ -85,10 +172,10 @@ export function montarCartoes(bancos, transacoes, mesReferencia) {
   })
 }
 
-// Projeta os próximos meses: renda fixa, despesas fixas (contínuas e temporárias) e parcelas restantes.
-// Gastos variáveis à vista não são projetados (impossível prever).
-export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses) {
+// Projeta os próximos meses: renda fixa, despesas fixas (contínuas e temporárias) e parcelas/faturas restantes.
+export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, bancos = []) {
   const [ano, mes] = mesReferencia.split('-').map(Number)
+  const bancosMap = new Map(bancos.map((b) => [b.id, b]))
 
   const rendaContinuas = transacoes.filter(
     (t) => t.tipo === 'Receita' && t.categoria === 'Fixo' && t.ativa && (t.total_parcelas === 1 || !t.total_parcelas),
@@ -97,7 +184,6 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses) {
     (t) => t.tipo === 'Receita' && t.categoria === 'Fixo' && t.ativa && t.total_parcelas > 1,
   )
 
-  // Despesas fixas (desconsidera Voucher, pois o VR não compromete a renda salarial líquida pessoal)
   const fixasContinuas = transacoes.filter(
     (t) =>
       t.tipo === 'Despesa' &&
@@ -115,11 +201,10 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses) {
       t.total_parcelas > 1,
   )
 
-  const parceladas = transacoes.filter(
+  const variaveis = transacoes.filter(
     (t) =>
       t.tipo === 'Despesa' &&
       t.categoria !== 'Fixo' &&
-      t.total_parcelas > 1 &&
       t.ativa &&
       t.forma_pagamento !== 'Voucher',
   )
@@ -168,10 +253,38 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses) {
 
     const fixas = soma(fixasContinuasNoMes) + soma(fixasTemporariasNoMes)
 
-    // No mês k, a parcela é (parcela_atual + k); só cobra se ainda não passou do total
-    const detalhesParcelas = parceladas
-      .filter((t) => t.parcela_atual + k <= t.total_parcelas)
-      .map((t) => ({ descricao: t.descricao, valor: t.valor, numero: t.parcela_atual + k, total: t.total_parcelas }))
+    // Parcelas e faturas que vencem no mês k
+    const detalhesParcelas = []
+    for (const t of variaveis) {
+      const banco = bancosMap.get(t.banco_id)
+      const mesFatura1 = mesDaTransacao(t, banco)
+      if (!mesFatura1) continue
+
+      const [ano1, m1] = mesFatura1.split('-').map(Number)
+      const diff = (anoK - ano1) * 12 + (mesKNum - m1)
+
+      if (t.total_parcelas > 1) {
+        const numParcela = t.parcela_atual + diff
+        if (numParcela >= 1 && numParcela <= t.total_parcelas) {
+          detalhesParcelas.push({
+            descricao: t.descricao,
+            valor: t.valor,
+            numero: numParcela,
+            total: t.total_parcelas,
+          })
+        }
+      } else {
+        // Compra à vista (1x): entra exatamente no mês de vencimento da fatura
+        if (diff === 0) {
+          detalhesParcelas.push({
+            descricao: t.descricao,
+            valor: t.valor,
+            numero: 1,
+            total: 1,
+          })
+        }
+      }
+    }
 
     const parcelas = soma(detalhesParcelas)
     const comprometido = fixas + parcelas

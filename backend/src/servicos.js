@@ -10,13 +10,18 @@ export async function carregarTransacoes() {
 export async function calcularDashboard(mes) {
   const transacoes = await carregarTransacoes()
   const bancos = await db.prepare('SELECT * FROM bancos ORDER BY id').all()
+  const bancosMap = new Map(bancos.map((b) => [b.id, b]))
   const result = await db.prepare('SELECT COALESCE(SUM(saldo_atual), 0) AS total FROM cofre').get()
   const cofre = Number(result?.total || 0)
 
   const receitaMes = calcularReceitaDoMes(transacoes, mes)
-  const despesasMes = transacoes.filter((t) => t.tipo === 'Despesa' && contaNaFatura(t, mes))
+  const despesasMes = transacoes.filter((t) => {
+    if (t.tipo !== 'Despesa') return false
+    const banco = bancosMap.get(t.banco_id)
+    return contaNaFatura(t, mes, banco)
+  })
 
-  // Faturas de Cartão de Crédito (apenas forma Crédito)
+  // Faturas de Cartão de Crédito (apenas forma Crédito com vencimento no mês 'mes')
   const faturasCartao = despesasMes
     .filter((t) => t.forma_pagamento === 'Crédito')
     .reduce((soma, t) => soma + t.valor, 0)
@@ -27,8 +32,15 @@ export async function calcularDashboard(mes) {
     .reduce((soma, t) => soma + t.valor, 0)
 
   // Gastos com Benefício (Voucher / Vale Refeição - não saem da conta bancária)
-  const despesasVoucher = despesasMes
-    .filter((t) => t.forma_pagamento === 'Voucher')
+  const despesasVoucher = transacoes
+    .filter((t) => {
+      if (t.tipo !== 'Despesa' || !t.ativa || t.forma_pagamento !== 'Voucher') return false
+      const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
+      if (t.categoria === 'Fixo') {
+        return !mesInicio || mesInicio <= mes
+      }
+      return mesInicio === mes
+    })
     .reduce((soma, t) => soma + t.valor, 0)
 
   const totalDespesas = faturasCartao + despesasContaPix
