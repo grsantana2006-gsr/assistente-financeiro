@@ -215,19 +215,19 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
 O **Forecast** é a funcionalidade mais estratégica do sistema. Ele responde à pergunta fundamental que planilhas comuns não conseguem responder:
 > *"Quanto da minha renda dos próximos 6 ou 12 meses já está comprometida com dívidas e contratos que já assumi?"*
 
-#### A. A Filosofia: "Conservador e Pessimista"
-O sistema projeta:
+#### A. A Filosofia: Previsibilidade Real de Faturas
+O sistema projeta com precisão:
 * ✅ Renda fixa garantida (Salário).
 * ✅ Despesas fixas contínuas (Aluguel, Luz, Internet).
 * ✅ Despesas fixas com prazo em vigor (Cursos, seguros).
-* ✅ Parcelas futuras de cartão de crédito ainda não quitadas.
-* ❌ **Não projeta:** Gastos variáveis à vista (iFood, combustível, Uber).
-* *Por que?* Porque é impossível adivinhar quanto você vai gastar de restaurante daqui a 9 meses. Ao projetar apenas o que já está contratado, o sistema garante que o seu **Saldo Projetado** seja uma base segura: tudo o que sobrar ali é margem de manobra real.
+* ✅ Parcelas futuras de compras no cartão de crédito (`3x`, `6x`, `10x...`).
+* ✅ Compras no crédito à vista (`1x`) programadas para vencer na fatura do respectivo ciclo (ex: compras feitas no Nubank em Outubro que vencem na fatura de Novembro).
+* ❌ **Não projeta:** Gastos à vista no débito, PIX ou dinheiro de meses futuros (já que saem no ato e não geram faturas).
 
 #### B. Gráfico de Barras Empilhadas em SVG
 * **Eixo Vertical (Y):** Escala monetária formatada (ex: `1,5k`, `3,0k`).
 * **Camada Roxa:** Total de despesas fixas daquele mês específico.
-* **Camada Ciano / Azul:** Parcelas de cartão e compras temporárias que vencem naquele mês.
+* **Camada Ciano / Azul:** Faturas de crédito e parcelas de compras temporárias que vencem naquele mês.
 * **Linha Tracejada:** A sua renda mensal esperada. Se a barra ultrapassar a linha, significa que naquele mês você estará no vermelho!
 
 #### C. Interatividade Mês a Mês
