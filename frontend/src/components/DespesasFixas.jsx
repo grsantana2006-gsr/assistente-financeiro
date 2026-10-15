@@ -41,6 +41,35 @@ function DespesasFixas({
   const [parcelaAtual, setParcelaAtual] = useState('1')
   const [enviando, setEnviando] = useState(false)
 
+  // Estado de edição de despesa fixa (valor e descrição)
+  const [editandoId, setEditandoId] = useState(null)
+  const [editDescricao, setEditDescricao] = useState('')
+  const [editValor, setEditValor] = useState('')
+
+  function iniciarEdicao(t) {
+    setEditandoId(t.id)
+    setEditDescricao(t.descricao)
+    setEditValor(String(t.valor).replace('.', ','))
+  }
+
+  function cancelarEdicao() {
+    setEditandoId(null)
+    setEditDescricao('')
+    setEditValor('')
+  }
+
+  async function salvarEdicao(id) {
+    const valorNumerico = Number(editValor.replace(',', '.'))
+    if (!editDescricao.trim() || Number.isNaN(valorNumerico) || valorNumerico <= 0) return
+    if (aoAtualizar) {
+      await aoAtualizar(id, {
+        descricao: editDescricao.trim(),
+        valor: valorNumerico,
+      })
+    }
+    setEditandoId(null)
+  }
+
   // Separar contas ativas do mês atual vs contas agendadas para começar em meses futuros
   const ehFutura = (t) => {
     const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
@@ -141,6 +170,7 @@ function DespesasFixas({
             {despesasDoMes.map((t) => {
               const ativa = t.ativa
               const ehTemporaria = t.total_parcelas > 1
+              const emEdicao = editandoId === t.id
 
               return (
                 <li
@@ -149,83 +179,134 @@ function DespesasFixas({
                     t.pago ? 'fixas__item--pago' : ''
                   }`}
                 >
-                  <div className="fixas__info">
-                    <div className="fixas__nome-linha">
-                      <span className="fixas__nome">{t.descricao}</span>
-                      {ehTemporaria && (
-                        <span
-                          className="fixas__tag-prazo"
-                          title={`Despesa com prazo: parcela ${t.parcela_atual} de ${t.total_parcelas}`}
+                  {emEdicao ? (
+                    <div className="fixas__edicao-inline">
+                      <input
+                        type="text"
+                        className="fixas__edit-input fixas__edit-input--desc"
+                        value={editDescricao}
+                        onChange={(e) => setEditDescricao(e.target.value)}
+                        placeholder="Descrição"
+                        aria-label="Descrição da conta fixa"
+                      />
+                      <input
+                        type="text"
+                        className="fixas__edit-input fixas__edit-input--valor"
+                        value={editValor}
+                        onChange={(e) => setEditValor(e.target.value)}
+                        placeholder="Valor R$"
+                        aria-label="Valor da conta fixa"
+                      />
+                      <div className="fixas__edit-acoes">
+                        <button
+                          type="button"
+                          className="fixas__btn-salvar"
+                          title="Salvar alterações"
+                          onClick={() => salvarEdicao(t.id)}
                         >
-                          ⏱️ {t.parcela_atual}/{t.total_parcelas} meses
-                        </span>
-                      )}
+                          ✓ Salvar
+                        </button>
+                        <button
+                          type="button"
+                          className="fixas__btn-cancelar"
+                          title="Cancelar edição"
+                          onClick={cancelarEdicao}
+                        >
+                          ✕ Cancelar
+                        </button>
+                      </div>
                     </div>
-                    <span className="card-subtitle">{nomeDoBanco(t.banco_id)}</span>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="fixas__info">
+                        <div className="fixas__nome-linha">
+                          <span className="fixas__nome">{t.descricao}</span>
+                          {ehTemporaria && (
+                            <span
+                              className="fixas__tag-prazo"
+                              title={`Despesa com prazo: parcela ${t.parcela_atual} de ${t.total_parcelas}`}
+                            >
+                              ⏱️ {t.parcela_atual}/{t.total_parcelas} meses
+                            </span>
+                          )}
+                        </div>
+                        <span className="card-subtitle">{nomeDoBanco(t.banco_id)}</span>
+                      </div>
 
-                  <input
-                    type="date"
-                    className="fixas__data-edit"
-                    value={t.data_compra || ''}
-                    onChange={(e) => aoAtualizar(t.id, { data_compra: e.target.value })}
-                    aria-label={`Data de ${t.descricao}`}
-                    title="Data de cobrança/início"
-                  />
+                      <input
+                        type="date"
+                        className="fixas__data-edit"
+                        value={t.data_compra || ''}
+                        onChange={(e) => aoAtualizar(t.id, { data_compra: e.target.value })}
+                        aria-label={`Data de ${t.descricao}`}
+                        title="Data de cobrança/início"
+                      />
 
-                  {/* Seletor de forma de pagamento na linha da despesa */}
-                  <select
-                    className="fixas__forma-select"
-                    value={t.forma_pagamento || 'Crédito'}
-                    onChange={(e) => aoAtualizar(t.id, { forma_pagamento: e.target.value })}
-                    aria-label={`Forma de pagamento de ${t.descricao}`}
-                    title="Forma de pagamento (altere quando quiser)"
-                  >
-                    <option value="PIX">⚡ PIX</option>
-                    <option value="Débito">🏦 Débito/Conta</option>
-                    <option value="Crédito">💳 Crédito</option>
-                    <option value="Voucher">🍽️ Voucher</option>
-                    <option value="Dinheiro">💵 Dinheiro</option>
-                  </select>
+                      {/* Seletor de forma de pagamento na linha da despesa */}
+                      <select
+                        className="fixas__forma-select"
+                        value={t.forma_pagamento || 'Crédito'}
+                        onChange={(e) => aoAtualizar(t.id, { forma_pagamento: e.target.value })}
+                        aria-label={`Forma de pagamento de ${t.descricao}`}
+                        title="Forma de pagamento (altere quando quiser)"
+                      >
+                        <option value="PIX">⚡ PIX</option>
+                        <option value="Débito">🏦 Débito/Conta</option>
+                        <option value="Crédito">💳 Crédito</option>
+                        <option value="Voucher">🍽️ Voucher</option>
+                        <option value="Dinheiro">💵 Dinheiro</option>
+                      </select>
 
-                  <span className="fixas__valor">{formatarMoeda(t.valor)}</span>
+                      <span className="fixas__valor">{formatarMoeda(t.valor)}</span>
 
-                  {/* Botão de Status: Pago vs Pendente */}
-                  <button
-                    id={`pago-fixa-${t.id}`}
-                    type="button"
-                    className={`fixas__btn-status ${
-                      t.pago ? 'fixas__btn-status--pago' : 'fixas__btn-status--pendente'
-                    }`}
-                    onClick={() => aoAlternarPagamento(t.id)}
-                    title={t.pago ? 'Clique para marcar como Pendente' : 'Clique para marcar como Pago'}
-                    aria-label={`${t.descricao}: ${t.pago ? 'Pago' : 'Pendente'}`}
-                  >
-                    {t.pago ? '✓ Pago' : '⏳ Pendente'}
-                  </button>
+                      <button
+                        type="button"
+                        className="fixas__btn-editar"
+                        aria-label={`Editar ${t.descricao}`}
+                        title="Editar valor e descrição"
+                        onClick={() => iniciarEdicao(t)}
+                      >
+                        ✏️
+                      </button>
 
-                  {/* Interruptor ativar/pausar */}
-                  <button
-                    id={`alternar-fixa-${t.id}`}
-                    type="button"
-                    role="switch"
-                    aria-checked={ativa}
-                    aria-label={`${ativa ? 'Pausar' : 'Ativar'} ${t.descricao}`}
-                    className={`interruptor ${ativa ? 'interruptor--ligado' : ''}`}
-                    onClick={() => aoAlternar(t)}
-                    title={ativa ? 'Pausar conta' : 'Ativar conta'}
-                  />
+                      {/* Botão de Status: Pago vs Pendente */}
+                      <button
+                        id={`pago-fixa-${t.id}`}
+                        type="button"
+                        className={`fixas__btn-status ${
+                          t.pago ? 'fixas__btn-status--pago' : 'fixas__btn-status--pendente'
+                        }`}
+                        onClick={() => aoAlternarPagamento(t.id)}
+                        title={t.pago ? 'Clique para marcar como Pendente' : 'Clique para marcar como Pago'}
+                        aria-label={`${t.descricao}: ${t.pago ? 'Pago' : 'Pendente'}`}
+                      >
+                        {t.pago ? '✓ Pago' : '⏳ Pendente'}
+                      </button>
 
-                  <button
-                    id={`remover-fixa-${t.id}`}
-                    type="button"
-                    className="fixas__remover"
-                    aria-label={`Remover ${t.descricao}`}
-                    onClick={() => aoRemover(t.id)}
-                    title="Remover conta"
-                  >
-                    ✕
-                  </button>
+                      {/* Interruptor ativar/pausar */}
+                      <button
+                        id={`alternar-fixa-${t.id}`}
+                        type="button"
+                        role="switch"
+                        aria-checked={ativa}
+                        aria-label={`${ativa ? 'Pausar' : 'Ativar'} ${t.descricao}`}
+                        className={`interruptor ${ativa ? 'interruptor--ligado' : ''}`}
+                        onClick={() => aoAlternar(t)}
+                        title={ativa ? 'Pausar conta' : 'Ativar conta'}
+                      />
+
+                      <button
+                        id={`remover-fixa-${t.id}`}
+                        type="button"
+                        className="fixas__remover"
+                        aria-label={`Remover ${t.descricao}`}
+                        onClick={() => aoRemover(t.id)}
+                        title="Remover conta"
+                      >
+                        ✕
+                      </button>
+                    </>
+                  )}
                 </li>
               )
             })}
@@ -246,82 +327,134 @@ function DespesasFixas({
                 const ativa = t.ativa
                 const ehTemporaria = t.total_parcelas > 1
                 const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : ''
+                const emEdicao = editandoId === t.id
 
                 return (
                   <li
                     key={t.id}
                     className={`fixas__item fixas__item--futuro ${ativa ? '' : 'fixas__item--pausada'}`}
                   >
-                    <div className="fixas__info">
-                      <div className="fixas__nome-linha">
-                        <span className="fixas__nome">{t.descricao}</span>
-                        <span
-                          className="fixas__tag-agendada"
-                          title={`Esta conta começará a ser cobrada a partir de ${formatarMesAno(mesInicio)}`}
-                        >
-                          🗓️ Inicia em {formatarMesAno(mesInicio)}
-                        </span>
-                        {ehTemporaria && (
-                          <span className="fixas__tag-prazo">
-                            ⏱️ {t.total_parcelas} meses
-                          </span>
-                        )}
+                    {emEdicao ? (
+                      <div className="fixas__edicao-inline">
+                        <input
+                          type="text"
+                          className="fixas__edit-input fixas__edit-input--desc"
+                          value={editDescricao}
+                          onChange={(e) => setEditDescricao(e.target.value)}
+                          placeholder="Descrição"
+                          aria-label="Descrição da conta fixa"
+                        />
+                        <input
+                          type="text"
+                          className="fixas__edit-input fixas__edit-input--valor"
+                          value={editValor}
+                          onChange={(e) => setEditValor(e.target.value)}
+                          placeholder="Valor R$"
+                          aria-label="Valor da conta fixa"
+                        />
+                        <div className="fixas__edit-acoes">
+                          <button
+                            type="button"
+                            className="fixas__btn-salvar"
+                            title="Salvar alterações"
+                            onClick={() => salvarEdicao(t.id)}
+                          >
+                            ✓ Salvar
+                          </button>
+                          <button
+                            type="button"
+                            className="fixas__btn-cancelar"
+                            title="Cancelar edição"
+                            onClick={cancelarEdicao}
+                          >
+                            ✕ Cancelar
+                          </button>
+                        </div>
                       </div>
-                      <span className="card-subtitle">{nomeDoBanco(t.banco_id)}</span>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="fixas__info">
+                          <div className="fixas__nome-linha">
+                            <span className="fixas__nome">{t.descricao}</span>
+                            <span
+                              className="fixas__tag-agendada"
+                              title={`Esta conta começará a ser cobrada a partir de ${formatarMesAno(mesInicio)}`}
+                            >
+                              🗓️ Inicia em {formatarMesAno(mesInicio)}
+                            </span>
+                            {ehTemporaria && (
+                              <span className="fixas__tag-prazo">
+                                ⏱️ {t.total_parcelas} meses
+                              </span>
+                            )}
+                          </div>
+                          <span className="card-subtitle">{nomeDoBanco(t.banco_id)}</span>
+                        </div>
 
-                    <input
-                      type="date"
-                      className="fixas__data-edit"
-                      value={t.data_compra || ''}
-                      onChange={(e) => aoAtualizar(t.id, { data_compra: e.target.value })}
-                      aria-label={`Data de início de ${t.descricao}`}
-                      title="Data de início da cobrança"
-                    />
+                        <input
+                          type="date"
+                          className="fixas__data-edit"
+                          value={t.data_compra || ''}
+                          onChange={(e) => aoAtualizar(t.id, { data_compra: e.target.value })}
+                          aria-label={`Data de início de ${t.descricao}`}
+                          title="Data de início da cobrança"
+                        />
 
-                    <select
-                      className="fixas__forma-select"
-                      value={t.forma_pagamento || 'Crédito'}
-                      onChange={(e) => aoAtualizar(t.id, { forma_pagamento: e.target.value })}
-                      aria-label={`Forma de pagamento de ${t.descricao}`}
-                    >
-                      <option value="PIX">⚡ PIX</option>
-                      <option value="Débito">🏦 Débito</option>
-                      <option value="Crédito">💳 Crédito</option>
-                      <option value="Voucher">🍽️ Voucher</option>
-                      <option value="Dinheiro">💵 Dinheiro</option>
-                    </select>
+                        <select
+                          className="fixas__forma-select"
+                          value={t.forma_pagamento || 'Crédito'}
+                          onChange={(e) => aoAtualizar(t.id, { forma_pagamento: e.target.value })}
+                          aria-label={`Forma de pagamento de ${t.descricao}`}
+                        >
+                          <option value="PIX">⚡ PIX</option>
+                          <option value="Débito">🏦 Débito</option>
+                          <option value="Crédito">💳 Crédito</option>
+                          <option value="Voucher">🍽️ Voucher</option>
+                          <option value="Dinheiro">💵 Dinheiro</option>
+                        </select>
 
-                    <span className="fixas__valor">{formatarMoeda(t.valor)}</span>
+                        <span className="fixas__valor">{formatarMoeda(t.valor)}</span>
 
-                    <span
-                      className="fixas__badge-status-agendado"
-                      title="Esta conta só passará para a lista de pagamentos ativos no mês de início estipulado"
-                    >
-                      ⏳ Agendada
-                    </span>
+                        <button
+                          type="button"
+                          className="fixas__btn-editar"
+                          aria-label={`Editar ${t.descricao}`}
+                          title="Editar valor e descrição"
+                          onClick={() => iniciarEdicao(t)}
+                        >
+                          ✏️
+                        </button>
 
-                    <button
-                      id={`alternar-fixa-${t.id}`}
-                      type="button"
-                      role="switch"
-                      aria-checked={ativa}
-                      aria-label={`${ativa ? 'Pausar' : 'Ativar'} ${t.descricao}`}
-                      className={`interruptor ${ativa ? 'interruptor--ligado' : ''}`}
-                      onClick={() => aoAlternar(t)}
-                      title={ativa ? 'Pausar agendamento' : 'Ativar agendamento'}
-                    />
+                        <span
+                          className="fixas__badge-status-agendado"
+                          title="Esta conta só passará para a lista de pagamentos ativos no mês de início estipulado"
+                        >
+                          ⏳ Agendada
+                        </span>
 
-                    <button
-                      id={`remover-fixa-${t.id}`}
-                      type="button"
-                      className="fixas__remover"
-                      aria-label={`Remover ${t.descricao}`}
-                      onClick={() => aoRemover(t.id)}
-                      title="Remover conta"
-                    >
-                      ✕
-                    </button>
+                        <button
+                          id={`alternar-fixa-${t.id}`}
+                          type="button"
+                          role="switch"
+                          aria-checked={ativa}
+                          aria-label={`${ativa ? 'Pausar' : 'Ativar'} ${t.descricao}`}
+                          className={`interruptor ${ativa ? 'interruptor--ligado' : ''}`}
+                          onClick={() => aoAlternar(t)}
+                          title={ativa ? 'Pausar agendamento' : 'Ativar agendamento'}
+                        />
+
+                        <button
+                          id={`remover-fixa-${t.id}`}
+                          type="button"
+                          className="fixas__remover"
+                          aria-label={`Remover ${t.descricao}`}
+                          onClick={() => aoRemover(t.id)}
+                          title="Remover conta"
+                        >
+                          ✕
+                        </button>
+                      </>
+                    )}
                   </li>
                 )
               })}
@@ -376,7 +509,7 @@ function DespesasFixas({
               aria-label="Forma de pagamento da despesa fixa"
             >
               <option value="PIX">⚡ PIX / Transferência</option>
-              <option value="Débito">🏦 Débito em Conta (Limite Especial)</option>
+              <option value="Débito">🏦 Débito em Conta / PIX</option>
               <option value="Crédito">💳 Cartão de Crédito</option>
               <option value="Voucher">🍽️ Voucher (Vale Refeição)</option>
               <option value="Dinheiro">💵 Dinheiro</option>

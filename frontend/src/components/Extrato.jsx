@@ -1,15 +1,51 @@
 import { useState } from 'react'
-import { formatarMoeda } from '../utils/format'
+import { formatarMoeda, formatarDataHora } from '../utils/format'
 import { obterMesFatura, rotuloMesFatura } from '../utils/fatura'
 import './Extrato.css'
 
-function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
+function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
   const [bancoId, setBancoId] = useState(bancos[0]?.id ?? '')
   const [forma, setForma] = useState('Crédito')
   const [parcelas, setParcelas] = useState('1')
   const [enviando, setEnviando] = useState(false)
+
+  // Estado de edição de gasto
+  const [editandoId, setEditandoId] = useState(null)
+  const [editDescricao, setEditDescricao] = useState('')
+  const [editValor, setEditValor] = useState('')
+  const [editBancoId, setEditBancoId] = useState('')
+  const [editForma, setEditForma] = useState('Crédito')
+
+  function iniciarEdicao(t) {
+    setEditandoId(t.id)
+    setEditDescricao(t.descricao)
+    setEditValor(String(t.valor).replace('.', ','))
+    setEditBancoId(String(t.banco_id))
+    setEditForma(t.forma_pagamento || 'Crédito')
+  }
+
+  function cancelarEdicao() {
+    setEditandoId(null)
+    setEditDescricao('')
+    setEditValor('')
+  }
+
+  async function salvarEdicao(id) {
+    const valorNumerico = Number(editValor.replace(',', '.'))
+    if (!editDescricao.trim() || Number.isNaN(valorNumerico) || valorNumerico <= 0) return
+
+    if (aoAtualizar) {
+      await aoAtualizar(id, {
+        descricao: editDescricao.trim(),
+        valor: valorNumerico,
+        banco_id: Number(editBancoId),
+        forma_pagamento: editForma,
+      })
+    }
+    setEditandoId(null)
+  }
 
   function nomeDoBanco(id) {
     return bancos.find((b) => b.id === id)?.nome ?? '—'
@@ -31,7 +67,8 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
       valor: valorNumerico / qtdeParcelas, // O banco espera o valor de CADA parcela
       banco_id: Number(bancoId || bancos[0]?.id),
       forma_pagamento: forma,
-      total_parcelas: qtdeParcelas
+      total_parcelas: qtdeParcelas,
+      data_compra: new Date().toISOString(),
     })
     setEnviando(false)
 
@@ -70,35 +107,118 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoRemover }) {
                   ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
                   : null
 
+              const emEdicao = editandoId === t.id
+
               return (
                 <li key={t.id} className="extrato__item" style={{ borderLeftColor: corDoBanco(t.banco_id) }}>
-                  <div className="extrato__info">
-                    <span className="extrato__nome">{t.descricao}</span>
-                    <div className="extrato__detalhes">
-                      <span>{new Date(t.data_compra).toLocaleDateString('pt-BR')}</span>
-                      <span>&bull;</span>
-                      <span>{nomeDoBanco(t.banco_id)}</span>
-                      <span>&bull;</span>
-                      <span>{t.forma_pagamento}</span>
-                      {mesFatura && (
-                        <>
-                          <span>&bull;</span>
-                          <span className="extrato__tag-fatura" title={`Vence na fatura de ${rotuloMesFatura(mesFatura)}`}>
-                            📅 Fatura: {rotuloMesFatura(mesFatura)}
-                          </span>
-                        </>
-                      )}
+                  {emEdicao ? (
+                    <div className="extrato__edicao-inline">
+                      <div className="extrato__edicao-campos">
+                        <input
+                          type="text"
+                          className="extrato__edit-input extrato__edit-input--desc"
+                          value={editDescricao}
+                          onChange={(e) => setEditDescricao(e.target.value)}
+                          placeholder="Descrição"
+                          aria-label="Descrição do gasto"
+                        />
+                        <input
+                          type="text"
+                          className="extrato__edit-input extrato__edit-input--valor"
+                          value={editValor}
+                          onChange={(e) => setEditValor(e.target.value)}
+                          placeholder="Valor R$"
+                          aria-label="Valor do gasto"
+                        />
+                        <select
+                          className="extrato__edit-select"
+                          value={editBancoId}
+                          onChange={(e) => setEditBancoId(e.target.value)}
+                          aria-label="Banco"
+                        >
+                          {bancos.map((b) => (
+                            <option key={b.id} value={b.id}>
+                              {b.tipo === 'Benefício' ? `🍽️ ${b.nome}` : b.nome}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          className="extrato__edit-select"
+                          value={editForma}
+                          onChange={(e) => setEditForma(e.target.value)}
+                          aria-label="Forma de pagamento"
+                        >
+                          <option value="Crédito">💳 Crédito</option>
+                          <option value="Débito">🏦 Débito</option>
+                          <option value="PIX">⚡ PIX</option>
+                          <option value="Dinheiro">💵 Dinheiro</option>
+                          <option value="Voucher">🍽️ Voucher</option>
+                        </select>
+                      </div>
+                      <div className="extrato__edit-acoes">
+                        <button
+                          type="button"
+                          className="extrato__btn-salvar"
+                          title="Salvar alterações"
+                          onClick={() => salvarEdicao(t.id)}
+                        >
+                          ✓ Salvar
+                        </button>
+                        <button
+                          type="button"
+                          className="extrato__btn-cancelar"
+                          title="Cancelar edição"
+                          onClick={cancelarEdicao}
+                        >
+                          ✕ Cancelar
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <span className="extrato__valor">{formatarMoeda(t.valor)}</span>
-                  <button
-                    type="button"
-                    className="extrato__remover"
-                    aria-label={`Remover ${t.descricao}`}
-                    onClick={() => aoRemover(t.id)}
-                  >
-                    ✕
-                  </button>
+                  ) : (
+                    <>
+                      <div className="extrato__info">
+                        <span className="extrato__nome">{t.descricao}</span>
+                        <div className="extrato__detalhes">
+                          <span className="extrato__data-hora" title="Data e hora do lançamento">
+                            🕒 {formatarDataHora(t.data_compra)}
+                          </span>
+                          <span>&bull;</span>
+                          <span>{nomeDoBanco(t.banco_id)}</span>
+                          <span>&bull;</span>
+                          <span>{t.forma_pagamento}</span>
+                          {mesFatura && (
+                            <>
+                              <span>&bull;</span>
+                              <span className="extrato__tag-fatura" title={`Vence na fatura de ${rotuloMesFatura(mesFatura)}`}>
+                                📅 Fatura: {rotuloMesFatura(mesFatura)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <span className="extrato__valor">{formatarMoeda(t.valor)}</span>
+                      <div className="extrato__acoes">
+                        <button
+                          type="button"
+                          className="extrato__btn-editar"
+                          aria-label={`Editar ${t.descricao}`}
+                          title="Editar este gasto"
+                          onClick={() => iniciarEdicao(t)}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          type="button"
+                          className="extrato__remover"
+                          aria-label={`Remover ${t.descricao}`}
+                          title="Excluir este gasto"
+                          onClick={() => aoRemover(t.id)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </li>
               )
             })}

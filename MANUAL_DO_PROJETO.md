@@ -119,7 +119,7 @@ Nem toda conta fixa é paga no cartão de crédito. Aluguel, condomínio e luz n
 * **Seletor de Forma de Pagamento:**
   * Ao cadastrar (e editável diretamente em cada linha), você escolhe:
     * ⚡ **PIX / Transferência:** Sai do saldo da conta, **NÃO consome** limite do cartão.
-    * 🏦 **Débito em Conta / Limite Especial:** Sai da conta corrente, **NÃO consome** limite do cartão.
+    * 🏦 **Débito em Conta / PIX:** Sai da conta corrente, **NÃO consome** limite do cartão. *(Nota: O Limite Especial/Cheque Especial é rotativo e não deve ser cadastrado como fixa; caso haja cobrança pontual, lança-se em Gastos Variáveis).*
     * 💳 **Cartão de Crédito:** Entra na fatura mensal e consome o limite daquele banco (Nubank, Itaú, Banco do Brasil, PicPay).
     * 🍽️ **Voucher (Vale Refeição):** Desconta do saldo do cartão de benefício, sem tocar no seu salário líquido.
     * 💵 **Dinheiro:** Não consome limite de banco.

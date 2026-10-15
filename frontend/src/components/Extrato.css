@@ -95,6 +95,114 @@
   color: var(--danger);
 }
 
+.extrato__acoes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.extrato__btn-editar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  transition: background var(--transition), transform var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.extrato__btn-editar:hover {
+  background: rgba(139, 92, 246, 0.2);
+  transform: scale(1.1);
+}
+
+.extrato__data-hora {
+  color: #a5b4fc;
+  font-weight: 500;
+}
+
+/* Modo de edição inline */
+.extrato__edicao-inline {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.extrato__edicao-campos {
+  display: flex;
+  flex: 1 1 300px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.extrato__edit-input,
+.extrato__edit-select {
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.extrato__edit-input--desc {
+  flex: 2 1 140px;
+}
+
+.extrato__edit-input--valor {
+  flex: 1 1 90px;
+}
+
+.extrato__edit-select {
+  flex: 1 1 110px;
+}
+
+.extrato__edit-acoes {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.extrato__btn-salvar {
+  padding: 8px 14px;
+  background: var(--success);
+  color: #0b0b14;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: opacity var(--transition);
+}
+
+.extrato__btn-salvar:hover {
+  opacity: 0.9;
+}
+
+.extrato__btn-cancelar {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.extrato__btn-cancelar:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text);
+}
+
 /* ---------- Formulário ---------- */
 .extrato__form {
   display: flex;
@@ -170,7 +278,7 @@
 
   .extrato__info {
     flex: 1 1 100%;
-    padding-right: 36px; /* espaço para o botão remover no topo se necessário */
+    padding-right: 72px; /* espaço para os botões editar e remover no topo */
   }
 
   .extrato__detalhes {
@@ -183,10 +291,15 @@
     margin-right: auto; /* alinha à esquerda embaixo no mobile */
   }
 
-  .extrato__remover {
+  .extrato__acoes {
     position: absolute;
     top: 10px;
     right: 10px;
+  }
+
+  .extrato__remover,
+  .extrato__btn-editar {
+    position: static;
   }
 
   .extrato__form {

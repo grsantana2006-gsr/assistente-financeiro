@@ -12,12 +12,12 @@
 //   coagir  -> usada em query string, onde tudo chega como texto ("12" -> 12)
 // =====================================================
 
-const REGEX_DATA = /^\d{4}-\d{2}-\d{2}$/
+const REGEX_DATA = /^\d{4}-\d{2}-\d{2}(?:[T\s]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/
 
 function dataValida(texto) {
-  if (!REGEX_DATA.test(texto)) return false
-  const d = new Date(`${texto}T00:00:00Z`)
-  return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(texto)
+  if (typeof texto !== 'string' || !REGEX_DATA.test(texto)) return false
+  const d = new Date(texto.includes('T') || texto.includes(' ') ? texto : `${texto}T12:00:00Z`)
+  return !Number.isNaN(d.getTime())
 }
 
 export function validar(corpo, regras, { parcial = false, coagir = false } = {}) {

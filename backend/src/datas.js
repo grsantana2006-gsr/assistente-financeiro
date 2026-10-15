@@ -13,6 +13,11 @@ export function dataLocalISO(data = new Date()) {
   return `${data.getFullYear()}-${doisDigitos(data.getMonth() + 1)}-${doisDigitos(data.getDate())}`
 }
 
+// "AAAA-MM-DDTHH:mm:ss" do dia e hora local
+export function dataHoraLocalISO(data = new Date()) {
+  return `${dataLocalISO(data)}T${doisDigitos(data.getHours())}:${doisDigitos(data.getMinutes())}:${doisDigitos(data.getSeconds())}`
+}
+
 // "AAAA-MM" do mês local
 export function mesLocalAtual(data = new Date()) {
   return dataLocalISO(data).slice(0, 7)

@@ -2,12 +2,12 @@ import { Router } from 'express'
 import { db } from '../db.js'
 import { validar } from '../validacao.js'
 import { lerId, idInvalido, naoEncontrado, erroValidacao, inserir, atualizar, transacaoParaApi } from '../ajudantes.js'
-import { dataLocalISO } from '../datas.js'
+import { dataHoraLocalISO } from '../datas.js'
 import { obterMesReferencia } from '../config.js'
 
 const router = Router()
 
-const hoje = () => dataLocalISO()
+const agora = () => dataHoraLocalISO()
 
 const regras = {
   descricao: { tipo: 'texto', obrigatorio: true, max: 120 },
@@ -16,7 +16,7 @@ const regras = {
   banco_id: { tipo: 'inteiro', obrigatorio: true, min: 1 },
   categoria: { tipo: 'enum', obrigatorio: true, valores: ['Fixo', 'Variável'] },
   forma_pagamento: { tipo: 'enum', padrao: 'Crédito', valores: ['Crédito', 'Débito', 'PIX', 'Dinheiro', 'Voucher'] },
-  data_compra: { tipo: 'data', padrao: hoje },
+  data_compra: { tipo: 'data', padrao: agora },
   parcela_atual: { tipo: 'inteiro', min: 1, padrao: 1 },
   total_parcelas: { tipo: 'inteiro', min: 1, padrao: 1 },
   ativa: { tipo: 'bool', padrao: true },

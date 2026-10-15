@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Sidebar from './components/Sidebar'
 import StatusHeader from './components/StatusHeader'
 import DespesasFixas from './components/DespesasFixas'
 import Forecast from './components/Forecast'
@@ -19,9 +20,10 @@ function App() {
   // É assim que a tela se atualiza depois de uma alteração.
   const [versao, setVersao] = useState(0)
   const [aviso, setAviso] = useState(null)
+  const [abaAtiva, setAbaAtiva] = useState('geral')
   const recarregar = () => setVersao((v) => v + 1)
 
-  // ---------- Leitura: 3 chamadas à API ----------
+  // ---------- Leitura: chamadas à API ----------
   const dashboard = useDados(() => api.obterDashboard(MES_REFERENCIA), [versao])
   const fixas = useDados(() => api.listarDespesasFixas(MES_REFERENCIA), [versao])
   const extrato = useDados(() => api.listarDespesasVariaveis(), [versao])
@@ -57,7 +59,7 @@ function App() {
   const adicionarReceita = (dados) => executar(() => api.criarTransacao(dados))
 
   const alternarFixa = (fixa) => executar(() => api.atualizarTransacao(fixa.id, { ativa: !fixa.ativa }))
-  const atualizarFixa = (id, dados) => executar(() => api.atualizarTransacao(id, dados))
+  const atualizarTransacao = (id, dados) => executar(() => api.atualizarTransacao(id, dados))
 
   const removerFixa = (id) => executar(() => api.removerTransacao(id))
 
@@ -86,50 +88,83 @@ function App() {
   } = dashboard.dados
 
   return (
-    <main className="app">
-      <StatusHeader
-        totalCofre={total_cofre}
-        receitaMes={receita_mes}
-        faturasCartao={faturas_cartao ?? faturas_abertas}
-        despesasContaPix={despesas_conta_pix ?? 0}
+    <div className="layout-principal">
+      <Sidebar
+        abaAtiva={abaAtiva}
+        aoMudarAba={setAbaAtiva}
         saldoMes={saldo_mes ?? (receita_mes - (faturas_abertas ?? 0))}
         statusMes={status_mes ?? (saldo_mes >= 0 ? 'positivo' : 'negativo')}
-      />
-      <Receitas
-        receitas={receitas.dados}
-        bancos={cartoes}
-        aoAdicionar={adicionarReceita}
-        aoAlternar={alternarFixa}
-        aoRemover={removerFixa}
-      />
-      <DespesasFixas
-        fixas={fixas.dados}
-        bancos={cartoes}
         mesReferencia={MES_REFERENCIA}
-        aoAdicionar={adicionarFixa}
-        aoAlternar={alternarFixa}
-        aoAtualizar={atualizarFixa}
-        aoAlternarPagamento={alternarPagamentoFixa}
-        aoRemover={removerFixa}
       />
-      <Extrato 
-        transacoes={extrato.dados} 
-        bancos={cartoes} 
-        aoAdicionar={adicionarVariavel} 
-        aoRemover={removerFixa} 
-      />
-      <Cofre 
-        cofre={cofre.dados} 
-        aoAdicionar={adicionarCofre} 
-        aoAtualizar={atualizarCofre} 
-        aoRemover={removerCofre} 
-      />
-      <PainelCartoes cartoes={cartoes} aoSalvarLimite={salvarLimite} />
-      <Forecast projecao={forecast.dados.projecao} />
 
-      {/* Se uma ação falhar, ou uma atualização em segundo plano falhar, avisamos aqui */}
-      <Toast mensagem={aviso ?? (erro ? erro.message : null)} aoFechar={() => setAviso(null)} />
-    </main>
+      <div className="layout-conteudo">
+        <main className="app">
+          {/* Header de Status rápido sempre disponível */}
+          <StatusHeader
+            totalCofre={total_cofre}
+            receitaMes={receita_mes}
+            faturasCartao={faturas_cartao ?? faturas_abertas}
+            despesasContaPix={despesas_conta_pix ?? 0}
+            saldoMes={saldo_mes ?? (receita_mes - (faturas_abertas ?? 0))}
+            statusMes={status_mes ?? (saldo_mes >= 0 ? 'positivo' : 'negativo')}
+          />
+
+          {(abaAtiva === 'geral' || abaAtiva === 'receitas') && (
+            <Receitas
+              receitas={receitas.dados}
+              bancos={cartoes}
+              aoAdicionar={adicionarReceita}
+              aoAtualizar={atualizarTransacao}
+              aoAlternar={alternarFixa}
+              aoRemover={removerFixa}
+            />
+          )}
+
+          {(abaAtiva === 'geral' || abaAtiva === 'fixas') && (
+            <DespesasFixas
+              fixas={fixas.dados}
+              bancos={cartoes}
+              mesReferencia={MES_REFERENCIA}
+              aoAdicionar={adicionarFixa}
+              aoAlternar={alternarFixa}
+              aoAtualizar={atualizarTransacao}
+              aoAlternarPagamento={alternarPagamentoFixa}
+              aoRemover={removerFixa}
+            />
+          )}
+
+          {(abaAtiva === 'geral' || abaAtiva === 'variaveis') && (
+            <Extrato
+              transacoes={extrato.dados}
+              bancos={cartoes}
+              aoAdicionar={adicionarVariavel}
+              aoAtualizar={atualizarTransacao}
+              aoRemover={removerFixa}
+            />
+          )}
+
+          {(abaAtiva === 'geral' || abaAtiva === 'cartoes') && (
+            <PainelCartoes cartoes={cartoes} aoSalvarLimite={salvarLimite} />
+          )}
+
+          {(abaAtiva === 'geral' || abaAtiva === 'cofre') && (
+            <Cofre
+              cofre={cofre.dados}
+              aoAdicionar={adicionarCofre}
+              aoAtualizar={atualizarCofre}
+              aoRemover={removerCofre}
+            />
+          )}
+
+          {(abaAtiva === 'geral' || abaAtiva === 'forecast') && (
+            <Forecast projecao={forecast.dados.projecao} />
+          )}
+
+          {/* Se uma ação falhar, ou uma atualização em segundo plano falhar, avisamos aqui */}
+          <Toast mensagem={aviso ?? (erro ? erro.message : null)} aoFechar={() => setAviso(null)} />
+        </main>
+      </div>
+    </div>
   )
 }
 

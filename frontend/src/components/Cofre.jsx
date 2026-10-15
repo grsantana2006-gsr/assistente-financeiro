@@ -7,6 +7,35 @@ function Cofre({ cofre, aoAdicionar, aoAtualizar, aoRemover }) {
   const [saldo, setSaldo] = useState('')
   const [enviando, setEnviando] = useState(false)
 
+  // Estado de edição
+  const [editandoId, setEditandoId] = useState(null)
+  const [editObjetivo, setEditObjetivo] = useState('')
+  const [editSaldo, setEditSaldo] = useState('')
+
+  function iniciarEdicao(c) {
+    setEditandoId(c.id)
+    setEditObjetivo(c.objetivo)
+    setEditSaldo(String(c.saldo_atual).replace('.', ','))
+  }
+
+  function cancelarEdicao() {
+    setEditandoId(null)
+    setEditObjetivo('')
+    setEditSaldo('')
+  }
+
+  async function salvarEdicao(id) {
+    const valorNumerico = Number(editSaldo.replace(',', '.'))
+    if (!editObjetivo.trim() || Number.isNaN(valorNumerico) || valorNumerico < 0) return
+    if (aoAtualizar) {
+      await aoAtualizar(id, {
+        objetivo: editObjetivo.trim(),
+        saldo_atual: valorNumerico,
+      })
+    }
+    setEditandoId(null)
+  }
+
   const itens = cofre?.itens ?? []
   const total = cofre?.total ?? 0
 
@@ -45,42 +74,80 @@ function Cofre({ cofre, aoAdicionar, aoAtualizar, aoRemover }) {
           <p className="fixas__vazio">Nenhum objetivo cadastrado.</p>
         ) : (
           <ul className="fixas__lista">
-            {itens.map((c) => (
-              <li key={c.id} className="fixas__item" style={{ borderLeft: '4px solid var(--primary)' }}>
-                <div className="fixas__info">
-                  <span className="fixas__nome">{c.objetivo}</span>
-                </div>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  defaultValue={c.saldo_atual}
-                  onBlur={(e) => {
-                    const novoSaldo = Number(e.target.value.replace(',', '.'))
-                    if (!Number.isNaN(novoSaldo) && novoSaldo !== c.saldo_atual) {
-                      aoAtualizar(c.id, { saldo_atual: novoSaldo })
-                    }
-                  }}
-                  style={{
-                    width: '100px',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid var(--border)',
-                    background: 'var(--bg-elevated)',
-                    color: 'var(--text)',
-                    fontFamily: 'var(--font-display)',
-                    textAlign: 'right'
-                  }}
-                />
+            {itens.map((c) => {
+              const emEdicao = editandoId === c.id
 
-                <button
-                  type="button"
-                  className="fixas__remover"
-                  onClick={() => aoRemover(c.id)}
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
+              return (
+                <li key={c.id} className="fixas__item" style={{ borderLeft: '4px solid var(--primary)' }}>
+                  {emEdicao ? (
+                    <div className="fixas__edicao-inline">
+                      <input
+                        type="text"
+                        className="fixas__edit-input fixas__edit-input--desc"
+                        value={editObjetivo}
+                        onChange={(e) => setEditObjetivo(e.target.value)}
+                        placeholder="Nome do objetivo"
+                        aria-label="Nome do objetivo"
+                      />
+                      <input
+                        type="text"
+                        className="fixas__edit-input fixas__edit-input--valor"
+                        value={editSaldo}
+                        onChange={(e) => setEditSaldo(e.target.value)}
+                        placeholder="Saldo R$"
+                        aria-label="Saldo atual do objetivo"
+                      />
+                      <div className="fixas__edit-acoes">
+                        <button
+                          type="button"
+                          className="fixas__btn-salvar"
+                          title="Salvar alterações"
+                          onClick={() => salvarEdicao(c.id)}
+                        >
+                          ✓ Salvar
+                        </button>
+                        <button
+                          type="button"
+                          className="fixas__btn-cancelar"
+                          title="Cancelar edição"
+                          onClick={cancelarEdicao}
+                        >
+                          ✕ Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="fixas__info">
+                        <span className="fixas__nome">{c.objetivo}</span>
+                      </div>
+                      <span className="fixas__valor" style={{ color: 'var(--primary)' }}>
+                        {formatarMoeda(c.saldo_atual)}
+                      </span>
+
+                      <button
+                        type="button"
+                        className="fixas__btn-editar"
+                        aria-label={`Editar ${c.objetivo}`}
+                        title="Editar saldo e objetivo"
+                        onClick={() => iniciarEdicao(c)}
+                      >
+                        ✏️
+                      </button>
+
+                      <button
+                        type="button"
+                        className="fixas__remover"
+                        aria-label={`Remover ${c.objetivo}`}
+                        onClick={() => aoRemover(c.id)}
+                      >
+                        ✕
+                      </button>
+                    </>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         )}
 

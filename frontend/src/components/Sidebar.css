@@ -1,0 +1,352 @@
+/* =====================================================
+   SIDEBAR & NAVEGAÇÃO LATERAL POR SETORES
+   Estilo Glassmorphism Escuro, Moderno e Responsivo
+   ===================================================== */
+
+/* Container geral da barra lateral em telas desktop */
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: rgba(17, 17, 28, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 90;
+  padding: 28px 18px 24px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  transition: transform var(--transition);
+}
+
+/* Topo com Logo e Marca */
+.sidebar__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 24px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar__logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar__logo-icone {
+  width: 38px;
+  height: 38px;
+  background: var(--gradient-primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+}
+
+.sidebar__logo-textos {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar__logo-titulo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.sidebar__logo-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+
+.sidebar__badge-mes {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Seção de Navegação */
+.sidebar__nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar__secao-titulo {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding-left: 10px;
+}
+
+.sidebar__menu {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar__item {
+  width: 100%;
+}
+
+.sidebar__btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  font-family: inherit;
+}
+
+.sidebar__btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.06);
+  transform: translateX(3px);
+}
+
+.sidebar__btn--ativo {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.22) 0%, rgba(99, 102, 241, 0.14) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  color: #ffffff;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.18);
+}
+
+.sidebar__btn--ativo:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.28) 0%, rgba(99, 102, 241, 0.18) 100%);
+  transform: none;
+}
+
+.sidebar__icone {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.sidebar__textos {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar__label {
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.sidebar__btn--ativo .sidebar__label {
+  color: #ffffff;
+}
+
+.sidebar__desc {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__btn--ativo .sidebar__desc {
+  color: #c7d2fe;
+}
+
+.sidebar__marcador {
+  width: 5px;
+  height: 22px;
+  background: var(--gradient-primary);
+  border-radius: 999px;
+  position: absolute;
+  right: 10px;
+}
+
+/* Rodapé da Sidebar: Card de Saldo Rápido */
+.sidebar__rodape {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar__card-saldo {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sidebar__saldo-rotulo {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.sidebar__saldo-valor {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.sidebar__saldo-valor.positivo {
+  color: var(--success);
+}
+
+.sidebar__saldo-valor.negativo {
+  color: var(--danger);
+}
+
+.sidebar__saldo-dica {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Topbar Mobile (escondida no Desktop) */
+.mobile-topbar {
+  display: none;
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
+/* =====================================================
+   RESPONSIVIDADE: TABLET & MOBILE (< 900px)
+   ===================================================== */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 290px;
+    height: 100vh;
+    transform: translateX(-100%);
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    padding-top: 24px;
+  }
+
+  .sidebar--aberta {
+    transform: translateX(0);
+  }
+
+  /* Overlay escuro ao abrir o menu mobile */
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  /* Barra no topo do celular para acesso rápido ao menu */
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(11, 11, 20, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 18px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mobile-topbar__btn-menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background var(--transition);
+  }
+
+  .mobile-topbar__btn-menu:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .mobile-topbar__icone-hamburguer {
+    font-size: 1.15rem;
+    line-height: 1;
+    color: #a5b4fc;
+  }
+
+  .mobile-topbar__aba-atual {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    font-family: var(--font-display);
+  }
+
+  .mobile-topbar__saldo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .mobile-topbar__saldo.positivo {
+    color: var(--success);
+  }
+
+  .mobile-topbar__saldo.negativo {
+    color: var(--danger);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
