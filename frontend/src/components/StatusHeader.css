@@ -121,6 +121,13 @@
   margin-top: 2px;
 }
 
+.status-card__sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  display: block;
+}
+
 @media (max-width: 600px) {
   .status-banner {
     padding: 14px 16px;

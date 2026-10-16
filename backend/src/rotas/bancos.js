@@ -63,4 +63,29 @@ router.delete('/:id', async (req, res) => {
   res.status(204).end()
 })
 
+router.post('/:id/alternar-fatura', async (req, res) => {
+  const id = lerId(req)
+  if (!id) return idInvalido(res)
+  const banco = await buscarPorId(id)
+  if (!banco) return naoEncontrado(res, 'Banco')
+
+  const mes = req.body?.mes || new Date().toISOString().slice(0, 7)
+  const existente = await db.prepare('SELECT id FROM pagamentos_faturas WHERE banco_id = ? AND mes = ?').get(id, mes)
+
+  let marcarComoPago = false
+  if (typeof req.body?.pago === 'boolean') {
+    marcarComoPago = req.body.pago
+  } else {
+    marcarComoPago = !existente
+  }
+
+  if (marcarComoPago) {
+    await db.prepare('INSERT INTO pagamentos_faturas (banco_id, mes) VALUES (?, ?) ON CONFLICT (banco_id, mes) DO NOTHING').run(id, mes)
+  } else {
+    await db.prepare('DELETE FROM pagamentos_faturas WHERE banco_id = ? AND mes = ?').run(id, mes)
+  }
+
+  res.json({ banco_id: id, mes, pago: marcarComoPago })
+})
+
 export default router

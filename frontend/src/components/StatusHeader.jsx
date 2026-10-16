@@ -8,16 +8,40 @@ function StatusHeader({
   totalCofre,
   receitaMes,
   faturasCartao,
+  faturasPagasTotal = 0,
+  faturasPendentesTotal,
+  qtdFaturasPagas = 0,
+  qtdFaturasTotal = 0,
+  todasFaturasPagas = false,
   despesasContaPix,
   saldoMes,
   statusMes,
 }) {
   const ehPositivo = (statusMes ?? (saldoMes >= 0 ? 'positivo' : 'negativo')) === 'positivo'
 
+  const valorFaturasExibir = faturasPendentesTotal !== undefined ? faturasPendentesTotal : faturasCartao
+
   const indicadores = [
     { id: 'cofre', rotulo: 'Dinheiro no Cofre', valor: totalCofre, icone: '🏦', classe: '' },
     { id: 'receita', rotulo: 'Receita do Mês', valor: receitaMes, icone: '📈', classe: 'positive' },
-    { id: 'faturas', rotulo: 'Faturas de Cartão', valor: faturasCartao, icone: '💳', classe: 'negative' },
+    {
+      id: 'faturas',
+      rotulo: todasFaturasPagas
+        ? 'Faturas (Todas Pagas 🎉)'
+        : faturasPagasTotal > 0
+          ? 'Faturas a Pagar'
+          : 'Faturas de Cartão',
+      valor: valorFaturasExibir,
+      sub: todasFaturasPagas
+        ? `Todas as faturas do mês quitadas (${formatarMoeda(faturasPagasTotal)})`
+        : faturasPagasTotal > 0
+          ? `${qtdFaturasPagas}/${qtdFaturasTotal} pagas (${formatarMoeda(faturasPagasTotal)} quitados)`
+          : qtdFaturasTotal > 0
+            ? `${qtdFaturasTotal} fatura(s) a pagar`
+            : null,
+      icone: '💳',
+      classe: todasFaturasPagas ? 'positive' : 'negative',
+    },
     { id: 'debito-pix', rotulo: 'Débito & PIX (Conta)', valor: despesasContaPix, icone: '⚡', classe: 'warning' },
   ]
 
@@ -70,6 +94,7 @@ function StatusHeader({
             <span className="status-card__icon" aria-hidden="true">{item.icone}</span>
             <p className="card-subtitle">{item.rotulo}</p>
             <p className={`status-card__value ${item.classe}`}>{formatarMoeda(item.valor)}</p>
+            {item.sub && <span className="status-card__sub">{item.sub}</span>}
           </article>
         ))}
       </section>

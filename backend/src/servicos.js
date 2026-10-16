@@ -1,6 +1,6 @@
 import { db } from './db.js'
 import { transacaoParaApi, arredondar } from './ajudantes.js'
-import { calcularReceitaDoMes, contaNaFatura, montarCartoes } from './calculos.js'
+import { calcularReceitaDoMes, contaNaFatura, montarCartoes, calcularFaturaDoBanco } from './calculos.js'
 
 export async function carregarTransacoes() {
   const transacoes = await db.prepare('SELECT * FROM transacoes').all()
@@ -14,6 +14,10 @@ export async function calcularDashboard(mes) {
   const result = await db.prepare('SELECT COALESCE(SUM(saldo_atual), 0) AS total FROM cofre').get()
   const cofre = Number(result?.total || 0)
 
+  // Status de faturas pagas no mês
+  const pagamentosFaturas = await db.prepare('SELECT banco_id FROM pagamentos_faturas WHERE mes = ?').all(mes)
+  const faturasPagasMap = new Map(pagamentosFaturas.map((pf) => [pf.banco_id, true]))
+
   const receitaMes = calcularReceitaDoMes(transacoes, mes)
   const despesasMes = transacoes.filter((t) => {
     if (t.tipo !== 'Despesa') return false
@@ -25,6 +29,24 @@ export async function calcularDashboard(mes) {
   const faturasCartao = despesasMes
     .filter((t) => t.forma_pagamento === 'Crédito')
     .reduce((soma, t) => soma + t.valor, 0)
+
+  // Métricas de faturas pagas vs pendentes de quitação
+  const cartoesCredito = bancos.filter((b) => b.tipo !== 'Benefício')
+  let faturasPagasTotal = 0
+  let qtdFaturasPagas = 0
+  let qtdFaturasTotal = 0
+
+  for (const b of cartoesCredito) {
+    const valFatura = calcularFaturaDoBanco(transacoes, b, mes)
+    if (valFatura > 0) {
+      qtdFaturasTotal++
+      if (faturasPagasMap.get(b.id)) {
+        faturasPagasTotal += valFatura
+        qtdFaturasPagas++
+      }
+    }
+  }
+  const faturasPendentesTotal = Math.max(faturasCartao - faturasPagasTotal, 0)
 
   // Saídas da Conta Corrente (PIX, Débito em Conta, Limite Especial, Dinheiro - excluindo Voucher)
   const despesasContaPix = despesasMes
@@ -51,12 +73,17 @@ export async function calcularDashboard(mes) {
     total_cofre: arredondar(cofre),
     receita_mes: arredondar(receitaMes),
     faturas_cartao: arredondar(faturasCartao),
-    faturas_abertas: arredondar(faturasCartao), // mantido para compatibilidade
+    faturas_abertas: arredondar(faturasPendentesTotal),
+    faturas_pagas_total: arredondar(faturasPagasTotal),
+    faturas_pendentes_total: arredondar(faturasPendentesTotal),
+    qtd_faturas_pagas: qtdFaturasPagas,
+    qtd_faturas_total: qtdFaturasTotal,
+    todas_faturas_pagas: qtdFaturasTotal > 0 && qtdFaturasPagas === qtdFaturasTotal,
     despesas_conta_pix: arredondar(despesasContaPix),
     despesas_voucher: arredondar(despesasVoucher),
     total_despesas: arredondar(totalDespesas),
     saldo_mes: arredondar(saldoMes),
     status_mes: saldoMes >= 0 ? 'positivo' : 'negativo',
-    cartoes: montarCartoes(bancos, transacoes, mes),
+    cartoes: montarCartoes(bancos, transacoes, mes, faturasPagasMap),
   }
 }

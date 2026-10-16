@@ -53,6 +53,9 @@ function App() {
   const alternarPagamentoFixa = (id) =>
     executar(() => api.alternarPagamentoFixa(id, MES_REFERENCIA))
 
+  const alternarPagamentoFatura = (bancoId) =>
+    executar(() => api.alternarPagamentoFatura(bancoId, MES_REFERENCIA))
+
   const adicionarVariavel = (dados) =>
     executar(() => api.criarTransacao({ ...dados, tipo: 'Despesa', categoria: 'Variável' }))
 
@@ -81,6 +84,11 @@ function App() {
     receita_mes,
     faturas_cartao,
     faturas_abertas,
+    faturas_pagas_total,
+    faturas_pendentes_total,
+    qtd_faturas_pagas,
+    qtd_faturas_total,
+    todas_faturas_pagas,
     despesas_conta_pix,
     saldo_mes,
     status_mes,
@@ -104,6 +112,11 @@ function App() {
             totalCofre={total_cofre}
             receitaMes={receita_mes}
             faturasCartao={faturas_cartao ?? faturas_abertas}
+            faturasPagasTotal={faturas_pagas_total ?? 0}
+            faturasPendentesTotal={faturas_pendentes_total ?? faturas_abertas}
+            qtdFaturasPagas={qtd_faturas_pagas ?? 0}
+            qtdFaturasTotal={qtd_faturas_total ?? 0}
+            todasFaturasPagas={todas_faturas_pagas ?? false}
             despesasContaPix={despesas_conta_pix ?? 0}
             saldoMes={saldo_mes ?? (receita_mes - (faturas_abertas ?? 0))}
             statusMes={status_mes ?? (saldo_mes >= 0 ? 'positivo' : 'negativo')}
@@ -144,7 +157,12 @@ function App() {
           )}
 
           {(abaAtiva === 'geral' || abaAtiva === 'cartoes') && (
-            <PainelCartoes cartoes={cartoes} aoSalvarLimite={salvarLimite} />
+            <PainelCartoes
+              cartoes={cartoes}
+              aoSalvarLimite={salvarLimite}
+              aoAlternarFatura={alternarPagamentoFatura}
+              mesReferencia={MES_REFERENCIA}
+            />
           )}
 
           {(abaAtiva === 'geral' || abaAtiva === 'cofre') && (

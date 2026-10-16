@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { formatarMoeda } from '../utils/format'
+import { formatarMoeda, formatarMesAnoCurto } from '../utils/format'
+import { obterMesFatura } from '../utils/calculos'
 import './DespesasFixas.css'
 
 function formatarMesAno(anoMes) {
@@ -29,6 +30,9 @@ function DespesasFixas({
   aoAlternarPagamento,
 }) {
   const mesAtualRef = mesReferencia || new Date().toISOString().slice(0, 7)
+
+  // Filtro rápido: todos | conta | credito
+  const [filtroTipo, setFiltroTipo] = useState('todos')
 
   // Formulário controlado
   const [descricao, setDescricao] = useState('')
@@ -78,6 +82,13 @@ function DespesasFixas({
 
   const despesasDoMes = fixas.filter((t) => !ehFutura(t))
   const despesasFuturas = fixas.filter(ehFutura)
+
+  // Despesas filtradas pelo seletor rápido (todas | conta | credito)
+  const despesasFiltradas = despesasDoMes.filter((t) => {
+    if (filtroTipo === 'conta') return t.forma_pagamento !== 'Crédito'
+    if (filtroTipo === 'credito') return t.forma_pagamento === 'Crédito'
+    return true
+  })
 
   // Cálculos de resumo do mês (apenas contas do mês atual!)
   const ativas = despesasDoMes.filter((t) => t.ativa)
@@ -197,12 +208,37 @@ function DespesasFixas({
           </div>
         </div>
 
+        {/* Filtro Rápido: Todas | Conta/PIX | Cartão de Crédito */}
+        <div className="fixas__filtros" role="group" aria-label="Filtrar despesas fixas">
+          <button
+            type="button"
+            className={`fixas__filtro-btn ${filtroTipo === 'todos' ? 'fixas__filtro-btn--ativo' : ''}`}
+            onClick={() => setFiltroTipo('todos')}
+          >
+            📋 Todas ({despesasDoMes.length})
+          </button>
+          <button
+            type="button"
+            className={`fixas__filtro-btn ${filtroTipo === 'conta' ? 'fixas__filtro-btn--ativo' : ''}`}
+            onClick={() => setFiltroTipo('conta')}
+          >
+            ⚡ Conta / PIX ({contasContaPix.length})
+          </button>
+          <button
+            type="button"
+            className={`fixas__filtro-btn ${filtroTipo === 'credito' ? 'fixas__filtro-btn--ativo' : ''}`}
+            onClick={() => setFiltroTipo('credito')}
+          >
+            💳 Cartão ({contasCredito.length})
+          </button>
+        </div>
+
         {/* Lista de Contas do Mês Atual */}
-        {despesasDoMes.length === 0 ? (
-          <p className="fixas__vazio">Nenhuma despesa fixa ativa para este mês.</p>
+        {despesasFiltradas.length === 0 ? (
+          <p className="fixas__vazio">Nenhuma despesa fixa encontrada com o filtro selecionado.</p>
         ) : (
           <ul className="fixas__lista">
-            {despesasDoMes.map((t) => {
+            {despesasFiltradas.map((t) => {
               const ativa = t.ativa
               const ehTemporaria = t.total_parcelas > 1
               const emEdicao = editandoId === t.id
@@ -240,6 +276,19 @@ function DespesasFixas({
                     : 'fixas__item--pago'
                   : ''
               }`
+
+              const banco = bancos.find((b) => b.id === t.banco_id)
+              const mesFaturaDestino =
+                ehCredito && banco && t.data_compra
+                  ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+                  : null
+
+              const hojeStr = new Date().toISOString().slice(0, 10)
+              const diaHoje = Number(hojeStr.slice(8, 10))
+              const diaCobranca = t.data_compra ? Number(t.data_compra.slice(8, 10)) : null
+              const cobrancaPassou = Boolean(
+                !t.pago && diaCobranca && diaHoje > diaCobranca && mesAtualRef <= hojeStr.slice(0, 7)
+              )
 
               return (
                 <li key={t.id} className={itemClass}>
@@ -291,6 +340,24 @@ function DespesasFixas({
                               title={`Despesa com prazo: parcela ${t.parcela_atual} de ${t.total_parcelas}`}
                             >
                               ⏱️ {t.parcela_atual}/{t.total_parcelas} meses
+                            </span>
+                          )}
+                          {/* Tag da Fatura de Destino nas assinaturas */}
+                          {ehCredito && mesFaturaDestino && (
+                            <span
+                              className="fixas__tag-fatura"
+                              title={`Assinatura cobrada dia ${diaCobranca || ''}: entra na fatura que vence em ${formatarMesAnoCurto(mesFaturaDestino)}`}
+                            >
+                              🗓️ Fatura {formatarMesAnoCurto(mesFaturaDestino)}
+                            </span>
+                          )}
+                          {/* Alerta de Cobrança Prevista Ultrapassada */}
+                          {cobrancaPassou && (
+                            <span
+                              className="fixas__tag-alerta-data"
+                              title={`A data prevista de cobrança (dia ${diaCobranca}) já passou e esta conta continua pendente neste mês.`}
+                            >
+                              ⚠️ Passou do dia {diaCobranca}
                             </span>
                           )}
                         </div>

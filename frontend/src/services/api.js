@@ -60,6 +60,7 @@ export const api = {
   criarTransacao: (dados) => requisitar('POST', '/transacoes', dados),
   atualizarTransacao: (id, dados) => requisitar('PATCH', `/transacoes/${id}`, dados),
   alternarPagamentoFixa: (id, mes) => requisitar('POST', `/transacoes/${id}/alternar-pagamento`, { mes }),
+  alternarPagamentoFatura: (bancoId, mes) => requisitar('POST', `/bancos/${bancoId}/alternar-fatura`, { mes }),
   removerTransacao: (id) => requisitar('DELETE', `/transacoes/${id}`),
   criarCofre: (dados) => requisitar('POST', '/cofre', dados),
   atualizarCofre: (id, dados) => requisitar('PATCH', `/cofre/${id}`, dados),

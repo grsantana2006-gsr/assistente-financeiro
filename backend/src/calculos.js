@@ -159,15 +159,37 @@ export function calcularReceitaDoMes(transacoes, mesReferencia) {
   )
 }
 
-// Monta cada "card" de banco já com limite disponível e % de uso
-export function montarCartoes(bancos, transacoes, mesReferencia) {
+// Calcula apenas o valor da fatura de um banco específico para o mês de referência
+export function calcularFaturaDoBanco(transacoes, banco, mesReferencia) {
+  const bancoId = typeof banco === 'object' ? banco.id : banco
+  const bancoObj = typeof banco === 'object' ? banco : null
+  return soma(
+    transacoes.filter((t) => {
+      if (t.banco_id !== bancoId || t.tipo !== 'Despesa' || !t.ativa || t.forma_pagamento !== 'Crédito') return false
+      return contaNaFatura(t, mesReferencia, bancoObj)
+    })
+  )
+}
+
+// Monta cada "card" de banco já com limite disponível, % de uso e status da fatura do mês
+export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap = new Map()) {
   return bancos.map((banco) => {
-    const gasto = calcularGastoDoBanco(transacoes, banco, mesReferencia)
+    const gastoAcumulado = calcularGastoDoBanco(transacoes, banco, mesReferencia)
+    const ehBeneficio = banco.tipo === 'Benefício'
+    const valorFatura = ehBeneficio ? 0 : calcularFaturaDoBanco(transacoes, banco, mesReferencia)
+    const faturaPaga = Boolean(faturasPagasMap.get(banco.id))
+
+    // Se a fatura do mês atual já foi paga, aquele valor é liberado do limite comprometido
+    const gastoEfetivo = faturaPaga ? Math.max(gastoAcumulado - valorFatura, 0) : gastoAcumulado
+
     return {
       ...banco,
-      gasto: arredondar(gasto),
-      limite_disponivel: arredondar(Math.max(banco.limite_total - gasto, 0)),
-      uso: banco.limite_total > 0 ? Math.min(gasto / banco.limite_total, 1) : 0,
+      gasto: arredondar(gastoEfetivo),
+      gasto_acumulado: arredondar(gastoAcumulado),
+      valor_fatura: arredondar(valorFatura),
+      fatura_paga: faturaPaga,
+      limite_disponivel: arredondar(Math.max(banco.limite_total - gastoEfetivo, 0)),
+      uso: banco.limite_total > 0 ? Math.min(gastoEfetivo / banco.limite_total, 1) : 0,
     }
   })
 }

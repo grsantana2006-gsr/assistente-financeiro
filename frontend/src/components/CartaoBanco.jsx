@@ -1,37 +1,39 @@
 import { useState } from 'react'
-import { formatarMoeda, formatarPercentual } from '../utils/format'
+import { formatarMoeda, formatarPercentual, formatarMesAnoCurto } from '../utils/format'
 import { nivelDeAlerta } from '../utils/calculos'
 import './CartaoBanco.css'
 
 // Um card para UM banco. Recebe:
-// - cartao: dados do banco + gasto, limite_disponivel e uso (calculados pelo servidor)
-// - aoSalvarLimite: função do pai (assíncrona) chamada quando o usuário confirma um novo limite
-function CartaoBanco({ cartao, aoSalvarLimite }) {
+// - cartao: dados do banco + gasto, limite_disponivel, uso, valor_fatura e fatura_paga
+// - aoSalvarLimite: função do pai chamada para salvar novo limite
+// - aoAlternarFatura: função para alternar status da fatura (aberta vs paga)
+// - mesReferencia: mês de referência (ex: '2026-10')
+function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }) {
   // useState: memória do componente. Quando muda, a tela é redesenhada.
-  // editando -> está mostrando o campo de edição?  | rascunho -> texto digitado
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState('')
-  const [salvando, setSalvando] = useState(false) // aguardando a resposta da API?
+  const [salvando, setSalvando] = useState(false)
 
   const banco = cartao
   const { gasto, limite_disponivel: disponivel, uso } = cartao
   const alerta = nivelDeAlerta(uso)
   const ehBeneficio = banco.tipo === 'Benefício'
+  const mesAtual = mesReferencia || new Date().toISOString().slice(0, 7)
 
   function iniciarEdicao() {
-    setRascunho(String(banco.limite_total)) // começa com o valor atual
+    setRascunho(String(banco.limite_total))
     setEditando(true)
   }
 
   async function salvar(evento) {
-    evento.preventDefault() // evita recarregar a página ao enviar o formulário
+    evento.preventDefault()
     const novoLimite = Number(rascunho.replace(',', '.'))
-    if (Number.isNaN(novoLimite) || novoLimite < 0) return // ignora valor inválido
+    if (Number.isNaN(novoLimite) || novoLimite < 0) return
 
     setSalvando(true)
     const deuCerto = await aoSalvarLimite(banco.id, novoLimite)
     setSalvando(false)
-    if (deuCerto) setEditando(false) // se falhou, mantém aberto para tentar de novo
+    if (deuCerto) setEditando(false)
   }
 
   return (
@@ -74,6 +76,39 @@ function CartaoBanco({ cartao, aoSalvarLimite }) {
         <span>Gasto: <strong>{formatarMoeda(gasto)}</strong></span>
         <span>{ehBeneficio ? 'Recarga:' : 'Limite:'} <strong>{formatarMoeda(banco.limite_total)}</strong></span>
       </div>
+
+      {/* Bloco de Fatura do Mês e Botão de Quitação */}
+      {!ehBeneficio && (
+        <div className={`cartao__fatura-bloco ${banco.fatura_paga ? 'cartao__fatura-bloco--paga' : ''}`}>
+          <div className="cartao__fatura-conteudo">
+            <span className="cartao__fatura-rotulo">
+              Fatura de {formatarMesAnoCurto(mesAtual)}:
+            </span>
+            <strong className="cartao__fatura-valor">
+              {formatarMoeda(banco.valor_fatura || 0)}
+            </strong>
+            <span className="cartao__fatura-vencimento">
+              Vencimento: dia {banco.dia_vencimento}
+            </span>
+          </div>
+
+          <button
+            id={`fatura-btn-${banco.id}`}
+            type="button"
+            className={`cartao__btn-fatura ${
+              banco.fatura_paga ? 'cartao__btn-fatura--paga' : 'cartao__btn-fatura--aberta'
+            }`}
+            onClick={() => aoAlternarFatura && aoAlternarFatura(banco.id)}
+            title={
+              banco.fatura_paga
+                ? 'Fatura quitada! Clique para reabrir se necessário.'
+                : 'Clique para marcar a fatura deste mês como paga e liberar o limite correspondente.'
+            }
+          >
+            {banco.fatura_paga ? '✓ Fatura Paga' : '⏳ Fatura Aberta'}
+          </button>
+        </div>
+      )}
 
       {/* Renderização condicional: mostra o formulário OU o botão */}
       {editando ? (

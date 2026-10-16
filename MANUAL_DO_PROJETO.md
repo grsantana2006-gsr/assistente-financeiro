@@ -145,6 +145,20 @@ Se você vai começar a pagar uma nova despesa fixa somente daqui a alguns meses
 #### F. Data de Pagamento / Vencimento
 Cada conta possui um campo de data editável diretamente na linha (`<input type="date">`). Alterar a data dispara uma requisição `PATCH` imediata para o servidor, mantendo suas datas de pagamento sempre organizadas. Se você alterar a data para um mês futuro, ela migra instantaneamente para a seção de agendadas!
 
+#### G. Filtro Rápido no Topo da Lista (`Todas` | `⚡ Conta/PIX` | `💳 Cartão`)
+Para facilitar a auditoria sem poluição visual, você pode filtrar as contas fixas do mês em um clique:
+* **📋 Todas:** Exibe a visão completa do checklist mensal.
+* **⚡ Conta / PIX:** Isola apenas aluguel, condomínio, luz e contas que saem da conta bancária.
+* **💳 Cartão de Crédito:** Isola exclusivamente assinaturas de streaming, nuvem e academias que cobram no cartão.
+
+#### H. Tag da Fatura de Destino nas Assinaturas
+O sistema calcula a data de fechamento do cartão vinculado à assinatura (ex: Nubank fecha dia 27, BB dia 28, Itaú dia 03, PicPay dia 04).
+* Se a cobrança da assinatura ocorrer após a data de fechamento daquele cartão, o sistema exibe uma etiqueta informativa: `🗓️ Fatura Nov/26` ou `🗓️ Fatura Dez/26`.
+* Dessa forma, você sabe exatamente em qual mês aquela assinatura vai te cobrar no boleto da fatura.
+
+#### I. Alerta de Cobrança Prevista Ultrapassada
+Se a data programada para a conta fixa já passou no calendário atual (ex: data era dia 10 e hoje já é dia 16) e a despesa ainda estiver com status pendente (`⏳ Pendente` ou `⏳ A Cobrar`), o sistema exibe uma insígnia sutil: `⚠️ Passou do dia 10`. Isso serve como um lembrete preventivo para conferir se o pagamento foi esquecido ou se houve recusa no cartão.
+
 ---
 
 ### 🛒 Setor 4: Gastos Variáveis & Compras Parceladas (`Extrato.jsx`)
@@ -212,6 +226,19 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
   * Exibe o dia de fechamento e o dia de vencimento de cada cartão (ou dia de recarga no caso de benefícios).
 * **Ajuste de Teto em Tempo Real:**
   * Ao clicar no botão **✏️ Editar limite** (ou **✏️ Editar recarga mensal**), abre-se um campo para digitar o novo valor. Ao salvar, uma chamada `PATCH /api/bancos/:id` persiste o novo valor no banco de dados.
+
+* **Fatura do Mês & Sistema de Quitação (`✓ Fatura Paga`):**
+  * Cada cartão de crédito possui agora um bloco dedicado exibindo a **Fatura do Mês de Referência** (ex: `Fatura de Out/26: R$ 385,50 · Vencimento: dia 03`).
+  * **Botão Interativo de Status:**
+    * 🟡 **`⏳ Fatura Aberta`:** Indica que a fatura daquele mês ainda está aguardando quitação.
+    * 🟢 **`✓ Fatura Paga`:** Ao pagar o boleto da fatura no banco, você clica neste botão para registrar a quitação.
+  * **Restabelecimento Automático de Limite:**
+    * Quando a fatura é marcada como paga, o sistema **libera imediatamente o limite consumido por aquela fatura**, exatamente como o banco faz na vida real!
+    * As parcelas futuras de compras parceladas continuam comprometendo o restante do limite, garantindo fidelidade contábil absoluta.
+  * **Integração com o Topo (`StatusHeader`):**
+    * O card "Faturas de Cartão" no topo passa a exibir o total pendente de pagamento e o progresso de quitação (ex: `2/3 faturas pagas (R$ 481,39 quitados)`).
+    * Ao quitar todas as faturas do mês, o painel exibe o selo comemorativo: `🎉 Faturas (Todas Pagas)`.
+  * **Persistência no Banco de Dados:** Registrado na tabela `pagamentos_faturas(banco_id, mes, pago_em)`. Mudar de mês reseta o status para o ciclo correspondente de forma 100% automatizada.
 
 ---
 

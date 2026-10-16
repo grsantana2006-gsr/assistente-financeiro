@@ -128,3 +128,84 @@
 .cartao__form input:focus {
   box-shadow: 0 0 0 3px var(--primary-soft);
 }
+
+/* ---------- Bloco de Fatura do Mês ---------- */
+.cartao__fatura-bloco {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+}
+
+.cartao__fatura-bloco--paga {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.cartao__fatura-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cartao__fatura-rotulo {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.cartao__fatura-valor {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #c4b5fd;
+}
+
+.cartao__fatura-bloco--paga .cartao__fatura-valor {
+  color: #34d399;
+}
+
+.cartao__fatura-vencimento {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.cartao__btn-fatura {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.cartao__btn-fatura--aberta {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+.cartao__btn-fatura--aberta:hover {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #fbbf24;
+  transform: translateY(-1px);
+}
+
+.cartao__btn-fatura--paga {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #34d399;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+}
+
+.cartao__btn-fatura--paga:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: #34d399;
+  transform: translateY(-1px);
+}

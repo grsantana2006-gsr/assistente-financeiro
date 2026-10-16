@@ -94,9 +94,18 @@ export async function criarTabelas() {
       UNIQUE(transacao_id, mes)
     );
 
+    CREATE TABLE IF NOT EXISTS pagamentos_faturas (
+      id             SERIAL PRIMARY KEY,
+      banco_id       INTEGER NOT NULL REFERENCES bancos(id) ON DELETE CASCADE,
+      mes            TEXT    NOT NULL,
+      pago_em        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(banco_id, mes)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_transacoes_banco ON transacoes(banco_id);
     CREATE INDEX IF NOT EXISTS idx_transacoes_data  ON transacoes(data_compra);
     CREATE INDEX IF NOT EXISTS idx_pagamentos_fixas_mes ON pagamentos_fixas(mes);
+    CREATE INDEX IF NOT EXISTS idx_pagamentos_faturas_mes ON pagamentos_faturas(mes);
   `)
 }
 

@@ -33,3 +33,12 @@ export function formatarDataHora(dataStr) {
 
   return `${dia}/${mes}/${ano} às ${hora}:${minuto}`
 }
+
+// Transforma "2026-11" em "Nov/26"
+export function formatarMesAnoCurto(anoMes) {
+  if (!anoMes) return ''
+  const [ano, mes] = anoMes.split('-')
+  const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+  const idx = parseInt(mes, 10) - 1
+  return `${meses[idx] || mes}/${ano.slice(2)}`
+}

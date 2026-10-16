@@ -57,6 +57,39 @@
   transition: width 0.3s ease;
 }
 
+/* ---------- Filtros Rápidos ---------- */
+.fixas__filtros {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.fixas__filtro-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.fixas__filtro-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.fixas__filtro-btn--ativo {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: #c4b5fd;
+  font-weight: 600;
+}
+
 /* ---------- Lista de Itens ---------- */
 .fixas__lista {
   list-style: none;
@@ -128,6 +161,34 @@
   padding: 2px 7px;
   border-radius: 999px;
   white-space: nowrap;
+}
+
+.fixas__tag-fatura {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.fixas__tag-alerta-data {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  animation: pulse-alerta 2s infinite ease-in-out;
+}
+
+@keyframes pulse-alerta {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
 }
 
 .fixas__valor {
