@@ -82,11 +82,31 @@ function DespesasFixas({
   // Cálculos de resumo do mês (apenas contas do mês atual!)
   const ativas = despesasDoMes.filter((t) => t.ativa)
   const totalMensal = ativas.reduce((soma, t) => soma + t.valor, 0)
-  const totalPago = ativas.filter((t) => t.pago).reduce((soma, t) => soma + t.valor, 0)
-  const totalPendente = Math.max(totalMensal - totalPago, 0)
-  const qtdPagas = ativas.filter((t) => t.pago).length
+
+  // Separar contas pagas em conta (PIX/Débito/Dinheiro/Voucher) vs contas no cartão de crédito
+  const contasContaPix = ativas.filter((t) => t.forma_pagamento !== 'Crédito')
+  const contasCredito = ativas.filter((t) => t.forma_pagamento === 'Crédito')
+
+  // Liquidado na conta (dinheiro que já saiu)
+  const liquidadoConta = contasContaPix
+    .filter((t) => t.pago)
+    .reduce((soma, t) => soma + t.valor, 0)
+  const qtdLiquidadaConta = contasContaPix.filter((t) => t.pago).length
+  const qtdTotalConta = contasContaPix.length
+
+  // Lançado na fatura do cartão de crédito (já cobrado pela operadora)
+  const lancadoFatura = contasCredito
+    .filter((t) => t.pago)
+    .reduce((soma, t) => soma + t.valor, 0)
+  const qtdLancadaFatura = contasCredito.filter((t) => t.pago).length
+  const qtdTotalCredito = contasCredito.length
+
+  // Total confirmado (liquidado + na fatura) e Total ainda pendente
+  const totalConfirmado = liquidadoConta + lancadoFatura
+  const totalPendente = Math.max(totalMensal - totalConfirmado, 0)
+  const qtdPendentes = ativas.filter((t) => !t.pago).length
   const qtdTotal = ativas.length
-  const progresso = totalMensal > 0 ? Math.min((totalPago / totalMensal) * 100, 100) : 0
+  const progresso = totalMensal > 0 ? Math.min((totalConfirmado / totalMensal) * 100, 100) : 0
 
   function nomeDoBanco(id) {
     return bancos.find((b) => b.id === id)?.nome ?? '—'
@@ -139,25 +159,40 @@ function DespesasFixas({
       </div>
 
       <div className="card fixas">
-        {/* Resumo do mês: Total, Pago e A Pagar */}
+        {/* Resumo do mês: Total, Liquidado na Conta, Lançado na Fatura e A Pagar */}
         <div className="fixas__resumo">
           <div className="fixas__resumo-cards">
             <div className="fixas__resumo-item">
               <span className="card-subtitle">Total Mensal ({formatarMesAno(mesAtualRef)})</span>
               <span className="fixas__resumo-valor negative">{formatarMoeda(totalMensal)}</span>
+              <span className="fixas__resumo-sub">{qtdTotal} contas ativas</span>
             </div>
             <div className="fixas__resumo-item">
-              <span className="card-subtitle">Pago este Mês ({qtdPagas}/{qtdTotal})</span>
-              <span className="fixas__resumo-valor positive">{formatarMoeda(totalPago)}</span>
+              <span className="card-subtitle">Liquidado na Conta</span>
+              <span className="fixas__resumo-valor positive">{formatarMoeda(liquidadoConta)}</span>
+              <span className="fixas__resumo-sub">
+                {qtdLiquidadaConta}/{qtdTotalConta} via PIX/Débito
+              </span>
             </div>
             <div className="fixas__resumo-item">
-              <span className="card-subtitle">A Pagar</span>
+              <span className="card-subtitle">Lançado nas Faturas</span>
+              <span className="fixas__resumo-valor credit">{formatarMoeda(lancadoFatura)}</span>
+              <span className="fixas__resumo-sub">
+                {qtdLancadaFatura}/{qtdTotalCredito} assinaturas cartão
+              </span>
+            </div>
+            <div className="fixas__resumo-item">
+              <span className="card-subtitle">Ainda Pendente</span>
               <span className="fixas__resumo-valor warning">{formatarMoeda(totalPendente)}</span>
+              <span className="fixas__resumo-sub">{qtdPendentes} a confirmar</span>
             </div>
           </div>
 
           {/* Barra de progresso visual */}
-          <div className="fixas__progresso-trilho" title={`${progresso.toFixed(0)}% pago`}>
+          <div
+            className="fixas__progresso-trilho"
+            title={`${progresso.toFixed(0)}% processado (${formatarMoeda(totalConfirmado)} de ${formatarMoeda(totalMensal)})`}
+          >
             <div className="fixas__progresso-barra" style={{ width: `${progresso}%` }} />
           </div>
         </div>
@@ -171,14 +206,43 @@ function DespesasFixas({
               const ativa = t.ativa
               const ehTemporaria = t.total_parcelas > 1
               const emEdicao = editandoId === t.id
+              const ehCredito = t.forma_pagamento === 'Crédito'
+
+              // Configuração inteligente de status para Crédito vs Conta/PIX
+              const statusClass = t.pago
+                ? ehCredito
+                  ? 'fixas__btn-status--fatura'
+                  : 'fixas__btn-status--pago'
+                : ehCredito
+                  ? 'fixas__btn-status--a-cobrar'
+                  : 'fixas__btn-status--pendente'
+
+              const statusTexto = t.pago
+                ? ehCredito
+                  ? '💳 Na Fatura'
+                  : '✓ Liquidado'
+                : ehCredito
+                  ? '⏳ A Cobrar'
+                  : '⏳ Pendente'
+
+              const statusTitle = t.pago
+                ? ehCredito
+                  ? 'Cobrado no cartão (já lançado na fatura). Clique para desmarcar.'
+                  : 'Conta liquidada / debitada da conta. Clique para marcar como pendente.'
+                : ehCredito
+                  ? 'Ainda não cobrado no cartão este mês. Clique para marcar como lançado na fatura.'
+                  : 'Conta pendente de pagamento este mês. Clique para marcar como liquidada.'
+
+              const itemClass = `fixas__item ${ativa ? '' : 'fixas__item--pausada'} ${
+                t.pago
+                  ? ehCredito
+                    ? 'fixas__item--fatura'
+                    : 'fixas__item--pago'
+                  : ''
+              }`
 
               return (
-                <li
-                  key={t.id}
-                  className={`fixas__item ${ativa ? '' : 'fixas__item--pausada'} ${
-                    t.pago ? 'fixas__item--pago' : ''
-                  }`}
-                >
+                <li key={t.id} className={itemClass}>
                   {emEdicao ? (
                     <div className="fixas__edicao-inline">
                       <input
@@ -269,18 +333,16 @@ function DespesasFixas({
                         ✏️
                       </button>
 
-                      {/* Botão de Status: Pago vs Pendente */}
+                      {/* Botão de Status Inteligente: Liquidado vs Na Fatura vs Pendente */}
                       <button
                         id={`pago-fixa-${t.id}`}
                         type="button"
-                        className={`fixas__btn-status ${
-                          t.pago ? 'fixas__btn-status--pago' : 'fixas__btn-status--pendente'
-                        }`}
+                        className={`fixas__btn-status ${statusClass}`}
                         onClick={() => aoAlternarPagamento(t.id)}
-                        title={t.pago ? 'Clique para marcar como Pendente' : 'Clique para marcar como Pago'}
-                        aria-label={`${t.descricao}: ${t.pago ? 'Pago' : 'Pendente'}`}
+                        title={statusTitle}
+                        aria-label={`${t.descricao}: ${statusTexto}`}
                       >
-                        {t.pago ? '✓ Pago' : '⏳ Pendente'}
+                        {statusTexto}
                       </button>
 
                       {/* Interruptor ativar/pausar */}

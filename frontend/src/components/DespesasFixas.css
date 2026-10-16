@@ -32,6 +32,16 @@
   font-weight: 700;
 }
 
+.fixas__resumo-valor.credit {
+  color: #818cf8;
+}
+
+.fixas__resumo-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
 .fixas__progresso-trilho {
   height: 6px;
   background: rgba(255, 255, 255, 0.08);
@@ -42,7 +52,7 @@
 
 .fixas__progresso-barra {
   height: 100%;
-  background: linear-gradient(90deg, #10b981, #059669);
+  background: linear-gradient(90deg, #10b981 0%, #6366f1 100%);
   border-radius: 999px;
   transition: width 0.3s ease;
 }
@@ -74,7 +84,12 @@
 
 .fixas__item--pago {
   border-left: 3px solid #10b981;
-  background: rgba(16, 185, 129, 0.03);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.fixas__item--fatura {
+  border-left: 3px solid #6366f1;
+  background: rgba(99, 102, 241, 0.04);
 }
 
 /* Despesa pausada fica apagada e com o nome riscado */
@@ -155,6 +170,19 @@
   transform: translateY(-1px);
 }
 
+.fixas__btn-status--fatura {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(99, 102, 241, 0.45);
+  color: #a5b4fc;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+}
+
+.fixas__btn-status--fatura:hover {
+  background: rgba(99, 102, 241, 0.32);
+  border-color: #818cf8;
+  transform: translateY(-1px);
+}
+
 .fixas__btn-status--pendente {
   background: rgba(245, 158, 11, 0.14);
   border-color: rgba(245, 158, 11, 0.35);
@@ -164,6 +192,18 @@
 .fixas__btn-status--pendente:hover {
   background: rgba(245, 158, 11, 0.24);
   border-color: #fbbf24;
+  transform: translateY(-1px);
+}
+
+.fixas__btn-status--a-cobrar {
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+}
+
+.fixas__btn-status--a-cobrar:hover {
+  background: rgba(148, 163, 184, 0.22);
+  border-color: #cbd5e1;
   transform: translateY(-1px);
 }
 

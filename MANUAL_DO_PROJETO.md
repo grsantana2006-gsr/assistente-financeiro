@@ -89,20 +89,25 @@ Este setor registra todos os ingressos de capital no seu orçamento.
 
 Este é um dos setores mais avançados e importantes do sistema. Ele gerencia as contas recorrentes e foi desenhado para eliminar duas das maiores dores da gestão financeira pessoal: esquecer de pagar uma conta e distorcer a projeção futura com despesas que têm prazo de término.
 
-#### A. Painel de Resumo do Mês (Checklist KPI)
-No topo do card, você tem um resumo em tempo real:
-* **Total Mensal:** Quanto suas contas fixas ativas somam no mês.
-* **Pago este Mês (X/Y):** O valor exato que já saiu do seu bolso e a quantidade de contas liquidadas (ex: `R$ 900,00 (3/5)`).
-* **A Pagar:** Quanto ainda falta pagar até o fim do mês, em destaque de alerta.
-* **Barra de Progresso:** Um trilho visual que enche proporcionalmente conforme você liquida as contas.
+#### A. Painel de Resumo do Mês (Checklist KPI em 4 Blocos)
+No topo do card, você tem um resumo em tempo real que separa a realidade de caixa da realidade de fatura:
+* **Total Mensal:** Quanto suas contas fixas ativas somam no mês atual.
+* **Liquidado na Conta:** O valor das contas via PIX, Débito em Conta ou Dinheiro que já foram efetivamente pagas e saíram do saldo bancário.
+* **Lançado nas Faturas:** O valor das assinaturas e contas fixas no Cartão de Crédito que já foram cobradas pela operadora e estão aguardando o vencimento da fatura.
+* **Ainda Pendente:** Quanto ainda falta confirmar/pagar até o fim do mês, em destaque de alerta.
+* **Barra de Progresso Bicolor:** Um trilho visual que enche em gradiente conforme você confirma as liquidações e lançamentos.
 
-#### B. O Botão Interativo "Pago / Pendente" (Checklist Inteligente)
-Ao lado de cada conta fixa, há um botão inteligente de status:
-* 🟡 **`⏳ Pendente`:** A conta ainda não foi paga neste mês.
-* 🟢 **`✓ Pago`:** Ao apertar o botão, ele registra a quitação da conta.
+#### B. O Botão Interativo Inteligente (Conta vs Cartão)
+Ao lado de cada conta fixa, o botão inteligente adapta seu comportamento e rótulo dependendo da forma de pagamento:
+* **Se a conta for no Cartão de Crédito:**
+  * ⚪ **`⏳ A Cobrar`:** A operadora ainda não processou a cobrança da assinatura neste mês.
+  * 🟣 **`💳 Na Fatura`:** A cobrança já foi confirmada na fatura do cartão (você pagará no vencimento da fatura).
+* **Se a conta for via PIX / Débito em Conta / Dinheiro:**
+  * 🟡 **`⏳ Pendente`:** A conta ainda não foi paga neste mês.
+  * 🟢 **`✓ Liquidado`:** O dinheiro já saiu da sua conta bancária.
 * **A Lógica Mensal (Como funciona no banco):**
-  * O sistema grava o pagamento na tabela `pagamentos_fixas` atrelando o `transacao_id` ao mês específico (ex: `2026-10`).
-  * Quando o mês virar (ex: 01 de novembro), **todas as contas voltam automaticamente para `⏳ Pendente`** sem que você precise desmarcar nada manualmente!
+  * O sistema grava a confirmação na tabela `pagamentos_fixas` atrelando o `transacao_id` ao mês específico (ex: `2026-10`).
+  * Quando o mês virar (ex: 01 de novembro), **todas as contas voltam automaticamente para o estado inicial (`⏳ Pendente` ou `⏳ A Cobrar`)** sem que você precise desmarcar nada manualmente!
 
 #### C. Duração e Prazo Determinado (Recorrência Finita)
 Nem toda conta fixa dura para sempre. Um curso de programação em 12x, um seguro de carro pago em 10 boletos mensais ou um consórcio têm início e fim.
