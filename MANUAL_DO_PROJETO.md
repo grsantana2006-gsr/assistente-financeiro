@@ -229,12 +229,15 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
 
 * **Fatura do Mês & Sistema de Quitação (`✓ Fatura Paga`):**
   * Cada cartão de crédito possui agora um bloco dedicado exibindo a **Fatura do Mês de Referência** (ex: `Fatura de Out/26: R$ 385,50 · Vencimento: dia 03`).
+  * **Ciclo de Fechamento Unificado:**
+    * Tanto para despesas fixas (assinaturas e compras parceladas) quanto para despesas variáveis no cartão, o mês da fatura segue estritamente o ciclo do banco (`dia_fechamento` e `dia_vencimento`).
+    * Exemplo Nubank (fecha dia 27, vence dia 03): assinaturas e compras cobradas ao longo de Outubro (como Google One, Premiere, ou compras de mercado) entram automaticamente na fatura que vence em **Novembro** (`Nov/26`), sem contaminar o boleto de Outubro.
   * **Botão Interativo de Status:**
     * 🟡 **`⏳ Fatura Aberta`:** Indica que a fatura daquele mês ainda está aguardando quitação.
     * 🟢 **`✓ Fatura Paga`:** Ao pagar o boleto da fatura no banco, você clica neste botão para registrar a quitação.
-  * **Restabelecimento Automático de Limite:**
-    * Quando a fatura é marcada como paga, o sistema **libera imediatamente o limite consumido por aquela fatura**, exatamente como o banco faz na vida real!
-    * As parcelas futuras de compras parceladas continuam comprometendo o restante do limite, garantindo fidelidade contábil absoluta.
+  * **Restabelecimento Automático e Fiel de Limite:**
+    * Quando a fatura é marcada como paga, o sistema **libera imediatamente e estritamente o valor que foi pago naquela fatura**, exatamente como o banco faz na vida real!
+    * Todas as parcelas futuras de compras parceladas e gastos do próximo ciclo continuam retendo o limite comprometido.
   * **Integração com o Topo (`StatusHeader`):**
     * O card "Faturas de Cartão" no topo passa a exibir o total pendente de pagamento e o progresso de quitação (ex: `2/3 faturas pagas (R$ 481,39 quitados)`).
     * Ao quitar todas as faturas do mês, o painel exibe o selo comemorativo: `🎉 Faturas (Todas Pagas)`.

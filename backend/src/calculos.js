@@ -74,8 +74,8 @@ export function mesDaTransacao(t, banco) {
 
 // Uma despesa entra na fatura ou pagamentos do mês de referência quando:
 //  - está ativa; e
-//  - é fixa e já iniciou (data_compra <= mês de referência), OU
-//  - é variável/parcelada e a parcela cai no mês de referência.
+//  - para débito/PIX/dinheiro: data de pagamento no mês de referência;
+//  - para crédito: o mês de vencimento da fatura (calculado por obterMesFatura) cai no mês de referência.
 export function contaNaFatura(t, mesReferencia, banco) {
   if (t.tipo !== 'Despesa' || !t.ativa) return false
   const forma = t.forma_pagamento || 'Crédito'
@@ -83,40 +83,29 @@ export function contaNaFatura(t, mesReferencia, banco) {
   // Voucher não entra em faturas de conta corrente nem de cartão
   if (forma === 'Voucher') return false
 
-  const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
+  const ehCredito = forma === 'Crédito' && banco && banco.tipo !== 'Benefício'
+  const mesInicio = ehCredito
+    ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+    : (t.data_compra ? t.data_compra.slice(0, 7) : null)
 
-  if (t.categoria === 'Fixo') {
-    // Se a despesa fixa foi agendada para um mês futuro, ela ainda não entra na fatura atual
-    if (mesInicio && mesReferencia < mesInicio) return false
-
-    // Se tem prazo determinado, verifica se já passou do total de parcelas
-    if (t.total_parcelas > 1) {
-      if (mesInicio) {
-        const [anoRef, mRef] = mesReferencia.split('-').map(Number)
-        const [anoIni, mIni] = mesInicio.split('-').map(Number)
-        const diffMeses = (anoRef - anoIni) * 12 + (mRef - mIni)
-        if (t.parcela_atual + diffMeses > t.total_parcelas) return false
-      } else if (t.parcela_atual > t.total_parcelas) {
-        return false
-      }
-    }
-    return true
-  }
-
-  // Despesa Variável (à vista ou parcelada)
-  const mesFatura1 = mesDaTransacao(t, banco)
-  if (!mesFatura1) return false
+  if (!mesInicio) return false
 
   if (t.total_parcelas > 1) {
     const [anoRef, mRef] = mesReferencia.split('-').map(Number)
-    const [ano1, m1] = mesFatura1.split('-').map(Number)
-    const diffMeses = (anoRef - ano1) * 12 + (mRef - m1)
-    const numParcela = t.parcela_atual + diffMeses
+    const [anoIni, mIni] = mesInicio.split('-').map(Number)
+    const diffMeses = (anoRef - anoIni) * 12 + (mRef - mIni)
+    const numParcela = (t.parcela_atual || 1) + diffMeses
     return numParcela >= 1 && numParcela <= t.total_parcelas
   }
 
+  if (t.categoria === 'Fixo') {
+    // Para despesa fixa contínua (ex: assinaturas ou contas recorrentes):
+    // Entra a partir do mês em que começou a cobrança/fatura
+    return mesReferencia >= mesInicio
+  }
+
   // Compra à vista (1x)
-  return mesFatura1 === mesReferencia
+  return mesInicio === mesReferencia
 }
 
 export function calcularGastoDoBanco(transacoes, banco, mesReferencia) {
@@ -257,15 +246,17 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, banc
         })
       )
 
-    // Fixas contínuas no mês k: só conta a partir de mesInicio
+    // Fixas contínuas no mês k: só conta a partir de mesInicio (levando em conta a fatura se for crédito)
     const fixasContinuasNoMes = fixasContinuas.filter((t) => {
-      const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
+      const banco = bancosMap.get(t.banco_id)
+      const mesInicio = mesDaTransacao(t, banco)
       return !mesInicio || mesK >= mesInicio
     })
 
     // Fixas temporárias no mês k: só conta a partir de mesInicio até total_parcelas
     const fixasTemporariasNoMes = fixasTemporarias.filter((t) => {
-      const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
+      const banco = bancosMap.get(t.banco_id)
+      const mesInicio = mesDaTransacao(t, banco)
       if (mesInicio && mesK < mesInicio) return false
       const diffMeses = mesInicio
         ? (anoK - Number(mesInicio.slice(0, 4))) * 12 + (mesKNum - Number(mesInicio.slice(5, 7)))
