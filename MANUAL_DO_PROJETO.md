@@ -22,16 +22,18 @@ O seu sistema adota o padrão moderno de arquitetura **Full-Stack desacoplada**,
           - "Fonte única da verdade" dos cálculos matemáticos
           - Validação defensiva de todos os campos
           - Executa regras de negócio (calculos.js)
+          - Motor de Conciliação e Importação Bancária (importador_ofx.js)
                 │  (SQL via Driver pg)
                 ▼
        3. BANCO DE DADOS (PostgreSQL no Supabase)
           - Armazenamento persistente e relacional blindado
-          - Tabelas: bancos, transacoes, cofre, pagamentos_fixas, configuracoes
+          - Tabelas: bancos, transacoes (com fitid único), cofre, pagamentos_fixas, pagamentos_faturas (com valor_pago), configuracoes
 ```
 
 * **Frontend (Vercel):** `https://assistente-financeiro-two-omega.vercel.app/`
 * **Backend (Render):** `https://assistente-financeiro-tjdd.onrender.com/api`
 * **Database (Supabase):** PostgreSQL em nuvem AWS (com Pooler de conexão para estabilidade IPv4).
+* **Segurança & Privacidade:** Arquivos de extratos bancários (`*.ofx`), credenciais e `.env` são blindados pelo `.gitignore` na raiz, impedindo vazamentos no repositório.
 
 ---
 
@@ -227,16 +229,21 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
 * **Ajuste de Teto em Tempo Real:**
   * Ao clicar no botão **✏️ Editar limite** (ou **✏️ Editar recarga mensal**), abre-se um campo para digitar o novo valor. Ao salvar, uma chamada `PATCH /api/bancos/:id` persiste o novo valor no banco de dados.
 
-* **Fatura do Mês & Sistema de Quitação (`✓ Fatura Paga`):**
-  * Cada cartão de crédito possui agora um bloco dedicado exibindo a **Fatura do Mês de Referência** (ex: `Fatura de Out/26: R$ 385,50 · Vencimento: dia 03`).
+* **Fatura do Mês & Sistema de Quitação (`✓ Fatura Paga` e `⚡ Adiantamento`):**
+  * Cada cartão de crédito possui agora um bloco dedicado exibindo a **Fatura do Mês de Referência** (ex: `Fatura de Nov/26: R$ 1.758,70 · Vencimento: dia 03`).
   * **Ciclo de Fechamento Unificado:**
     * Tanto para despesas fixas (assinaturas e compras parceladas) quanto para despesas variáveis no cartão, o mês da fatura segue estritamente o ciclo do banco (`dia_fechamento` e `dia_vencimento`).
     * Exemplo Nubank (fecha dia 27, vence dia 03): assinaturas e compras cobradas ao longo de Outubro (como Google One, Premiere, ou compras de mercado) entram automaticamente na fatura que vence em **Novembro** (`Nov/26`), sem contaminar o boleto de Outubro.
   * **Botão Interativo de Status:**
     * 🟡 **`⏳ Fatura Aberta`:** Indica que a fatura daquele mês ainda está aguardando quitação.
-    * 🟢 **`✓ Fatura Paga`:** Ao pagar o boleto da fatura no banco, você clica neste botão para registrar a quitação.
+    * 🟢 **`✓ Fatura Paga`:** Fatura quitada integralmente no banco.
+    * ⚡ **`⚡ R$ X Pago (Adiantamento / Parcial)`:** Caso você tenha pago uma parte da fatura antes do fechamento (ou adiantou dinheiro para liberar limite).
+  * **⚡ Suporte a Pagamentos Antecipados & Parciais:**
+    * Muito comum na rotina: você passa uma compra alta no cartão para um amigo ou familiar (ex: Lucas Pereira R$ 722,45), recebe o PIX dele logo em seguida e **paga o cartão imediatamente**.
+    * O sistema permite registrar o valor exato pago antecipadamente (ex: R$ 708,00 adiantados em 06/10).
+    * O card exibe o saldo líquido restante a pagar, a insígnia brilhante `⚡ R$ 708,00 adiantado` e **restaura o limite disponível na hora** na quantia exata que você pagou!
   * **Restabelecimento Automático e Fiel de Limite:**
-    * Quando a fatura é marcada como paga, o sistema **libera imediatamente e estritamente o valor que foi pago naquela fatura**, exatamente como o banco faz na vida real!
+    * Quando a fatura é marcada como paga (ou adiantada), o sistema **libera imediatamente e estritamente o valor que foi pago**, exatamente como o banco faz na vida real!
     * Todas as parcelas futuras de compras parceladas e gastos do próximo ciclo continuam retendo o limite comprometido.
   * **Integração com o Topo (`StatusHeader`):**
     * O card "Faturas de Cartão" no topo passa a exibir o total pendente de pagamento e o progresso de quitação (ex: `2/3 faturas pagas (R$ 481,39 quitados)`).
@@ -248,7 +255,39 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
       * Se houver assinaturas com data nos próximos dias que ainda estão com status `⏳ A Cobrar` (ex: Google One no dia 22, Premiere no dia 23), o card exibe uma etiqueta discreta com o **Total Previsto** (ex: `previsto: R$ 1.784,15`).
       * **Detalhamento Interativo:** Ao tocar ou clicar em qualquer mês futuro, o card abre um painel inline revelando cada conta com seu respectivo selo: `💳 Lançado` ou `⏳ A cobrar dia DD`.
     * Inclui botão para recolher ou expandir a visão dos próximos meses quando desejar.
-  * **Persistência no Banco de Dados:** Registrado na tabela `pagamentos_faturas(banco_id, mes, pago_em)`. Mudar de mês reseta o status para o ciclo correspondente de forma 100% automatizada.
+  * **Persistência no Banco de Dados:** Registrado na tabela `pagamentos_faturas(banco_id, mes, pago_em, valor_pago)`. Mudar de mês reseta o status para o ciclo correspondente de forma 100% automatizada.
+
+---
+
+### 🏦 Setor 6.1: O Motor de Conciliação e Importação Bancária OFX (`importador_ofx.js` e `/api/ofx`)
+
+Este é o motor bancário automatizado do sistema. Ele foi construído para permitir que você traga o extrato real do seu banco (Nubank, Itaú, Banco do Brasil, etc.) para dentro do seu sistema financeiro com **zero esforço manual** e **zero duplicação**:
+
+#### A. O que é o Formato OFX (Open Financial Exchange)?
+O arquivo `.ofx` é o padrão ouro da indústria financeira internacional. Ao contrário de uma planilha de Excel ou PDF, ele carrega metadados eletrônicos precisos emitidos diretamente pelo servidor do banco.
+
+#### B. A Chave Mestra da Deduplicação: O `FITID`
+Cada compra emitida no extrato bancário recebe um código alfanumérico global exclusivo chamado **`FITID`** (Financial Institution Transaction ID).
+* O nosso banco de dados agora possui uma coluna blindada com restrição de unicidade: `transacoes (..., fitid TEXT UNIQUE)`.
+* **Idempotência Absoluta:** Você pode importar o mesmo arquivo `.ofx` 1 vez ou 100 vezes: o sistema lê, compara os `FITIDs` e **ignora silenciosamente qualquer transação que já exista**, garantindo que nenhuma conta seja cadastrada duas vezes!
+
+#### C. Inteligência Automática de Estornos (Cancelamentos & Devoluções)
+Quando uma compra é cancelada ou estornada pelo lojista, o banco emite dois registros: o débito da compra e o crédito do estorno.
+* **Estorno Integral:** Se uma compra for estornada integralmente no mesmo ciclo (ex: Dieta Flexível R$ 34,75, Lltimehibrid R$ 70,59, Mercado Livre R$ 71,20), o motor reconhece o par correspondente e **descarta a compra automaticamente**, evitando poluir o seu painel com valores fantasmas.
+* **Estorno Parcial:** Se houver ajuste de valor (ex: Duka's Academia cobrou R$ 119,86 e devolveu R$ 93,26), o sistema calcula a diferença e registra unicamente o **valor líquido real pago** (R$ 26,60).
+
+#### D. Categorização Automática por Padrão de Nomes
+O motor analisa o texto do estabelecimento (`MEMO`) e classifica as novas despesas automaticamente:
+* Palavras com `uber`, `99`, `posto`, `combustivel` ➔ **Transporte**
+* Palavras com `mercad`, `youmart`, `ifood`, `restaurante`, `lanchonete`, `padaria` ➔ **Alimentação**
+* Palavras com `farmacia`, `drogaria`, `farmavip`, `hospital`, `medico` ➔ **Saúde**
+* Palavras com `smart fit`, `academia`, `duka` ➔ **Lazer / Saúde**
+* Palavras com `apple`, `google`, `netflix`, `disney`, `crunchy`, `prime` ➔ **Assinaturas**
+
+#### E. Como Usar no Dia a Dia:
+1. Acesse o aplicativo do seu banco (ex: Nubank) e baixe o extrato da fatura em formato `.ofx`.
+2. Salve o arquivo na pasta do projeto (ele é automaticamente protegido de subir para a internet pelo `.gitignore`).
+3. O sistema varre os arquivos e sincroniza tudo com o banco de dados em segundos!
 
 ---
 
