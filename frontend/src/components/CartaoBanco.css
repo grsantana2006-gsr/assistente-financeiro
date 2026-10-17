@@ -209,3 +209,201 @@
   border-color: #34d399;
   transform: translateY(-1px);
 }
+
+/* ---------- Bloco de Faturas dos Próximos Meses ---------- */
+.cartao__proximas-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+}
+
+.cartao__proximas-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.cartao__proximas-titulo {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.cartao__proximas-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all var(--transition);
+}
+
+.cartao__proximas-toggle-btn:hover {
+  color: #c4b5fd;
+  text-decoration: underline;
+}
+
+.cartao__proximas-trilho {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.cartao__proximas-trilho::-webkit-scrollbar {
+  height: 4px;
+}
+
+.cartao__proximas-trilho::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
+
+.cartao__proxima-card {
+  flex: 1 0 88px;
+  min-width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.cartao__proxima-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.cartao__proxima-card--ativo {
+  background: rgba(139, 92, 246, 0.16);
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);
+}
+
+.cartao__proxima-mes {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.cartao__proxima-valor {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.cartao__proxima-card--ativo .cartao__proxima-valor {
+  color: #c4b5fd;
+}
+
+.cartao__proxima-qtd {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.cartao__proxima-detalhes {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeIn 0.2s ease;
+}
+
+.cartao__proxima-detalhes-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.cartao__proxima-detalhes-topo strong {
+  color: var(--text);
+}
+
+.cartao__proxima-detalhes-fechar {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.cartao__proxima-detalhes-fechar:hover {
+  color: var(--text);
+}
+
+.cartao__proxima-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 140px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  scrollbar-width: thin;
+}
+
+.cartao__proxima-lista::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cartao__proxima-lista::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
+
+.cartao__proxima-item-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cartao__proxima-item-desc {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  color: var(--text);
+}
+
+.cartao__proxima-parc-tag {
+  color: #94a3b8;
+  font-size: 0.7rem;
+}
+
+.cartao__proxima-item-valor {
+  color: #c4b5fd;
+  font-weight: 600;
+  white-space: nowrap;
+}

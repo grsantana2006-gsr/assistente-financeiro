@@ -241,6 +241,11 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
   * **Integração com o Topo (`StatusHeader`):**
     * O card "Faturas de Cartão" no topo passa a exibir o total pendente de pagamento e o progresso de quitação (ex: `2/3 faturas pagas (R$ 481,39 quitados)`).
     * Ao quitar todas as faturas do mês, o painel exibe o selo comemorativo: `🎉 Faturas (Todas Pagas)`.
+  * **🔮 Faturas dos Próximos Meses (Previsão por Cartão):**
+    * Abaixo do bloco da fatura atual, cada cartão de crédito agora possui um trilho interativo exibindo a **previsão das faturas dos próximos 5 meses** (ex: `Nov/26`, `Dez/26`, `Jan/27`, `Fev/27`, `Mar/27`).
+    * Exibe o valor projetado de cada fatura futura e a quantidade de lançamentos previstos.
+    * **Detalhamento Interativo:** Ao tocar ou clicar em qualquer mês futuro, o card abre um painel inline revelando a lista completa com nome, valor e indicador de parcela (ex: `Mercado Livre (2/5x)`) de todas as contas que compõem aquele vencimento.
+    * Inclui botão para recolher ou expandir a visão dos próximos meses quando desejar.
   * **Persistência no Banco de Dados:** Registrado na tabela `pagamentos_faturas(banco_id, mes, pago_em)`. Mudar de mês reseta o status para o ciclo correspondente de forma 100% automatizada.
 
 ---

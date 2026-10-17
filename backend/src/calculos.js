@@ -160,6 +160,46 @@ export function calcularFaturaDoBanco(transacoes, banco, mesReferencia) {
   )
 }
 
+// Calcula a previsão das faturas dos próximos meses para um cartão
+export function calcularProximasFaturas(transacoes, banco, mesReferencia, quantidade = 5) {
+  if (!banco || banco.tipo === 'Benefício') return []
+  const [ano, mes] = mesReferencia.split('-').map(Number)
+  const faturas = []
+
+  for (let i = 1; i <= quantidade; i++) {
+    const data = new Date(ano, mes - 1 + i, 1)
+    const anoK = data.getFullYear()
+    const mesKNum = data.getMonth() + 1
+    const mesK = `${anoK}-${String(mesKNum).padStart(2, '0')}`
+
+    const itensDoMes = transacoes.filter(
+      (t) =>
+        t.banco_id === banco.id &&
+        t.tipo === 'Despesa' &&
+        t.ativa &&
+        t.forma_pagamento === 'Crédito' &&
+        contaNaFatura(t, mesK, banco),
+    )
+
+    const valor = itensDoMes.reduce((soma, t) => soma + t.valor, 0)
+
+    faturas.push({
+      mes: mesK,
+      valor: arredondar(valor),
+      qtd_itens: itensDoMes.length,
+      itens: itensDoMes.map((t) => ({
+        id: t.id,
+        descricao: t.descricao,
+        valor: t.valor,
+        parcela_atual: t.parcela_atual,
+        total_parcelas: t.total_parcelas,
+      })),
+    })
+  }
+
+  return faturas
+}
+
 // Monta cada "card" de banco já com limite disponível, % de uso e status da fatura do mês
 export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap = new Map()) {
   return bancos.map((banco) => {
@@ -167,6 +207,7 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
     const ehBeneficio = banco.tipo === 'Benefício'
     const valorFatura = ehBeneficio ? 0 : calcularFaturaDoBanco(transacoes, banco, mesReferencia)
     const faturaPaga = Boolean(faturasPagasMap.get(banco.id))
+    const proximasFaturas = ehBeneficio ? [] : calcularProximasFaturas(transacoes, banco, mesReferencia, 5)
 
     // Se a fatura do mês atual já foi paga, aquele valor é liberado do limite comprometido
     const gastoEfetivo = faturaPaga ? Math.max(gastoAcumulado - valorFatura, 0) : gastoAcumulado
@@ -177,6 +218,7 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
       gasto_acumulado: arredondar(gastoAcumulado),
       valor_fatura: arredondar(valorFatura),
       fatura_paga: faturaPaga,
+      proximas_faturas: proximasFaturas,
       limite_disponivel: arredondar(Math.max(banco.limite_total - gastoEfetivo, 0)),
       uso: banco.limite_total > 0 ? Math.min(gastoEfetivo / banco.limite_total, 1) : 0,
     }

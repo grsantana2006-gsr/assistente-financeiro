@@ -13,6 +13,8 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [mostrarProximas, setMostrarProximas] = useState(true)
+  const [faturaAbertaModal, setFaturaAbertaModal] = useState(null)
 
   const banco = cartao
   const { gasto, limite_disponivel: disponivel, uso } = cartao
@@ -107,6 +109,86 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
           >
             {banco.fatura_paga ? '✓ Fatura Paga' : '⏳ Fatura Aberta'}
           </button>
+        </div>
+      )}
+
+      {/* Bloco de Previsão das Próximas Faturas */}
+      {!ehBeneficio && banco.proximas_faturas && banco.proximas_faturas.length > 0 && (
+        <div className="cartao__proximas-bloco">
+          <div className="cartao__proximas-cabecalho">
+            <span className="cartao__proximas-titulo">
+              🔮 Faturas dos Próximos Meses:
+            </span>
+            <button
+              type="button"
+              className="cartao__proximas-toggle-btn"
+              onClick={() => setMostrarProximas(!mostrarProximas)}
+              aria-label={mostrarProximas ? 'Recolher próximas faturas' : 'Ver próximas faturas'}
+            >
+              {mostrarProximas ? 'Recolher ▲' : `Ver ${banco.proximas_faturas.length} meses ▼`}
+            </button>
+          </div>
+
+          {mostrarProximas && (
+            <div className="cartao__proximas-trilho">
+              {banco.proximas_faturas.map((faturaFutura) => {
+                const ativa = faturaAbertaModal?.mes === faturaFutura.mes
+                return (
+                  <button
+                    key={faturaFutura.mes}
+                    type="button"
+                    className={`cartao__proxima-card ${ativa ? 'cartao__proxima-card--ativo' : ''}`}
+                    onClick={() => setFaturaAbertaModal(ativa ? null : faturaFutura)}
+                    title={`Clique para ver os lançamentos de ${formatarMesAnoCurto(faturaFutura.mes)}`}
+                  >
+                    <span className="cartao__proxima-mes">
+                      {formatarMesAnoCurto(faturaFutura.mes)}
+                    </span>
+                    <strong className="cartao__proxima-valor">
+                      {formatarMoeda(faturaFutura.valor)}
+                    </strong>
+                    <span className="cartao__proxima-qtd">
+                      {faturaFutura.qtd_itens} {faturaFutura.qtd_itens === 1 ? 'item' : 'itens'}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Detalhes inline das contas que compõem a fatura futura selecionada */}
+          {mostrarProximas && faturaAbertaModal && (
+            <div className="cartao__proxima-detalhes">
+              <div className="cartao__proxima-detalhes-topo">
+                <span className="cartao__proxima-detalhes-titulo">
+                  Contas em <strong>{formatarMesAnoCurto(faturaAbertaModal.mes)}</strong> ({faturaAbertaModal.qtd_itens}):
+                </span>
+                <button
+                  type="button"
+                  className="cartao__proxima-detalhes-fechar"
+                  onClick={() => setFaturaAbertaModal(null)}
+                  title="Fechar detalhe"
+                >
+                  ✕
+                </button>
+              </div>
+              <ul className="cartao__proxima-lista">
+                {faturaAbertaModal.itens.map((item, idx) => (
+                  <li key={item.id ? `${item.id}-${idx}` : idx} className="cartao__proxima-item-linha">
+                    <span className="cartao__proxima-item-desc" title={item.descricao}>
+                      {item.descricao}
+                      {item.total_parcelas > 1 && (
+                        <span className="cartao__proxima-parc-tag">
+                          {' '}({item.parcela_atual ? `${item.parcela_atual}/` : ''}{item.total_parcelas}x)
+                        </span>
+                      )}
+                    </span>
+                    <strong className="cartao__proxima-item-valor">{formatarMoeda(item.valor)}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
