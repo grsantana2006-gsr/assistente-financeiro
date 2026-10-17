@@ -160,6 +160,16 @@ export function calcularFaturaDoBanco(transacoes, banco, mesReferencia) {
   )
 }
 
+/**
+ * Determina se uma transação que cai na fatura já foi efetivamente lançada no cartão.
+ * - Gastos Variáveis: sempre true (compras feitas no cartão já foram cobradas no ato).
+ * - Despesas Fixas: se marcada como cobrada/paga (t.pago === true), está lançada (true); caso contrário, está 'a cobrar' (false).
+ */
+export function itemLancadoNoCartao(t) {
+  if (t.categoria !== 'Fixo') return true
+  return Boolean(t.pago)
+}
+
 // Calcula a previsão das faturas dos próximos meses para um cartão
 export function calcularProximasFaturas(transacoes, banco, mesReferencia, quantidade = 5) {
   if (!banco || banco.tipo === 'Benefício') return []
@@ -181,19 +191,33 @@ export function calcularProximasFaturas(transacoes, banco, mesReferencia, quanti
         contaNaFatura(t, mesK, banco),
     )
 
-    const valor = itensDoMes.reduce((soma, t) => soma + t.valor, 0)
-
-    faturas.push({
-      mes: mesK,
-      valor: arredondar(valor),
-      qtd_itens: itensDoMes.length,
-      itens: itensDoMes.map((t) => ({
+    const itensComStatus = itensDoMes.map((t) => {
+      const lancado = itemLancadoNoCartao(t)
+      const diaCobranca = t.data_compra ? Number(t.data_compra.slice(8, 10)) : null
+      return {
         id: t.id,
         descricao: t.descricao,
         valor: t.valor,
         parcela_atual: t.parcela_atual,
         total_parcelas: t.total_parcelas,
-      })),
+        lancado,
+        dia_cobranca: diaCobranca,
+      }
+    })
+
+    const valorLancado = itensComStatus.filter((it) => it.lancado).reduce((s, it) => s + it.valor, 0)
+    const valorACobrar = itensComStatus.filter((it) => !it.lancado).reduce((s, it) => s + it.valor, 0)
+    const valorTotal = valorLancado + valorACobrar
+
+    faturas.push({
+      mes: mesK,
+      valor: arredondar(valorTotal),
+      valor_lancado: arredondar(valorLancado),
+      valor_a_cobrar: arredondar(valorACobrar),
+      qtd_itens: itensDoMes.length,
+      qtd_lancados: itensComStatus.filter((it) => it.lancado).length,
+      qtd_a_cobrar: itensComStatus.filter((it) => !it.lancado).length,
+      itens: itensComStatus,
     })
   }
 
@@ -205,18 +229,45 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
   return bancos.map((banco) => {
     const gastoAcumulado = calcularGastoDoBanco(transacoes, banco, mesReferencia)
     const ehBeneficio = banco.tipo === 'Benefício'
-    const valorFatura = ehBeneficio ? 0 : calcularFaturaDoBanco(transacoes, banco, mesReferencia)
     const faturaPaga = Boolean(faturasPagasMap.get(banco.id))
     const proximasFaturas = ehBeneficio ? [] : calcularProximasFaturas(transacoes, banco, mesReferencia, 5)
 
+    // Detalhamento da fatura do mês de referência
+    const itensFaturaAtual = ehBeneficio
+      ? []
+      : transacoes.filter(
+          (t) =>
+            t.banco_id === banco.id &&
+            t.tipo === 'Despesa' &&
+            t.ativa &&
+            t.forma_pagamento === 'Crédito' &&
+            contaNaFatura(t, mesReferencia, banco),
+        )
+
+    const itensAtualComStatus = itensFaturaAtual.map((t) => ({
+      id: t.id,
+      descricao: t.descricao,
+      valor: t.valor,
+      parcela_atual: t.parcela_atual,
+      total_parcelas: t.total_parcelas,
+      lancado: itemLancadoNoCartao(t),
+      dia_cobranca: t.data_compra ? Number(t.data_compra.slice(8, 10)) : null,
+    }))
+
+    const valorFaturaLancada = itensAtualComStatus.filter((it) => it.lancado).reduce((s, it) => s + it.valor, 0)
+    const valorFaturaACobrar = itensAtualComStatus.filter((it) => !it.lancado).reduce((s, it) => s + it.valor, 0)
+    const valorFaturaTotal = valorFaturaLancada + valorFaturaACobrar
+
     // Se a fatura do mês atual já foi paga, aquele valor é liberado do limite comprometido
-    const gastoEfetivo = faturaPaga ? Math.max(gastoAcumulado - valorFatura, 0) : gastoAcumulado
+    const gastoEfetivo = faturaPaga ? Math.max(gastoAcumulado - valorFaturaTotal, 0) : gastoAcumulado
 
     return {
       ...banco,
       gasto: arredondar(gastoEfetivo),
       gasto_acumulado: arredondar(gastoAcumulado),
-      valor_fatura: arredondar(valorFatura),
+      valor_fatura: arredondar(valorFaturaTotal),
+      valor_fatura_lancada: arredondar(valorFaturaLancada),
+      valor_fatura_a_cobrar: arredondar(valorFaturaACobrar),
       fatura_paga: faturaPaga,
       proximas_faturas: proximasFaturas,
       limite_disponivel: arredondar(Math.max(banco.limite_total - gastoEfetivo, 0)),

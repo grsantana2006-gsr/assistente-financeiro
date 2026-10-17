@@ -2,13 +2,22 @@ import { db } from './db.js'
 import { transacaoParaApi, arredondar } from './ajudantes.js'
 import { calcularReceitaDoMes, contaNaFatura, montarCartoes, calcularFaturaDoBanco } from './calculos.js'
 
-export async function carregarTransacoes() {
+export async function carregarTransacoes(mes) {
+  if (mes) {
+    const sql = `
+      SELECT t.*, (CASE WHEN pf.id IS NOT NULL THEN 1 ELSE 0 END) AS pago
+      FROM transacoes t
+      LEFT JOIN pagamentos_fixas pf ON pf.transacao_id = t.id AND pf.mes = ?
+    `
+    const transacoes = await db.prepare(sql).all(mes)
+    return transacoes.map(transacaoParaApi)
+  }
   const transacoes = await db.prepare('SELECT * FROM transacoes').all()
   return transacoes.map(transacaoParaApi)
 }
 
 export async function calcularDashboard(mes) {
-  const transacoes = await carregarTransacoes()
+  const transacoes = await carregarTransacoes(mes)
   const bancos = await db.prepare('SELECT * FROM bancos ORDER BY id').all()
   const bancosMap = new Map(bancos.map((b) => [b.id, b]))
   const result = await db.prepare('SELECT COALESCE(SUM(saldo_atual), 0) AS total FROM cofre').get()

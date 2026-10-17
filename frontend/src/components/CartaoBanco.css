@@ -389,6 +389,59 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
+.cartao__fatura-valores-linha {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cartao__fatura-sub-previsto {
+  font-size: 0.7rem;
+  color: #fbbf24;
+  font-weight: 600;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.cartao__proxima-sub-previsao {
+  font-size: 0.65rem;
+  color: #fbbf24;
+  font-weight: 600;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.cartao__proxima-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cartao__item-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.cartao__item-badge--lancado {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.cartao__item-badge--a-cobrar {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
 .cartao__proxima-item-desc {
   white-space: nowrap;
   overflow: hidden;

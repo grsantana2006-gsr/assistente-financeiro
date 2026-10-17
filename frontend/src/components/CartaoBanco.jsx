@@ -86,9 +86,16 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
             <span className="cartao__fatura-rotulo">
               Fatura de {formatarMesAnoCurto(mesAtual)}:
             </span>
-            <strong className="cartao__fatura-valor">
-              {formatarMoeda(banco.valor_fatura || 0)}
-            </strong>
+            <div className="cartao__fatura-valores-linha">
+              <strong className="cartao__fatura-valor">
+                {formatarMoeda(banco.valor_fatura_lancada > 0 ? banco.valor_fatura_lancada : (banco.valor_fatura || 0))}
+              </strong>
+              {banco.valor_fatura_a_cobrar > 0 && (
+                <span className="cartao__fatura-sub-previsto" title={`Já lançado: ${formatarMoeda(banco.valor_fatura_lancada || 0)} | Ainda a cobrar: ${formatarMoeda(banco.valor_fatura_a_cobrar)}`}>
+                  previsto: {formatarMoeda(banco.valor_fatura || 0)}
+                </span>
+              )}
+            </div>
             <span className="cartao__fatura-vencimento">
               Vencimento: dia {banco.dia_vencimento}
             </span>
@@ -133,6 +140,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
             <div className="cartao__proximas-trilho">
               {banco.proximas_faturas.map((faturaFutura) => {
                 const ativa = faturaAbertaModal?.mes === faturaFutura.mes
+                const temACobrar = faturaFutura.valor_a_cobrar > 0
                 return (
                   <button
                     key={faturaFutura.mes}
@@ -145,8 +153,13 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                       {formatarMesAnoCurto(faturaFutura.mes)}
                     </span>
                     <strong className="cartao__proxima-valor">
-                      {formatarMoeda(faturaFutura.valor)}
+                      {formatarMoeda(faturaFutura.valor_lancado > 0 ? faturaFutura.valor_lancado : faturaFutura.valor)}
                     </strong>
+                    {temACobrar && (
+                      <span className="cartao__proxima-sub-previsao" title={`Já lançado: ${formatarMoeda(faturaFutura.valor_lancado)} | A cobrar: ${formatarMoeda(faturaFutura.valor_a_cobrar)}`}>
+                        previsto: {formatarMoeda(faturaFutura.valor)}
+                      </span>
+                    )}
                     <span className="cartao__proxima-qtd">
                       {faturaFutura.qtd_itens} {faturaFutura.qtd_itens === 1 ? 'item' : 'itens'}
                     </span>
@@ -175,14 +188,19 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
               <ul className="cartao__proxima-lista">
                 {faturaAbertaModal.itens.map((item, idx) => (
                   <li key={item.id ? `${item.id}-${idx}` : idx} className="cartao__proxima-item-linha">
-                    <span className="cartao__proxima-item-desc" title={item.descricao}>
-                      {item.descricao}
-                      {item.total_parcelas > 1 && (
-                        <span className="cartao__proxima-parc-tag">
-                          {' '}({item.parcela_atual ? `${item.parcela_atual}/` : ''}{item.total_parcelas}x)
-                        </span>
-                      )}
-                    </span>
+                    <div className="cartao__proxima-item-info">
+                      <span className="cartao__proxima-item-desc" title={item.descricao}>
+                        {item.descricao}
+                        {item.total_parcelas > 1 && (
+                          <span className="cartao__proxima-parc-tag">
+                            {' '}({item.parcela_atual ? `${item.parcela_atual}/` : ''}{item.total_parcelas}x)
+                          </span>
+                        )}
+                      </span>
+                      <span className={`cartao__item-badge ${item.lancado ? 'cartao__item-badge--lancado' : 'cartao__item-badge--a-cobrar'}`}>
+                        {item.lancado ? '💳 Lançado' : `⏳ A cobrar ${item.dia_cobranca ? `dia ${item.dia_cobranca}` : ''}`}
+                      </span>
+                    </div>
                     <strong className="cartao__proxima-item-valor">{formatarMoeda(item.valor)}</strong>
                   </li>
                 ))}
