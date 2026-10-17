@@ -12,6 +12,7 @@ import bancosRouter from './rotas/bancos.js'
 import transacoesRouter from './rotas/transacoes.js'
 import cofreRouter from './rotas/cofre.js'
 import analisesRouter from './rotas/analises.js'
+import ofxRouter from './rotas/ofx.js'
 
 // 1) Prepara o banco antes de aceitar qualquer requisição
 await criarTabelas()
@@ -40,6 +41,7 @@ app.get('/api/saude', async (_req, res) => {
 app.use('/api/bancos', bancosRouter)
 app.use('/api/transacoes', transacoesRouter)
 app.use('/api/cofre', cofreRouter)
+app.use('/api/ofx', ofxRouter)
 app.use('/api', analisesRouter) // /api/dashboard e /api/forecast
 
 // 4) Rota inexistente -> 404 em JSON (em vez do HTML padrão do Express)

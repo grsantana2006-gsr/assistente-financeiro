@@ -210,6 +210,31 @@
   transform: translateY(-1px);
 }
 
+.cartao__btn-fatura--parcial {
+  background: rgba(34, 211, 238, 0.14);
+  border-color: rgba(34, 211, 238, 0.45);
+  color: #22d3ee;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.12);
+}
+
+.cartao__btn-fatura--parcial:hover {
+  background: rgba(34, 211, 238, 0.25);
+  border-color: #22d3ee;
+  transform: translateY(-1px);
+}
+
+.cartao__fatura-sub-adiantado {
+  font-size: 0.73rem;
+  color: #22d3ee;
+  background: rgba(34, 211, 238, 0.1);
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
 /* ---------- Bloco de Faturas dos Próximos Meses ---------- */
 .cartao__proximas-bloco {
   display: flex;

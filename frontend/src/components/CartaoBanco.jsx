@@ -88,9 +88,19 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
             </span>
             <div className="cartao__fatura-valores-linha">
               <strong className="cartao__fatura-valor">
-                {formatarMoeda(banco.valor_fatura_lancada > 0 ? banco.valor_fatura_lancada : (banco.valor_fatura || 0))}
+                {banco.fatura_parcial
+                  ? formatarMoeda(banco.saldo_restante_fatura)
+                  : formatarMoeda(banco.valor_fatura_lancada > 0 ? banco.valor_fatura_lancada : (banco.valor_fatura || 0))}
               </strong>
-              {banco.valor_fatura_a_cobrar > 0 && (
+              {banco.fatura_parcial && (
+                <span
+                  className="cartao__fatura-sub-adiantado"
+                  title={`Total: ${formatarMoeda(banco.valor_fatura || 0)} | Adiantado: -${formatarMoeda(banco.valor_pago_adiantado || 0)}`}
+                >
+                  ⚡ {formatarMoeda(banco.valor_pago_adiantado)} adiantado
+                </span>
+              )}
+              {!banco.fatura_parcial && banco.valor_fatura_a_cobrar > 0 && (
                 <span className="cartao__fatura-sub-previsto" title={`Já lançado: ${formatarMoeda(banco.valor_fatura_lancada || 0)} | Ainda a cobrar: ${formatarMoeda(banco.valor_fatura_a_cobrar)}`}>
                   previsto: {formatarMoeda(banco.valor_fatura || 0)}
                 </span>
@@ -105,16 +115,26 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
             id={`fatura-btn-${banco.id}`}
             type="button"
             className={`cartao__btn-fatura ${
-              banco.fatura_paga ? 'cartao__btn-fatura--paga' : 'cartao__btn-fatura--aberta'
+              banco.fatura_paga
+                ? 'cartao__btn-fatura--paga'
+                : banco.fatura_parcial
+                ? 'cartao__btn-fatura--parcial'
+                : 'cartao__btn-fatura--aberta'
             }`}
             onClick={() => aoAlternarFatura && aoAlternarFatura(banco.id)}
             title={
               banco.fatura_paga
                 ? 'Fatura quitada! Clique para reabrir se necessário.'
+                : banco.fatura_parcial
+                ? `Adiantamento de ${formatarMoeda(banco.valor_pago_adiantado)} realizado. Resta ${formatarMoeda(banco.saldo_restante_fatura)}.`
                 : 'Clique para marcar a fatura deste mês como paga e liberar o limite correspondente.'
             }
           >
-            {banco.fatura_paga ? '✓ Fatura Paga' : '⏳ Fatura Aberta'}
+            {banco.fatura_paga
+              ? '✓ Fatura Paga'
+              : banco.fatura_parcial
+              ? `⚡ ${formatarMoeda(banco.valor_pago_adiantado)} Pago`
+              : '⏳ Fatura Aberta'}
           </button>
         </div>
       )}

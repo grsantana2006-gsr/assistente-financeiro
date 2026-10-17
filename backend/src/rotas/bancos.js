@@ -79,13 +79,15 @@ router.post('/:id/alternar-fatura', async (req, res) => {
     marcarComoPago = !existente
   }
 
+  const valorPago = req.body?.valor_pago !== undefined ? (req.body.valor_pago === null ? null : Number(req.body.valor_pago)) : null
+
   if (marcarComoPago) {
-    await db.prepare('INSERT INTO pagamentos_faturas (banco_id, mes) VALUES (?, ?) ON CONFLICT (banco_id, mes) DO NOTHING').run(id, mes)
+    await db.prepare('INSERT INTO pagamentos_faturas (banco_id, mes, valor_pago) VALUES (?, ?, ?) ON CONFLICT (banco_id, mes) DO UPDATE SET valor_pago = excluded.valor_pago').run(id, mes, valorPago)
   } else {
     await db.prepare('DELETE FROM pagamentos_faturas WHERE banco_id = ? AND mes = ?').run(id, mes)
   }
 
-  res.json({ banco_id: id, mes, pago: marcarComoPago })
+  res.json({ banco_id: id, mes, pago: marcarComoPago, valor_pago: valorPago })
 })
 
 export default router

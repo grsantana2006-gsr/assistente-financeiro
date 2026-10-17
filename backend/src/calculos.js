@@ -229,7 +229,6 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
   return bancos.map((banco) => {
     const gastoAcumulado = calcularGastoDoBanco(transacoes, banco, mesReferencia)
     const ehBeneficio = banco.tipo === 'Benefício'
-    const faturaPaga = Boolean(faturasPagasMap.get(banco.id))
     const proximasFaturas = ehBeneficio ? [] : calcularProximasFaturas(transacoes, banco, mesReferencia, 5)
 
     // Detalhamento da fatura do mês de referência
@@ -258,8 +257,19 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
     const valorFaturaACobrar = itensAtualComStatus.filter((it) => !it.lancado).reduce((s, it) => s + it.valor, 0)
     const valorFaturaTotal = valorFaturaLancada + valorFaturaACobrar
 
-    // Se a fatura do mês atual já foi paga, aquele valor é liberado do limite comprometido
-    const gastoEfetivo = faturaPaga ? Math.max(gastoAcumulado - valorFaturaTotal, 0) : gastoAcumulado
+    const infoPagamento = faturasPagasMap.get(banco.id)
+    const ehPagoObjeto = infoPagamento && typeof infoPagamento === 'object'
+    const faturaPagaTotal = ehPagoObjeto
+      ? (infoPagamento.valor_pago == null || infoPagamento.valor_pago >= valorFaturaTotal)
+      : Boolean(infoPagamento)
+    const valorAdiantado = ehPagoObjeto && infoPagamento.valor_pago != null
+      ? infoPagamento.valor_pago
+      : (faturaPagaTotal ? valorFaturaTotal : 0)
+    const faturaParcial = Boolean(ehPagoObjeto && infoPagamento.valor_pago != null && infoPagamento.valor_pago < valorFaturaTotal && infoPagamento.valor_pago > 0)
+
+    // Se a fatura do mês atual já foi paga ou teve adiantamento, aquele valor é liberado do limite comprometido
+    const gastoEfetivo = Math.max(gastoAcumulado - valorAdiantado, 0)
+    const saldoRestanteFatura = Math.max(valorFaturaTotal - valorAdiantado, 0)
 
     return {
       ...banco,
@@ -268,7 +278,10 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
       valor_fatura: arredondar(valorFaturaTotal),
       valor_fatura_lancada: arredondar(valorFaturaLancada),
       valor_fatura_a_cobrar: arredondar(valorFaturaACobrar),
-      fatura_paga: faturaPaga,
+      valor_pago_adiantado: arredondar(valorAdiantado),
+      saldo_restante_fatura: arredondar(saldoRestanteFatura),
+      fatura_paga: faturaPagaTotal,
+      fatura_parcial: faturaParcial,
       proximas_faturas: proximasFaturas,
       limite_disponivel: arredondar(Math.max(banco.limite_total - gastoEfetivo, 0)),
       uso: banco.limite_total > 0 ? Math.min(gastoEfetivo / banco.limite_total, 1) : 0,

@@ -23,9 +23,14 @@ export async function calcularDashboard(mes) {
   const result = await db.prepare('SELECT COALESCE(SUM(saldo_atual), 0) AS total FROM cofre').get()
   const cofre = Number(result?.total || 0)
 
-  // Status de faturas pagas no mês
-  const pagamentosFaturas = await db.prepare('SELECT banco_id FROM pagamentos_faturas WHERE mes = ?').all(mes)
-  const faturasPagasMap = new Map(pagamentosFaturas.map((pf) => [pf.banco_id, true]))
+  // Status de faturas pagas ou adiantadas no mês
+  const pagamentosFaturas = await db.prepare('SELECT banco_id, valor_pago FROM pagamentos_faturas WHERE mes = ?').all(mes)
+  const faturasPagasMap = new Map(
+    pagamentosFaturas.map((pf) => [
+      pf.banco_id,
+      { pago: true, valor_pago: pf.valor_pago != null ? Number(pf.valor_pago) : null },
+    ]),
+  )
 
   const receitaMes = calcularReceitaDoMes(transacoes, mes)
   const despesasMes = transacoes.filter((t) => {
@@ -49,9 +54,13 @@ export async function calcularDashboard(mes) {
     const valFatura = calcularFaturaDoBanco(transacoes, b, mes)
     if (valFatura > 0) {
       qtdFaturasTotal++
-      if (faturasPagasMap.get(b.id)) {
-        faturasPagasTotal += valFatura
-        qtdFaturasPagas++
+      const infoP = faturasPagasMap.get(b.id)
+      if (infoP) {
+        const valPago = infoP.valor_pago != null ? infoP.valor_pago : valFatura
+        faturasPagasTotal += Math.min(valPago, valFatura)
+        if (valPago >= valFatura) {
+          qtdFaturasPagas++
+        }
       }
     }
   }
