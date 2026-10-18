@@ -255,6 +255,8 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
       * Se houver assinaturas com data nos próximos dias que ainda estão com status `⏳ A Cobrar` (ex: Google One no dia 22, Premiere no dia 23), o card exibe uma etiqueta discreta com o **Total Previsto** (ex: `previsto: R$ 1.784,15`).
       * **Detalhamento Interativo:** Ao tocar ou clicar em qualquer mês futuro, o card abre um painel inline revelando cada conta com seu respectivo selo: `💳 Lançado` ou `⏳ A cobrar dia DD`.
     * Inclui botão para recolher ou expandir a visão dos próximos meses quando desejar.
+    * **Adiantamentos em faturas futuras:** o pagamento registrado para um mês (ex.: R$ 708 adiantados na fatura de Nov/26) é abatido no card daquele mês, que passa a mostrar o **saldo que falta pagar** (igual ao app do banco) + o selo `⚡ R$ 708,00 pago`. O valor adiantado também devolve limite ao cartão.
+    * **Conferência com o banco:** a fatura "lançada" de um mês deve bater centavo a centavo com o extrato OFX. O que ainda não foi cobrado (assinaturas `⏳ A cobrar`) aparece apenas em `previsto`.
   * **Persistência no Banco de Dados:** Registrado na tabela `pagamentos_faturas(banco_id, mes, pago_em, valor_pago)`. Mudar de mês reseta o status para o ciclo correspondente de forma 100% automatizada.
 
 ---

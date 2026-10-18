@@ -23,14 +23,18 @@ export async function calcularDashboard(mes) {
   const result = await db.prepare('SELECT COALESCE(SUM(saldo_atual), 0) AS total FROM cofre').get()
   const cofre = Number(result?.total || 0)
 
-  // Status de faturas pagas ou adiantadas no mês
-  const pagamentosFaturas = await db.prepare('SELECT banco_id, valor_pago FROM pagamentos_faturas WHERE mes = ?').all(mes)
+  // Status de faturas pagas ou adiantadas (de qualquer mês)
+  const todosPagamentos = await db.prepare('SELECT banco_id, mes, valor_pago FROM pagamentos_faturas').all()
   const faturasPagasMap = new Map(
-    pagamentosFaturas.map((pf) => [
-      pf.banco_id,
-      { pago: true, valor_pago: pf.valor_pago != null ? Number(pf.valor_pago) : null },
-    ]),
+    todosPagamentos
+      .filter((pf) => pf.mes === mes)
+      .map((pf) => [pf.banco_id, { pago: true, valor_pago: pf.valor_pago != null ? Number(pf.valor_pago) : null }]),
   )
+  const pagamentosPorBanco = new Map()
+  for (const pf of todosPagamentos) {
+    if (!pagamentosPorBanco.has(pf.banco_id)) pagamentosPorBanco.set(pf.banco_id, [])
+    pagamentosPorBanco.get(pf.banco_id).push({ mes: pf.mes, valor_pago: pf.valor_pago != null ? Number(pf.valor_pago) : null })
+  }
 
   const receitaMes = calcularReceitaDoMes(transacoes, mes)
   const despesasMes = transacoes.filter((t) => {
@@ -102,6 +106,6 @@ export async function calcularDashboard(mes) {
     total_despesas: arredondar(totalDespesas),
     saldo_mes: arredondar(saldoMes),
     status_mes: saldoMes >= 0 ? 'positivo' : 'negativo',
-    cartoes: montarCartoes(bancos, transacoes, mes, faturasPagasMap),
+    cartoes: montarCartoes(bancos, transacoes, mes, faturasPagasMap, pagamentosPorBanco),
   }
 }

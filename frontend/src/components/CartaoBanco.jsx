@@ -173,11 +173,23 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                       {formatarMesAnoCurto(faturaFutura.mes)}
                     </span>
                     <strong className="cartao__proxima-valor">
-                      {formatarMoeda(faturaFutura.valor_lancado > 0 ? faturaFutura.valor_lancado : faturaFutura.valor)}
+                      {formatarMoeda(
+                        faturaFutura.valor_lancado > 0
+                          ? faturaFutura.saldo_lancado_restante ?? faturaFutura.valor_lancado
+                          : faturaFutura.saldo_restante ?? faturaFutura.valor,
+                      )}
                     </strong>
+                    {faturaFutura.valor_pago_adiantado > 0 && (
+                      <span
+                        className="cartao__fatura-sub-adiantado"
+                        title={`Lançado: ${formatarMoeda(faturaFutura.valor_lancado)} | Adiantado: -${formatarMoeda(faturaFutura.valor_pago_adiantado)}`}
+                      >
+                        ⚡ {formatarMoeda(faturaFutura.valor_pago_adiantado)} pago
+                      </span>
+                    )}
                     {temACobrar && (
                       <span className="cartao__proxima-sub-previsao" title={`Já lançado: ${formatarMoeda(faturaFutura.valor_lancado)} | A cobrar: ${formatarMoeda(faturaFutura.valor_a_cobrar)}`}>
-                        previsto: {formatarMoeda(faturaFutura.valor)}
+                        previsto: {formatarMoeda(faturaFutura.saldo_restante ?? faturaFutura.valor)}
                       </span>
                     )}
                     <span className="cartao__proxima-qtd">

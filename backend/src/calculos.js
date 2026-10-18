@@ -170,8 +170,9 @@ export function itemLancadoNoCartao(t) {
   return Boolean(t.pago)
 }
 
-// Calcula a previsão das faturas dos próximos meses para um cartão
-export function calcularProximasFaturas(transacoes, banco, mesReferencia, quantidade = 5) {
+// Calcula a previsão das faturas dos próximos meses para um cartão.
+// `pagamentos` = lista de { mes, valor_pago } já registrados (adiantamentos ou quitações) desse cartão.
+export function calcularProximasFaturas(transacoes, banco, mesReferencia, quantidade = 5, pagamentos = []) {
   if (!banco || banco.tipo === 'Benefício') return []
   const [ano, mes] = mesReferencia.split('-').map(Number)
   const faturas = []
@@ -209,11 +210,19 @@ export function calcularProximasFaturas(transacoes, banco, mesReferencia, quanti
     const valorACobrar = itensComStatus.filter((it) => !it.lancado).reduce((s, it) => s + it.valor, 0)
     const valorTotal = valorLancado + valorACobrar
 
+    // Pagamento/adiantamento já feito para a fatura deste mês (valor_pago nulo = quitada por inteiro)
+    const pg = pagamentos.find((p) => p.mes === mesK)
+    const valorPago = pg ? Math.min(pg.valor_pago != null ? Number(pg.valor_pago) : valorTotal, valorTotal) : 0
+
     faturas.push({
       mes: mesK,
       valor: arredondar(valorTotal),
       valor_lancado: arredondar(valorLancado),
       valor_a_cobrar: arredondar(valorACobrar),
+      valor_pago_adiantado: arredondar(valorPago),
+      // Quanto ainda falta pagar do que já foi lançado no cartão (é o número que o app do banco mostra)
+      saldo_lancado_restante: arredondar(Math.max(valorLancado - valorPago, 0)),
+      saldo_restante: arredondar(Math.max(valorTotal - valorPago, 0)),
       qtd_itens: itensDoMes.length,
       qtd_lancados: itensComStatus.filter((it) => it.lancado).length,
       qtd_a_cobrar: itensComStatus.filter((it) => !it.lancado).length,
@@ -224,12 +233,20 @@ export function calcularProximasFaturas(transacoes, banco, mesReferencia, quanti
   return faturas
 }
 
-// Monta cada "card" de banco já com limite disponível, % de uso e status da fatura do mês
-export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap = new Map()) {
+// Monta cada "card" de banco já com limite disponível, % de uso e status da fatura do mês.
+// `pagamentosPorBanco` = Map(banco_id -> [{ mes, valor_pago }]) com TODOS os pagamentos registrados.
+export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap = new Map(), pagamentosPorBanco = new Map()) {
   return bancos.map((banco) => {
     const gastoAcumulado = calcularGastoDoBanco(transacoes, banco, mesReferencia)
     const ehBeneficio = banco.tipo === 'Benefício'
-    const proximasFaturas = ehBeneficio ? [] : calcularProximasFaturas(transacoes, banco, mesReferencia, 5)
+    const pagamentosDoBanco = pagamentosPorBanco.get(banco.id) || []
+    const proximasFaturas = ehBeneficio ? [] : calcularProximasFaturas(transacoes, banco, mesReferencia, 5, pagamentosDoBanco)
+
+    // Adiantamentos de OUTRAS faturas (ex.: pagou R$ 708 da fatura de nov enquanto o mês de referência é out)
+    // também devolvem limite no banco de verdade.
+    const adiantadoOutrosMeses = pagamentosDoBanco
+      .filter((p) => p.mes !== mesReferencia && p.valor_pago != null)
+      .reduce((s, p) => s + Number(p.valor_pago), 0)
 
     // Detalhamento da fatura do mês de referência
     const itensFaturaAtual = ehBeneficio
@@ -268,7 +285,7 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
     const faturaParcial = Boolean(ehPagoObjeto && infoPagamento.valor_pago != null && infoPagamento.valor_pago < valorFaturaTotal && infoPagamento.valor_pago > 0)
 
     // Se a fatura do mês atual já foi paga ou teve adiantamento, aquele valor é liberado do limite comprometido
-    const gastoEfetivo = Math.max(gastoAcumulado - valorAdiantado, 0)
+    const gastoEfetivo = Math.max(gastoAcumulado - valorAdiantado - adiantadoOutrosMeses, 0)
     const saldoRestanteFatura = Math.max(valorFaturaTotal - valorAdiantado, 0)
 
     return {
