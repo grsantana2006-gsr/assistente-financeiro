@@ -170,7 +170,7 @@ export function calcularFaturaDoBanco(transacoes, banco, mesReferencia) {
  *   a cobrança foi confirmada (t.pago). Nas faturas seguintes ainda são 'a cobrar'.
  *   Para isso, informe `mesFatura` e `banco` (usado nas faturas futuras).
  */
-export function itemLancadoNoCartao(t, mesK = null) {
+export function itemLancadoNoCartao(t, mesK = null, banco = null, mesReferencia = null) {
   if (t.categoria !== 'Fixo') return true
 
   // Compras parceladas contratadas no cartão (exceto assinaturas como Hashtag Vitalício na Hotmart):
@@ -178,14 +178,23 @@ export function itemLancadoNoCartao(t, mesK = null) {
   if (t.total_parcelas > 1 && !t.descricao.toLowerCase().includes('hashtag')) return true
 
   // Para despesas fixas recorrentes (assinaturas):
-  // Se mesK for um mês futuro além do ciclo atual (ex: 2026-12 em diante), a cobrança ainda não ocorreu
-  if (mesK && mesK > '2026-11') return false
+  // Se mesK for um mês além da primeira fatura de início, ela ainda não foi cobrada pelo banco
+  if (banco && mesK) {
+    const mesInicio = obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+    if (mesInicio && mesK > mesInicio) return false
+  }
 
-  // Se a data de cobrança no ciclo for futura em relação ao momento atual (ex: Google One dia 22, Premiere dia 23, Moisés dia 24):
-  // ainda está 'a cobrar'
-  if (t.data_compra && t.data_compra > '2026-10-20') return false
+  // Na fatura atual do ciclo: se marcada como paga/confirmada, já foi lançada
+  if (t.pago) return true
 
-  return Boolean(t.pago || t.data_compra <= '2026-10-20')
+  // Se a data de cobrança no mês já passou no calendário atual, já foi cobrada
+  if (t.data_compra) {
+    const diaCobranca = Number(t.data_compra.slice(8, 10))
+    const hoje = new Date()
+    if (hoje.getDate() >= diaCobranca) return true
+  }
+
+  return false
 }
 
 // Soma `n` meses a um mês 'AAAA-MM'
@@ -208,7 +217,7 @@ function montarFaturaDoMes(transacoes, banco, mesK, mesReferencia, pagamentos) {
   )
 
   const itensComStatus = itensDoMes.map((t) => {
-    const lancado = itemLancadoNoCartao(t, mesK)
+    const lancado = itemLancadoNoCartao(t, mesK, banco, mesReferencia)
     const diaCobranca = t.data_compra ? Number(t.data_compra.slice(8, 10)) : null
     return {
       id: t.id,
@@ -319,7 +328,7 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
       valor: t.valor,
       parcela_atual: t.parcela_atual,
       total_parcelas: t.total_parcelas,
-      lancado: itemLancadoNoCartao(t),
+      lancado: itemLancadoNoCartao(t, mesReferencia, banco, mesReferencia),
       dia_cobranca: t.data_compra ? Number(t.data_compra.slice(8, 10)) : null,
     }))
 
