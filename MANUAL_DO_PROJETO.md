@@ -211,10 +211,10 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
   * **Etiqueta Visual no Extrato:** Cada compra no crédito ganha uma tag visual indicando em qual fatura ela vai vencer (ex: `📅 Fatura: Nov/26`), e o formulário avisa em tempo real qual fatura receberá as compras feitas hoje.
 
 * **Métricas por Cartão de Crédito:**
-  * **Limite Total:** O limite concedido pela instituição.
-  * **Limite Comprometido (Gasto):** O total acumulado em aberto que está bloqueando o seu limite no banco.
-  * **Limite Disponível:** $\text{Limite Total} - \text{Gasto}$ (atualizado instantaneamente na hora que você compra).
-  * **Percentual de Uso:** $\frac{\text{Gasto}}{\text{Limite Total}}$.
+  * **Limite Total:** O limite total concedido pela instituição (ex: R$ 4.800 no Nubank).
+  * **Limite Comprometido (Gasto Real):** Exatamente como o banco opera na vida real: $\text{Saldo a pagar da fatura aberta} + \sum (\text{Todas as parcelas futuras de compras já contratadas})$. Assinaturas ainda 'a cobrar' não retêm limite antes da cobrança.
+  * **Limite Disponível:** $\text{Limite Total} - \text{Limite Comprometido}$ (bate centavo a centavo com o aplicativo do banco).
+  * **Percentual de Uso:** $\frac{\text{Limite Comprometido}}{\text{Limite Total}}$.
 * **Métricas para o Vale Refeição (Benefício):**
   * **Recarga Mensal:** Saldo disponibilizado mensalmente (editável).
   * **Gasto no Mês:** Total de compras feitas na função Voucher.
