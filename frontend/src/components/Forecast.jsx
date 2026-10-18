@@ -198,7 +198,17 @@ function Forecast({ projecao }) {
             </div>
             <div>
               <dt>Faturas & Parcelas</dt>
-              <dd>{formatarMoeda(mesAtivo.parcelas)}</dd>
+              <dd>
+                {formatarMoeda(mesAtivo.parcelas)}
+                {mesAtivo.adiantado > 0 && (
+                  <span
+                    style={{ display: 'block', fontSize: '0.75rem', color: 'var(--success, #10b981)', fontWeight: 500 }}
+                    title={`Total de parcelas brutas: ${formatarMoeda(mesAtivo.parcelas_brutas || 0)} | Já adiantado: -${formatarMoeda(mesAtivo.adiantado)}`}
+                  >
+                    ⚡ {formatarMoeda(mesAtivo.adiantado)} pago
+                  </span>
+                )}
+              </dd>
             </div>
             <div>
               <dt>Comprometido</dt>

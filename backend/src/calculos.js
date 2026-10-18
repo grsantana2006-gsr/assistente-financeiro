@@ -309,7 +309,7 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
 }
 
 // Projeta os próximos meses: renda fixa, despesas fixas (contínuas e temporárias) e parcelas/faturas restantes.
-export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, bancos = []) {
+export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, bancos = [], pagamentos = []) {
   const [ano, mes] = mesReferencia.split('-').map(Number)
   const bancosMap = new Map(bancos.map((b) => [b.id, b]))
 
@@ -425,7 +425,14 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, banc
     }
 
     const parcelas = soma(detalhesParcelas)
-    const comprometido = fixas + parcelas
+
+    // Descontar pagamentos antecipados já realizados para as faturas que vencem no mês k
+    const adiantadoNoMes = pagamentos
+      .filter((p) => p.mes === mesK && p.valor_pago != null)
+      .reduce((s, p) => s + Number(p.valor_pago), 0)
+
+    const parcelasRestantes = Math.max(parcelas - adiantadoNoMes, 0)
+    const comprometido = fixas + parcelasRestantes
 
     meses.push({
       indice: k,
@@ -434,7 +441,9 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, banc
       rotuloCompleto: data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
       renda: arredondar(rendaNoMes),
       fixas: arredondar(fixas),
-      parcelas: arredondar(parcelas),
+      parcelas: arredondar(parcelasRestantes),
+      parcelas_brutas: arredondar(parcelas),
+      adiantado: arredondar(adiantadoNoMes),
       detalhesParcelas,
       comprometido: arredondar(comprometido),
       saldo: arredondar(rendaNoMes - comprometido),

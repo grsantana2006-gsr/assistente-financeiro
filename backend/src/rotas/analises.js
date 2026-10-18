@@ -26,9 +26,10 @@ router.get('/forecast', async (req, res) => {
 
   const transacoes = await carregarTransacoes()
   const bancos = await db.prepare('SELECT * FROM bancos ORDER BY id').all()
+  const pagamentos = await db.prepare('SELECT banco_id, mes, valor_pago FROM pagamentos_faturas').all()
   res.json({
     mes_base: dados.mes,
-    projecao: gerarForecast(transacoes, dados.mes, dados.meses, bancos),
+    projecao: gerarForecast(transacoes, dados.mes, dados.meses, bancos, pagamentos),
   })
 })
 
