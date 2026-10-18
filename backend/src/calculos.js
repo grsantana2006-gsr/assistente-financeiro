@@ -166,6 +166,8 @@ export function calcularFaturaDoBanco(transacoes, banco, mesReferencia) {
  * - Despesas Fixas: se marcada como cobrada/paga (t.pago === true), está lançada (true); caso contrário, está 'a cobrar' (false).
  */
 export function itemLancadoNoCartao(t) {
+  // Compras parceladas (mesmo com duração cadastrada como fixa) já foram processadas pelo banco e constam nas faturas futuras
+  if (t.total_parcelas > 1) return true
   if (t.categoria !== 'Fixo') return true
   return Boolean(t.pago)
 }
