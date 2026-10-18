@@ -59,8 +59,10 @@ export const api = {
   atualizarBanco: (id, dados) => requisitar('PATCH', `/bancos/${id}`, dados),
   criarTransacao: (dados) => requisitar('POST', '/transacoes', dados),
   atualizarTransacao: (id, dados) => requisitar('PATCH', `/transacoes/${id}`, dados),
-  alternarPagamentoFixa: (id, mes) => requisitar('POST', `/transacoes/${id}/alternar-pagamento`, { mes }),
-  alternarPagamentoFatura: (bancoId, mes) => requisitar('POST', `/bancos/${bancoId}/alternar-fatura`, { mes }),
+  alternarPagamentoFatura: (bancoId, payload) => {
+    const corpo = typeof payload === 'object' && payload !== null ? payload : { mes: payload }
+    return requisitar('POST', `/bancos/${bancoId}/alternar-fatura`, corpo)
+  },
   removerTransacao: (id) => requisitar('DELETE', `/transacoes/${id}`),
   criarCofre: (dados) => requisitar('POST', '/cofre', dados),
   atualizarCofre: (id, dados) => requisitar('PATCH', `/cofre/${id}`, dados),

@@ -53,8 +53,8 @@ function App() {
   const alternarPagamentoFixa = (id) =>
     executar(() => api.alternarPagamentoFixa(id, MES_REFERENCIA))
 
-  const alternarPagamentoFatura = (bancoId) =>
-    executar(() => api.alternarPagamentoFatura(bancoId, MES_REFERENCIA))
+  const alternarPagamentoFatura = (bancoId, dados) =>
+    executar(() => api.alternarPagamentoFatura(bancoId, dados || MES_REFERENCIA))
 
   const adicionarVariavel = (dados) =>
     executar(() => api.criarTransacao({ ...dados, tipo: 'Despesa', categoria: 'Variável' }))

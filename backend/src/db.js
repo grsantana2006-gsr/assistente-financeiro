@@ -99,8 +99,10 @@ export async function criarTabelas() {
       banco_id       INTEGER NOT NULL REFERENCES bancos(id) ON DELETE CASCADE,
       mes            TEXT    NOT NULL,
       pago_em        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      valor_pago     NUMERIC(10, 2),
       UNIQUE(banco_id, mes)
     );
+    ALTER TABLE pagamentos_faturas ADD COLUMN IF NOT EXISTS valor_pago NUMERIC(10, 2);
 
     CREATE INDEX IF NOT EXISTS idx_transacoes_banco ON transacoes(banco_id);
     CREATE INDEX IF NOT EXISTS idx_transacoes_data  ON transacoes(data_compra);

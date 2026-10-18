@@ -485,3 +485,239 @@
   font-weight: 600;
   white-space: nowrap;
 }
+
+.cartao__proxima-detalhes-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cartao__btn-adiantar-proxima {
+  background: rgba(34, 211, 238, 0.14);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  color: #22d3ee;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.cartao__btn-adiantar-proxima:hover {
+  background: rgba(34, 211, 238, 0.25);
+  border-color: #22d3ee;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   Modal de Pagamento / Adiantamento de Fatura
+   ========================================================= */
+.cartao__modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: cartaoModalFadeIn 0.2s ease-out;
+}
+
+.cartao__modal {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(34, 211, 238, 0.1);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  color: var(--text);
+  animation: cartaoModalScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cartaoModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cartaoModalScale {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.cartao__modal-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+}
+
+.cartao__modal-titulo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #f8fafc;
+}
+
+.cartao__modal-sub {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.cartao__modal-fechar {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.cartao__modal-fechar:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+.cartao__modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cartao__modal-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cartao__modal-rotulo {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.cartao__modal-campo select,
+.cartao__modal-campo input {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #f8fafc;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.cartao__modal-campo select:focus,
+.cartao__modal-campo input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.cartao__modal-resumo {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cartao__modal-resumo-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.cartao__modal-resumo-linha strong {
+  color: #f8fafc;
+  font-size: 0.95rem;
+}
+
+.cartao__modal-resumo-linha--destaque {
+  color: #22d3ee;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+.cartao__modal-resumo-linha--destaque strong {
+  color: #22d3ee;
+}
+
+.cartao__modal-opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cartao__modal-opcao {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.cartao__modal-opcao:hover {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.cartao__modal-opcao--ativa {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.cartao__modal-opcao input[type="radio"] {
+  margin-top: 3px;
+  accent-color: #38bdf8;
+  cursor: pointer;
+}
+
+.cartao__modal-opcao div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cartao__modal-opcao strong {
+  font-size: 0.88rem;
+  color: #f8fafc;
+}
+
+.cartao__modal-opcao small {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+.cartao__modal-acoes {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+

@@ -240,7 +240,13 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
     * ⚡ **`⚡ R$ X Pago (Adiantamento / Parcial)`:** Caso você tenha pago uma parte da fatura antes do fechamento (ou adiantou dinheiro para liberar limite).
   * **⚡ Suporte a Pagamentos Antecipados & Parciais:**
     * Muito comum na rotina: você passa uma compra alta no cartão para um amigo ou familiar (ex: Lucas Pereira R$ 722,45), recebe o PIX dele logo em seguida e **paga o cartão imediatamente**.
-    * O sistema permite registrar o valor exato pago antecipadamente (ex: R$ 708,00 adiantados em 06/10).
+    * **Como Registrar no Sistema (2 Cliques):**
+      * Basta clicar no botão de status da fatura (ex: `⏳ Fatura Aberta` ou `⚡ R$ 708,00 Pago`) em qualquer cartão, OU no botão `⚡ Adiantar esta fatura` ao abrir os detalhes de um mês futuro.
+      * O modal interativo **💳 Pagamento / Adiantamento de Fatura** se abre:
+        1. **Mês da Fatura:** Você escolhe a fatura de destino (atual ou qualquer mês futuro).
+        2. **Modo:** Escolha entre **✓ Quitar Fatura Integralmente** (100% quitada) ou **⚡ Adiantamento / Pagamento Parcial** (digita o valor exato pago em R$, ex: `708,00`).
+        3. **Salvar:** Clique em **✓ Confirmar Pagamento**. O sistema grava no banco de dados na hora!
+      * Para desfazer ou reabrir: basta abrir o modal e clicar em **🗑️ Reabrir / Limpar**.
     * O card exibe o saldo líquido restante a pagar, a insígnia brilhante `⚡ R$ 708,00 adiantado` e **restaura o limite disponível na hora** na quantia exata que você pagou!
   * **Restabelecimento Automático e Fiel de Limite:**
     * Quando a fatura é marcada como paga (ou adiantada), o sistema **libera imediatamente e estritamente o valor que foi pago**, exatamente como o banco faz na vida real!
