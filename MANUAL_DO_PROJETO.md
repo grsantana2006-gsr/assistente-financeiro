@@ -103,7 +103,8 @@ No topo do card, você tem um resumo em tempo real que separa a realidade de cai
 Ao lado de cada conta fixa, o botão inteligente adapta seu comportamento e rótulo dependendo da forma de pagamento:
 * **Se a conta for no Cartão de Crédito:**
   * ⚪ **`⏳ A Cobrar`:** A operadora ainda não processou a cobrança da assinatura neste mês.
-  * 🟣 **`💳 Na Fatura`:** A cobrança já foi confirmada na fatura do cartão (você pagará no vencimento da fatura).
+  * 🟣 **`💳 Na Fatura`:** A cobrança já foi confirmada na fatura do cartão (você pagará no vencimento da fatura). Ao clicar, o sistema exibe feedback imediato `⏳ Salvando…` e atualiza a fatura de destino.
+  * **Tooltip Explicativo:** Ao passar o mouse sobre o botão, o sistema detalha o destino exato: *"Lançada na fatura de Nov/26 do Nubank"*, eliminando qualquer dúvida de ciclo bancário.
 * **Se a conta for via PIX / Débito em Conta / Dinheiro:**
   * 🟡 **`⏳ Pendente`:** A conta ainda não foi paga neste mês.
   * 🟢 **`✓ Liquidado`:** O dinheiro já saiu da sua conta bancária.
@@ -135,12 +136,12 @@ Nem toda conta fixa é paga no cartão de crédito. Aluguel, condomínio e luz n
 #### E. Contas Agendadas para Início Futuro (Pré-Agendamento Inteligente)
 Se você vai começar a pagar uma nova despesa fixa somente daqui a alguns meses (por exemplo, um curso ou assinatura que começa em **Dezembro**), você pode cadastrá-la hoje mesmo sem poluir o mês atual:
 * **Como Funciona:**
-  * Basta preencher o campo de data com o mês de início (ex: `01/12/2026`).
+  * Basta preencher o campo de data com o mês de início (ex: `01/12/2026` ou `05/11/2026`).
   * O sistema reconhece automaticamente que a data é futura em relação ao mês de referência atual (`2026-10`).
-* **Visualização Separada:**
+* **Visualização Separada & Confirmação:**
   * A conta **NÃO** entra no cálculo de "Total Mensal" nem no "A Pagar" de Outubro.
   * Ela é agrupada em uma seção dedicada: **🗓️ Início Futuro**, exibindo uma etiqueta destacada (ex: `🗓️ Inicia em Dezembro/2026`).
-  * O checklist de pagamento fica desativado até que o mês de início chegue.
+  * **Interatividade Garantida:** Mesmo agendada para o futuro, a conta possui o botão de status (`⏳ Agendada`), permitindo que você confirme o lançamento ou liquidação antecipada se a cobrança já tiver ocorrido, sem bloqueios.
 * **Integração com o Forecast:**
   * No gráfico de previsão futura, a conta **só começa a ser contabilizada a partir do mês programado** (Dezembro em diante), mantendo sua projeção precisa e realista.
 
@@ -230,7 +231,9 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
   * Ao clicar no botão **✏️ Editar limite** (ou **✏️ Editar recarga mensal**), abre-se um campo para digitar o novo valor. Ao salvar, uma chamada `PATCH /api/bancos/:id` persiste o novo valor no banco de dados.
 
 * **Fatura do Mês & Sistema de Quitação (`✓ Fatura Paga` e `⚡ Adiantamento`):**
-  * Cada cartão de crédito possui agora um bloco dedicado exibindo a **Fatura do Mês de Referência** (ex: `Fatura de Nov/26: R$ 1.758,70 · Vencimento: dia 03`).
+  * Cada cartão de crédito possui agora um bloco dedicado exibindo a **Fatura do Ciclo Ativo** com abas de alternância rápida:
+    * Se a fatura do mês de referência (ex: `Out/26`) já foi quitada no banco, o cartão disponibiliza as abas `[Out/26 ✓ Paga]` e `[Nov/26 ⏳ Atual Aberta]`, dando foco automático na fatura que está em aberto acumulando os gastos do momento!
+    * Você pode clicar em qualquer uma das abas para inspecionar valores, status e registrar pagamentos na fatura desejada.
   * **Ciclo de Fechamento Unificado:**
     * Tanto para despesas fixas (assinaturas e compras parceladas) quanto para despesas variáveis no cartão, o mês da fatura segue estritamente o ciclo do banco (`dia_fechamento` e `dia_vencimento`).
     * Exemplo Nubank (fecha dia 27, vence dia 03): assinaturas e compras cobradas ao longo de Outubro (como Google One, Premiere, ou compras de mercado) entram automaticamente na fatura que vence em **Novembro** (`Nov/26`), sem contaminar o boleto de Outubro.

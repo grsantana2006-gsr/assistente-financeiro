@@ -50,8 +50,8 @@ function App() {
   const adicionarFixa = (dados) =>
     executar(() => api.criarTransacao({ ...dados, tipo: 'Despesa', categoria: 'Fixo' }))
 
-  const alternarPagamentoFixa = (id) =>
-    executar(() => api.alternarPagamentoFixa(id, MES_REFERENCIA))
+  const alternarPagamentoFixa = (id, mes) =>
+    executar(() => api.alternarPagamentoFixa(id, mes || MES_REFERENCIA))
 
   const alternarPagamentoFatura = (bancoId, dados) =>
     executar(() => api.alternarPagamentoFatura(bancoId, dados || MES_REFERENCIA))

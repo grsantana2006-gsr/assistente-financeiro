@@ -35,9 +35,9 @@ const buscarPorId = async (id, mesRef = obterMesReferencia()) =>
   await db.prepare(`
     SELECT t.*, (CASE WHEN pf.id IS NOT NULL THEN 1 ELSE 0 END) AS pago
     FROM transacoes t
-    LEFT JOIN pagamentos_fixas pf ON pf.transacao_id = t.id AND pf.mes = ?
+    LEFT JOIN pagamentos_fixas pf ON pf.transacao_id = t.id AND (pf.mes = ? OR (SUBSTR(t.data_compra, 1, 7) > ? AND pf.mes = SUBSTR(t.data_compra, 1, 7)))
     WHERE t.id = ?
-  `).get(mesRef, id)
+  `).get(mesRef, mesRef, id)
 
 async function verificarConsistencia(t) {
   const erros = []
@@ -58,7 +58,7 @@ router.get('/', async (req, res) => {
   const mesRef = filtros.mes_referencia || obterMesReferencia()
 
   const condicoes = []
-  const valores = [mesRef]
+  const valores = [mesRef, mesRef]
   for (const campo of ['tipo', 'categoria', 'banco_id', 'ativa']) {
     if (filtros[campo] !== undefined) {
       condicoes.push(`t.${campo} = ?`)
@@ -74,7 +74,7 @@ router.get('/', async (req, res) => {
   const sql = `
     SELECT t.*, (CASE WHEN pf.id IS NOT NULL THEN 1 ELSE 0 END) AS pago
     FROM transacoes t
-    LEFT JOIN pagamentos_fixas pf ON pf.transacao_id = t.id AND pf.mes = ?
+    LEFT JOIN pagamentos_fixas pf ON pf.transacao_id = t.id AND (pf.mes = ? OR (SUBSTR(t.data_compra, 1, 7) > ? AND pf.mes = SUBSTR(t.data_compra, 1, 7)))
     ${where}
     ORDER BY t.data_compra DESC, t.id DESC
   `

@@ -24,6 +24,10 @@ const PORTA = config.porta
 // 2) Middlewares: funções que rodam ANTES das rotas, em ordem.
 app.use(cors()) // libera o front para chamar a API de qualquer IP na rede local
 app.use(express.json()) // permite ler o corpo (body) das requisições em formato JSON
+app.use((_req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  next()
+})
 
 // 3) Rotas
 app.get('/api/saude', async (_req, res) => {

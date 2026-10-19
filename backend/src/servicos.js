@@ -7,9 +7,9 @@ export async function carregarTransacoes(mes) {
     const sql = `
       SELECT t.*, (CASE WHEN pf.id IS NOT NULL THEN 1 ELSE 0 END) AS pago
       FROM transacoes t
-      LEFT JOIN pagamentos_fixas pf ON pf.transacao_id = t.id AND pf.mes = ?
+      LEFT JOIN pagamentos_fixas pf ON pf.transacao_id = t.id AND (pf.mes = ? OR (SUBSTR(t.data_compra, 1, 7) > ? AND pf.mes = SUBSTR(t.data_compra, 1, 7)))
     `
-    const transacoes = await db.prepare(sql).all(mes)
+    const transacoes = await db.prepare(sql).all(mes, mes)
     return transacoes.map(transacaoParaApi)
   }
   const transacoes = await db.prepare('SELECT * FROM transacoes').all()

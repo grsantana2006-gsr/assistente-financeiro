@@ -49,6 +49,19 @@ function DespesasFixas({
   const [editandoId, setEditandoId] = useState(null)
   const [editDescricao, setEditDescricao] = useState('')
   const [editValor, setEditValor] = useState('')
+  const [processandoId, setProcessandoId] = useState(null)
+
+  async function tratarAlternarPagamento(id, mesAlvo) {
+    if (processandoId) return
+    setProcessandoId(id)
+    try {
+      if (aoAlternarPagamento) {
+        await aoAlternarPagamento(id, mesAlvo)
+      }
+    } finally {
+      setProcessandoId(null)
+    }
+  }
 
   function iniciarEdicao(t) {
     setEditandoId(t.id)
@@ -261,12 +274,18 @@ function DespesasFixas({
                   ? '⏳ A Cobrar'
                   : '⏳ Pendente'
 
+              const banco = bancos.find((b) => b.id === t.banco_id)
+              const mesFaturaDestino =
+                ehCredito && banco && t.data_compra
+                  ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+                  : null
+
               const statusTitle = t.pago
                 ? ehCredito
-                  ? 'Cobrado no cartão (já lançado na fatura). Clique para desmarcar.'
-                  : 'Conta liquidada / debitada da conta. Clique para marcar como pendente.'
+                  ? `Lançada na fatura de ${formatarMesAnoCurto(mesFaturaDestino)} do ${banco?.nome || 'cartão'}. Clique para desmarcar.`
+                  : `Conta liquidada / debitada no ${banco?.nome || 'conta'}. Clique para marcar como pendente.`
                 : ehCredito
-                  ? 'Ainda não cobrado no cartão este mês. Clique para marcar como lançado na fatura.'
+                  ? `Ainda não cobrado no cartão este mês. Clique para marcar como lançado na fatura de ${formatarMesAnoCurto(mesFaturaDestino)} do ${banco?.nome || 'cartão'}.`
                   : 'Conta pendente de pagamento este mês. Clique para marcar como liquidada.'
 
               const itemClass = `fixas__item ${ativa ? '' : 'fixas__item--pausada'} ${
@@ -276,12 +295,6 @@ function DespesasFixas({
                     : 'fixas__item--pago'
                   : ''
               }`
-
-              const banco = bancos.find((b) => b.id === t.banco_id)
-              const mesFaturaDestino =
-                ehCredito && banco && t.data_compra
-                  ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
-                  : null
 
               const hojeStr = new Date().toISOString().slice(0, 10)
               const diaHoje = Number(hojeStr.slice(8, 10))
@@ -404,12 +417,13 @@ function DespesasFixas({
                       <button
                         id={`pago-fixa-${t.id}`}
                         type="button"
-                        className={`fixas__btn-status ${statusClass}`}
-                        onClick={() => aoAlternarPagamento(t.id)}
+                        disabled={processandoId === t.id}
+                        className={`fixas__btn-status ${statusClass} ${processandoId === t.id ? 'fixas__btn-status--carregando' : ''}`}
+                        onClick={() => tratarAlternarPagamento(t.id, mesAtualRef)}
                         title={statusTitle}
                         aria-label={`${t.descricao}: ${statusTexto}`}
                       >
-                        {statusTexto}
+                        {processandoId === t.id ? '⏳ Salvando…' : statusTexto}
                       </button>
 
                       {/* Interruptor ativar/pausar */}
@@ -554,12 +568,31 @@ function DespesasFixas({
                           ✏️
                         </button>
 
-                        <span
-                          className="fixas__badge-status-agendado"
-                          title="Esta conta só passará para a lista de pagamentos ativos no mês de início estipulado"
+                        <button
+                          id={`pago-fixa-${t.id}`}
+                          type="button"
+                          disabled={processandoId === t.id}
+                          className={`fixas__btn-status ${
+                            t.pago
+                              ? (t.forma_pagamento === 'Crédito' ? 'fixas__btn-status--fatura' : 'fixas__btn-status--pago')
+                              : 'fixas__btn-status--a-cobrar'
+                          } ${processandoId === t.id ? 'fixas__btn-status--carregando' : ''}`}
+                          onClick={() => tratarAlternarPagamento(t.id, mesInicio)}
+                          title={
+                            t.pago
+                              ? (t.forma_pagamento === 'Crédito'
+                                  ? `Lançado na fatura de ${formatarMesAnoCurto(mesInicio)}. Clique para desmarcar.`
+                                  : `Liquidado em ${formatarMesAnoCurto(mesInicio)}. Clique para desmarcar.`)
+                              : (t.forma_pagamento === 'Crédito'
+                                  ? `Agendado para ${formatarMesAnoCurto(mesInicio)}. Clique para confirmar lançamento agora.`
+                                  : `Agendado para ${formatarMesAnoCurto(mesInicio)}. Clique para marcar como liquidado agora.`)
+                          }
+                          aria-label={`${t.descricao}: ${t.pago ? 'Confirmado' : 'Agendada'}`}
                         >
-                          ⏳ Agendada
-                        </span>
+                          {processandoId === t.id
+                            ? '⏳ Salvando…'
+                            : (t.pago ? (t.forma_pagamento === 'Crédito' ? '💳 Na Fatura' : '✓ Liquidado') : '⏳ Agendada')}
+                        </button>
 
                         <button
                           id={`alternar-fixa-${t.id}`}

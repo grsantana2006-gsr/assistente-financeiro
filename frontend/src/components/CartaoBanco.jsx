@@ -27,6 +27,42 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
   const alerta = nivelDeAlerta(uso)
   const ehBeneficio = banco.tipo === 'Benefício'
   const mesAtual = mesReferencia || new Date().toISOString().slice(0, 7)
+  const proximaFatura = banco.proximas_faturas?.[0]
+
+  // Se a fatura do mês atual já está paga, permite alternar ou focar na fatura aberta do ciclo seguinte (ex: Nov/26)
+  const [faturaFocoMes, setFaturaFocoMes] = useState(null)
+  const mesExibido = faturaFocoMes || (banco.fatura_paga && proximaFatura ? proximaFatura.mes : mesAtual)
+  const ehFocoProxima = Boolean(proximaFatura && mesExibido === proximaFatura.mes)
+  const faturaFocoDados = ehFocoProxima ? proximaFatura : null
+
+  // Métricas dinâmicas da fatura selecionada no bloco
+  const faturaExibidaPaga = ehFocoProxima
+    ? (faturaFocoDados.valor_pago_adiantado >= faturaFocoDados.valor_lancado && faturaFocoDados.valor_lancado > 0)
+    : banco.fatura_paga
+
+  const faturaExibidaParcial = ehFocoProxima
+    ? Boolean(faturaFocoDados.valor_pago_adiantado > 0 && faturaFocoDados.valor_pago_adiantado < faturaFocoDados.valor_lancado)
+    : banco.fatura_parcial
+
+  const faturaExibidaValor = ehFocoProxima
+    ? (faturaExibidaParcial
+        ? faturaFocoDados.saldo_lancado_restante
+        : (faturaFocoDados.valor_lancado > 0 ? faturaFocoDados.valor_lancado : faturaFocoDados.valor))
+    : (banco.fatura_parcial
+        ? banco.saldo_restante_fatura
+        : (banco.valor_fatura_lancada > 0 ? banco.valor_fatura_lancada : (banco.valor_fatura || 0)))
+
+  const faturaExibidaAdiantado = ehFocoProxima
+    ? faturaFocoDados.valor_pago_adiantado
+    : banco.valor_pago_adiantado
+
+  const faturaExibidaPrevisto = ehFocoProxima
+    ? faturaFocoDados.valor
+    : banco.valor_fatura
+
+  const faturaExibidaTemACobrar = ehFocoProxima
+    ? (faturaFocoDados.valor_a_cobrar > 0)
+    : (banco.valor_fatura_a_cobrar > 0)
 
   function iniciarEdicao() {
     setRascunho(String(banco.limite_total))
@@ -185,61 +221,83 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
 
       {/* Bloco de Fatura do Mês e Botão de Quitação / Adiantamento */}
       {!ehBeneficio && (
-        <div className={`cartao__fatura-bloco ${banco.fatura_paga ? 'cartao__fatura-bloco--paga' : ''}`}>
-          <div className="cartao__fatura-conteudo">
-            <span className="cartao__fatura-rotulo">
-              Fatura de {formatarMesAnoCurto(mesAtual)}:
-            </span>
-            <div className="cartao__fatura-valores-linha">
-              <strong className="cartao__fatura-valor">
-                {banco.fatura_parcial
-                  ? formatarMoeda(banco.saldo_restante_fatura)
-                  : formatarMoeda(banco.valor_fatura_lancada > 0 ? banco.valor_fatura_lancada : (banco.valor_fatura || 0))}
-              </strong>
-              {banco.fatura_parcial && (
-                <span
-                  className="cartao__fatura-sub-adiantado"
-                  title={`Total: ${formatarMoeda(banco.valor_fatura || 0)} | Adiantado: -${formatarMoeda(banco.valor_pago_adiantado || 0)}`}
-                >
-                  ⚡ {formatarMoeda(banco.valor_pago_adiantado)} adiantado
-                </span>
-              )}
-              {!banco.fatura_parcial && banco.valor_fatura_a_cobrar > 0 && (
-                <span className="cartao__fatura-sub-previsto" title={`Já lançado: ${formatarMoeda(banco.valor_fatura_lancada || 0)} | Ainda a cobrar: ${formatarMoeda(banco.valor_fatura_a_cobrar)}`}>
-                  previsto: {formatarMoeda(banco.valor_fatura || 0)}
-                </span>
-              )}
+        <div className={`cartao__fatura-bloco ${faturaExibidaPaga ? 'cartao__fatura-bloco--paga' : ''}`}>
+          {/* Seletor rápido de faturas quando há próximas faturas ou quando o mês atual já está pago */}
+          {proximaFatura && (
+            <div className="cartao__fatura-abas">
+              <button
+                type="button"
+                className={`cartao__fatura-aba ${mesExibido === mesAtual ? 'cartao__fatura-aba--ativa' : ''}`}
+                onClick={() => setFaturaFocoMes(mesAtual)}
+                title={`Ver fatura de ${formatarMesAnoCurto(mesAtual)}`}
+              >
+                {formatarMesAnoCurto(mesAtual)} {banco.fatura_paga ? '✓ Paga' : ''}
+              </button>
+              <button
+                type="button"
+                className={`cartao__fatura-aba ${mesExibido === proximaFatura.mes ? 'cartao__fatura-aba--ativa' : ''}`}
+                onClick={() => setFaturaFocoMes(proximaFatura.mes)}
+                title={`Ver fatura de ${formatarMesAnoCurto(proximaFatura.mes)}`}
+              >
+                {formatarMesAnoCurto(proximaFatura.mes)} {banco.fatura_paga ? '⏳ Atual Aberta' : ''}
+              </button>
             </div>
-            <span className="cartao__fatura-vencimento">
-              Vencimento: dia {banco.dia_vencimento}
-            </span>
-          </div>
+          )}
 
-          <button
-            id={`fatura-btn-${banco.id}`}
-            type="button"
-            className={`cartao__btn-fatura ${
-              banco.fatura_paga
-                ? 'cartao__btn-fatura--paga'
-                : banco.fatura_parcial
-                ? 'cartao__btn-fatura--parcial'
-                : 'cartao__btn-fatura--aberta'
-            }`}
-            onClick={() => abrirModalPagamento(mesAtual)}
-            title={
-              banco.fatura_paga
-                ? 'Fatura quitada! Clique para gerenciar ou reabrir.'
-                : banco.fatura_parcial
-                ? `Adiantamento de ${formatarMoeda(banco.valor_pago_adiantado)} realizado. Resta ${formatarMoeda(banco.saldo_restante_fatura)}. Clique para gerenciar.`
-                : 'Clique para registrar pagamento integral ou adiantamento desta fatura.'
-            }
-          >
-            {banco.fatura_paga
-              ? '✓ Fatura Paga'
-              : banco.fatura_parcial
-              ? `⚡ ${formatarMoeda(banco.valor_pago_adiantado)} Pago`
-              : '⏳ Fatura Aberta'}
-          </button>
+          <div className="cartao__fatura-corpo">
+            <div className="cartao__fatura-conteudo">
+              <span className="cartao__fatura-rotulo">
+                Fatura de {formatarMesAnoCurto(mesExibido)} {ehFocoProxima && banco.fatura_paga ? '(Atual Aberta)' : ''}:
+              </span>
+              <div className="cartao__fatura-valores-linha">
+                <strong className="cartao__fatura-valor">
+                  {formatarMoeda(faturaExibidaValor)}
+                </strong>
+                {faturaExibidaParcial && (
+                  <span
+                    className="cartao__fatura-sub-adiantado"
+                    title={`Total: ${formatarMoeda(faturaExibidaPrevisto || 0)} | Adiantado: -${formatarMoeda(faturaExibidaAdiantado || 0)}`}
+                  >
+                    ⚡ {formatarMoeda(faturaExibidaAdiantado)} adiantado
+                  </span>
+                )}
+                {!faturaExibidaParcial && faturaExibidaTemACobrar && (
+                  <span className="cartao__fatura-sub-previsto" title={`Já lançado: ${formatarMoeda(faturaExibidaValor || 0)} | Previsto total: ${formatarMoeda(faturaExibidaPrevisto || 0)}`}>
+                    previsto: {formatarMoeda(faturaExibidaPrevisto || 0)}
+                  </span>
+                )}
+              </div>
+              <span className="cartao__fatura-vencimento">
+                Vencimento: dia {banco.dia_vencimento}
+              </span>
+            </div>
+
+            <button
+              id={`fatura-btn-${banco.id}`}
+              type="button"
+              className={`cartao__btn-fatura ${
+                faturaExibidaPaga
+                  ? 'cartao__btn-fatura--paga'
+                  : faturaExibidaParcial
+                  ? 'cartao__btn-fatura--parcial'
+                  : 'cartao__btn-fatura--aberta'
+              }`}
+              onClick={() => abrirModalPagamento(mesExibido)}
+              title={
+                faturaExibidaPaga
+                  ? 'Fatura quitada! Clique para gerenciar ou reabrir.'
+                  : faturaExibidaParcial
+                  ? `Adiantamento de ${formatarMoeda(faturaExibidaAdiantado)} realizado. Resta ${formatarMoeda(faturaExibidaValor)}. Clique para gerenciar.`
+                  : 'Clique para registrar pagamento integral ou adiantamento desta fatura.'
+              }
+            >
+              {faturaExibidaPaga
+                ? '✓ Fatura Paga'
+                : faturaExibidaParcial
+                ? `⚡ ${formatarMoeda(faturaExibidaAdiantado)} Pago`
+                : '⏳ Fatura Aberta'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -270,7 +328,10 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                     key={faturaFutura.mes}
                     type="button"
                     className={`cartao__proxima-card ${ativa ? 'cartao__proxima-card--ativo' : ''}`}
-                    onClick={() => setFaturaAbertaModal(ativa ? null : faturaFutura)}
+                    onClick={() => {
+                      setFaturaAbertaModal(ativa ? null : faturaFutura)
+                      setFaturaFocoMes(faturaFutura.mes)
+                    }}
                     title={`Clique para ver os lançamentos de ${formatarMesAnoCurto(faturaFutura.mes)}`}
                   >
                     <span className="cartao__proxima-mes">

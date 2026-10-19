@@ -29,8 +29,11 @@ async function requisitar(metodo, caminho, corpo) {
   try {
     resposta = await fetch(BASE + caminho, {
       method: metodo,
-      // Só enviamos o cabeçalho quando há corpo (evita requisições extras desnecessárias)
-      headers: corpo === undefined ? undefined : { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        ...(corpo === undefined ? {} : { 'Content-Type': 'application/json' }),
+      },
       body: corpo === undefined ? undefined : JSON.stringify(corpo),
     })
   } catch {
@@ -59,6 +62,10 @@ export const api = {
   atualizarBanco: (id, dados) => requisitar('PATCH', `/bancos/${id}`, dados),
   criarTransacao: (dados) => requisitar('POST', '/transacoes', dados),
   atualizarTransacao: (id, dados) => requisitar('PATCH', `/transacoes/${id}`, dados),
+  alternarPagamentoFixa: (id, payload) => {
+    const corpo = typeof payload === 'object' && payload !== null ? payload : { mes: payload }
+    return requisitar('POST', `/transacoes/${id}/alternar-pagamento`, corpo)
+  },
   alternarPagamentoFatura: (bancoId, payload) => {
     const corpo = typeof payload === 'object' && payload !== null ? payload : { mes: payload }
     return requisitar('POST', `/bancos/${bancoId}/alternar-fatura`, corpo)

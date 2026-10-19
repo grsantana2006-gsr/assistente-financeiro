@@ -132,14 +132,61 @@
 /* ---------- Bloco de Fatura do Mês ---------- */
 .cartao__fatura-bloco {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
   transition: all var(--transition);
+}
+
+.cartao__fatura-corpo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.cartao__fatura-abas {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
+}
+
+.cartao__fatura-aba {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.cartao__fatura-aba:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cartao__fatura-aba--ativa {
+  color: #fff;
+  background: rgba(139, 92, 246, 0.28);
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
 }
 
 .cartao__fatura-bloco--paga {
