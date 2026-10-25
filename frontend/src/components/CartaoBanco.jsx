@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { formatarMoeda, formatarPercentual, formatarMesAnoCurto } from '../utils/format'
 import { nivelDeAlerta } from '../utils/calculos'
 import './CartaoBanco.css'
@@ -442,148 +443,156 @@ function CartaoBanco({
       )}
 
       {/* Modal de Pagamento e Adiantamentos de Fatura */}
-      {modalPagamentoAberto && (
-        <div className="cartao__modal-overlay" onClick={() => !salvandoPagamento && setModalPagamentoAberto(false)}>
-          <div className="cartao__modal" onClick={(e) => e.stopPropagation()}>
-            <div className="cartao__modal-cabecalho">
-              <div>
-                <h4 className="cartao__modal-titulo">Pagamento / Adiantamento de Fatura</h4>
-                <span className="cartao__modal-sub">{banco.nome}</span>
-              </div>
-              <button
-                type="button"
-                className="cartao__modal-fechar"
-                onClick={() => setModalPagamentoAberto(false)}
-                disabled={salvandoPagamento}
-              >
-                Fechar
-              </button>
-            </div>
-
-            <div className="cartao__modal-corpo">
-              <label className="cartao__modal-campo">
-                <span className="cartao__modal-rotulo">Selecione o mês da fatura:</span>
-                <select
-                  value={mesSelecionado}
-                  onChange={(e) => mudarMesNoModal(e.target.value)}
-                  disabled={salvandoPagamento}
-                >
-                  <option value={mesAtual}>Fatura Atual ({formatarMesAnoCurto(mesAtual)})</option>
-                  {banco.proximas_faturas?.map((pf) => (
-                    <option key={pf.mes} value={pf.mes}>
-                      Fatura de {formatarMesAnoCurto(pf.mes)} (lançado: {formatarMoeda(pf.valor_lancado || 0)})
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <div className="cartao__modal-resumo">
-                <div className="cartao__modal-resumo-linha">
-                  <span>Valor lançado da fatura:</span>
-                  <strong>{formatarMoeda(faturaSelecionadaInfo.valorLancado || faturaSelecionadaInfo.valorTotal)}</strong>
+      {modalPagamentoAberto &&
+        createPortal(
+          <div className="cartao__modal-overlay" onClick={() => !salvandoPagamento && setModalPagamentoAberto(false)}>
+            <div className="cartao__modal" onClick={(e) => e.stopPropagation()}>
+              <div className="cartao__modal-cabecalho">
+                <div>
+                  <h3 className="cartao__modal-titulo">Adiantamento de Fatura</h3>
+                  <span className="cartao__modal-sub">{banco.nome}</span>
                 </div>
-                {faturaSelecionadaInfo.valorPago > 0 && (
-                  <div className="cartao__modal-resumo-linha cartao__modal-resumo-linha--destaque">
-                    <span>Total adiantado:</span>
-                    <strong>{formatarMoeda(faturaSelecionadaInfo.valorPago)}</strong>
-                  </div>
-                )}
-                <div className="cartao__modal-resumo-linha">
-                  <span>Saldo restante a pagar:</span>
-                  <strong>{formatarMoeda(faturaSelecionadaInfo.saldoRestante)}</strong>
-                </div>
-              </div>
-
-              {/* Lista de Adiantamentos Registrados */}
-              <div className="cartao__modal-historico">
-                <span className="cartao__modal-rotulo">
-                  Adiantamentos Registrados ({faturaSelecionadaInfo.pagamentos?.length || 0}):
-                </span>
-                {faturaSelecionadaInfo.pagamentos && faturaSelecionadaInfo.pagamentos.length > 0 ? (
-                  <ul className="cartao__modal-historico-lista">
-                    {faturaSelecionadaInfo.pagamentos.map((pg) => (
-                      <li key={pg.id} className="cartao__modal-historico-item">
-                        <div className="cartao__modal-historico-info">
-                          <strong>{pg.valor_pago != null ? formatarMoeda(pg.valor_pago) : 'Quitação Integral'}</strong>
-                          <span className="cartao__modal-historico-sub">
-                            {pg.descricao || 'Adiantamento'}
-                            {pg.pago_em && ` · ${new Date(pg.pago_em).toLocaleDateString('pt-BR')}`}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          className="cartao__modal-btn-excluir"
-                          onClick={() => handleRemoverAdiantamento(pg.id)}
-                          disabled={salvandoPagamento}
-                          title="Excluir este adiantamento"
-                        >
-                          Excluir
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="cartao__modal-vazio">Nenhum adiantamento avulso registrado para este mês.</p>
-                )}
-              </div>
-
-              {/* Formulário para Adicionar Novo Adiantamento */}
-              <form onSubmit={handleAdicionarAdiantamento} className="cartao__modal-novo-form">
-                <span className="cartao__modal-rotulo">Adicionar Novo Adiantamento:</span>
-                <div className="cartao__modal-novo-grid">
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="Valor (ex: 417,00)"
-                    value={valorNovoAdiantamento}
-                    onChange={(e) => setValorNovoAdiantamento(e.target.value)}
-                    disabled={salvandoPagamento}
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Descrição / nota (opcional)"
-                    value={descricaoNovoAdiantamento}
-                    onChange={(e) => setDescricaoNovoAdiantamento(e.target.value)}
-                    disabled={salvandoPagamento}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="btn btn--primary cartao__modal-btn-adicionar"
-                  disabled={salvandoPagamento}
-                >
-                  {salvandoPagamento ? 'Salvando…' : 'Adicionar Adiantamento'}
-                </button>
-              </form>
-
-              {/* Ações Rápidas: Quitação Integral e Limpar */}
-              <div className="cartao__modal-acoes-rapidas">
                 <button
                   type="button"
-                  className="btn btn--success"
-                  onClick={handleQuitarIntegral}
+                  className="cartao__modal-fechar"
+                  onClick={() => setModalPagamentoAberto(false)}
                   disabled={salvandoPagamento}
-                  title="Marca a fatura como 100% quitada"
                 >
-                  Quitar Fatura Integralmente
+                  Fechar
                 </button>
-                {temPagamentoNoMes && (
+              </div>
+
+              <div className="cartao__modal-corpo">
+                <label className="cartao__modal-campo">
+                  <span className="cartao__modal-rotulo">Selecione o mês da fatura:</span>
+                  <select
+                    value={mesSelecionado}
+                    onChange={(e) => mudarMesNoModal(e.target.value)}
+                    disabled={salvandoPagamento}
+                  >
+                    <option value={mesAtual}>Fatura Atual ({formatarMesAnoCurto(mesAtual)})</option>
+                    {banco.proximas_faturas?.map((pf) => (
+                      <option key={pf.mes} value={pf.mes}>
+                        Fatura de {formatarMesAnoCurto(pf.mes)} (lançado: {formatarMoeda(pf.valor_lancado || 0)})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="cartao__modal-resumo">
+                  <div className="cartao__modal-resumo-linha">
+                    <span>Valor lançado da fatura:</span>
+                    <strong>{formatarMoeda(faturaSelecionadaInfo.valorLancado || faturaSelecionadaInfo.valorTotal)}</strong>
+                  </div>
+                  {faturaSelecionadaInfo.valorPago > 0 && (
+                    <div className="cartao__modal-resumo-linha cartao__modal-resumo-linha--destaque">
+                      <span>Total adiantado:</span>
+                      <strong>{formatarMoeda(faturaSelecionadaInfo.valorPago)}</strong>
+                    </div>
+                  )}
+                  <div className="cartao__modal-resumo-linha">
+                    <span>Saldo restante a pagar:</span>
+                    <strong className="cartao__modal-saldo-restante">{formatarMoeda(faturaSelecionadaInfo.saldoRestante)}</strong>
+                  </div>
+                </div>
+
+                {/* Lista de Adiantamentos Registrados */}
+                <div className="cartao__modal-historico">
+                  <span className="cartao__modal-rotulo">
+                    Adiantamentos Registrados ({faturaSelecionadaInfo.pagamentos?.length || 0}):
+                  </span>
+                  {faturaSelecionadaInfo.pagamentos && faturaSelecionadaInfo.pagamentos.length > 0 ? (
+                    <ul className="cartao__modal-historico-lista">
+                      {faturaSelecionadaInfo.pagamentos.map((pg) => (
+                        <li key={pg.id} className="cartao__modal-historico-item">
+                          <div className="cartao__modal-historico-info">
+                            <strong>{pg.valor_pago != null ? formatarMoeda(pg.valor_pago) : 'Quitação Integral'}</strong>
+                            <span className="cartao__modal-historico-sub">
+                              {pg.descricao || 'Adiantamento'}
+                              {pg.pago_em && ` · ${new Date(pg.pago_em).toLocaleDateString('pt-BR')}`}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            className="cartao__modal-btn-excluir"
+                            onClick={() => handleRemoverAdiantamento(pg.id)}
+                            disabled={salvandoPagamento}
+                            title="Excluir este adiantamento"
+                          >
+                            Excluir
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="cartao__modal-vazio">Nenhum adiantamento avulso registrado para este mês.</p>
+                  )}
+                </div>
+
+                {/* Formulário para Adicionar Novo Adiantamento */}
+                <form onSubmit={handleAdicionarAdiantamento} className="cartao__modal-novo-form">
+                  <span className="cartao__modal-rotulo">Adicionar Novo Adiantamento</span>
+                  <div className="cartao__modal-novo-grid">
+                    <div className="cartao__modal-campo-item">
+                      <label className="cartao__modal-campo-etiqueta">Valor (R$)</label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Ex: 417,00"
+                        value={valorNovoAdiantamento}
+                        onChange={(e) => setValorNovoAdiantamento(e.target.value)}
+                        disabled={salvandoPagamento}
+                        required
+                      />
+                    </div>
+                    <div className="cartao__modal-campo-item">
+                      <label className="cartao__modal-campo-etiqueta">Descrição / nota</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Pagamento recebido"
+                        value={descricaoNovoAdiantamento}
+                        onChange={(e) => setDescricaoNovoAdiantamento(e.target.value)}
+                        disabled={salvandoPagamento}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    className="btn btn--primary cartao__modal-btn-adicionar"
+                    disabled={salvandoPagamento}
+                  >
+                    {salvandoPagamento ? 'Salvando…' : 'Adicionar Adiantamento'}
+                  </button>
+                </form>
+
+                {/* Ações Rápidas: Quitação Integral e Limpar */}
+                <div className="cartao__modal-acoes-rapidas">
                   <button
                     type="button"
-                    className="btn btn--danger"
-                    onClick={handleLimparPagamentos}
+                    className="btn btn--secondary cartao__modal-btn-quitar"
+                    onClick={handleQuitarIntegral}
                     disabled={salvandoPagamento}
-                    title="Remove todos os pagamentos e reabre a fatura"
+                    title="Marca a fatura como 100% quitada"
                   >
-                    Limpar Pagamentos
+                    Quitar Fatura Integralmente
                   </button>
-                )}
+                  {temPagamentoNoMes && (
+                    <button
+                      type="button"
+                      className="btn btn--danger cartao__modal-btn-limpar"
+                      onClick={handleLimparPagamentos}
+                      disabled={salvandoPagamento}
+                      title="Remove todos os pagamentos e reabre a fatura"
+                    >
+                      Limpar Pagamentos
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </article>
   )
 }

@@ -559,32 +559,38 @@
 }
 
 /* =========================================================
-   Modal de Pagamento / Adiantamento de Fatura
+   Modal de Pagamento / Adiantamento de Fatura (Global Overlay)
    ========================================================= */
 .cartao__modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(8, 12, 22, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 16px;
+  z-index: 99999;
+  padding: 20px;
+  overflow-y: auto;
   animation: cartaoModalFadeIn 0.2s ease-out;
 }
 
 .cartao__modal {
-  background: #1e293b;
+  background: #141c2e;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(34, 211, 238, 0.1);
-  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 1px rgba(255, 255, 255, 0.2);
+  border-radius: 18px;
   width: 100%;
-  max-width: 440px;
-  padding: 24px;
+  max-width: 520px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 24px 28px;
   color: var(--text);
   animation: cartaoModalScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 @keyframes cartaoModalFadeIn {
@@ -593,7 +599,7 @@
 }
 
 @keyframes cartaoModalScale {
-  from { transform: scale(0.95); opacity: 0; }
+  from { transform: scale(0.96); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
@@ -601,35 +607,35 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 12px;
+  padding-bottom: 14px;
 }
 
 .cartao__modal-titulo {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  margin: 0 0 4px 0;
+  margin: 0;
   color: #f8fafc;
+  letter-spacing: -0.01em;
 }
 
 .cartao__modal-sub {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #94a3b8;
   font-weight: 500;
+  display: block;
+  margin-top: 2px;
 }
 
 .cartao__modal-fechar {
   background: rgba(255, 255, 255, 0.06);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #94a3b8;
   font-size: 0.8rem;
-  padding: 6px 12px;
+  font-weight: 500;
+  padding: 6px 14px;
   border-radius: 8px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: all var(--transition);
 }
 
@@ -651,38 +657,39 @@
 }
 
 .cartao__modal-rotulo {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #cbd5e1;
 }
 
-.cartao__modal-campo select,
-.cartao__modal-novo-grid input {
-  background: #0f172a;
+.cartao__modal-campo select {
+  background: #0b1120;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   color: #f8fafc;
   font-size: 0.9rem;
   font-family: inherit;
   outline: none;
+  cursor: pointer;
   transition: border-color var(--transition);
+  width: 100%;
 }
 
-.cartao__modal-campo select:focus,
-.cartao__modal-novo-grid input:focus {
+.cartao__modal-campo select:focus {
   border-color: #38bdf8;
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
 }
 
+/* Resumo da Fatura */
 .cartao__modal-resumo {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(11, 17, 32, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .cartao__modal-resumo-linha {
@@ -700,13 +707,17 @@
 
 .cartao__modal-resumo-linha--destaque {
   color: #22d3ee;
-  border-top: 1px dashed rgba(255, 255, 255, 0.08);
-  padding-top: 6px;
-  margin-top: 2px;
 }
 
 .cartao__modal-resumo-linha--destaque strong {
   color: #22d3ee;
+  font-weight: 600;
+}
+
+.cartao__modal-saldo-restante {
+  color: #38bdf8 !important;
+  font-size: 1.15rem !important;
+  font-weight: 700;
 }
 
 /* Histórico de pagamentos / adiantamentos */
@@ -722,8 +733,8 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-height: 160px;
+  gap: 8px;
+  max-height: 180px;
   overflow-y: auto;
 }
 
@@ -731,10 +742,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(11, 17, 32, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 8px 12px;
+  border-radius: 10px;
+  padding: 10px 14px;
 }
 
 .cartao__modal-historico-info {
@@ -744,74 +755,138 @@
 }
 
 .cartao__modal-historico-info strong {
-  color: #22d3ee;
-  font-size: 0.9rem;
+  color: #38bdf8;
+  font-size: 0.95rem;
 }
 
 .cartao__modal-historico-sub {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: #94a3b8;
 }
 
 .cartao__modal-btn-excluir {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.28);
   color: #fca5a5;
   font-size: 0.75rem;
   font-weight: 500;
-  padding: 4px 8px;
+  padding: 5px 10px;
   border-radius: 6px;
   cursor: pointer;
   transition: all var(--transition);
 }
 
 .cartao__modal-btn-excluir:hover {
-  background: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.25);
   color: #ffffff;
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 .cartao__modal-vazio {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: #64748b;
   font-style: italic;
   margin: 0;
   padding: 6px 0;
 }
 
-/* Novo adiantamento */
+/* Formulário de Novo Adiantamento */
 .cartao__modal-novo-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background: rgba(15, 23, 42, 0.4);
+  gap: 12px;
+  background: rgba(11, 17, 32, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 14px 16px;
 }
 
 .cartao__modal-novo-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 500px) {
   .cartao__modal-novo-grid {
     grid-template-columns: 1fr;
   }
 }
 
+.cartao__modal-campo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cartao__modal-campo-etiqueta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.cartao__modal-campo-item input {
+  background: #0b1120;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #f8fafc;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  transition: border-color var(--transition);
+}
+
+.cartao__modal-campo-item input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
 .cartao__modal-btn-adicionar {
   width: 100%;
-  margin-top: 4px;
+  padding: 10px;
+  font-weight: 600;
+  font-size: 0.88rem;
 }
 
 /* Ações rápidas */
 .cartao__modal-acoes-rapidas {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin-top: 4px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+}
+
+.cartao__modal-btn-quitar,
+.cartao__modal-btn-limpar {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.cartao__modal-btn-quitar {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.cartao__modal-btn-quitar:hover {
+  background: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+}
+
+.cartao__modal-btn-limpar {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.cartao__modal-btn-limpar:hover {
+  background: rgba(239, 68, 68, 0.22);
+  color: #ffffff;
 }
 
