@@ -3,7 +3,7 @@ import './PainelCartoes.css'
 
 // Painel que agrupa os cards de todos os bancos.
 // Cada "cartao" já chega do servidor com gasto, limite_disponivel e uso calculados.
-function PainelCartoes({ cartoes, aoSalvarLimite, aoAlternarFatura, mesReferencia }) {
+function PainelCartoes({ cartoes, aoSalvarLimite, aoAlternarFatura, aoAdicionarAdiantamento, aoRemoverAdiantamento, mesReferencia }) {
   return (
     <section id="painel-cartoes" aria-labelledby="titulo-cartoes">
       <div className="secao__cabecalho">
@@ -20,6 +20,8 @@ function PainelCartoes({ cartoes, aoSalvarLimite, aoAlternarFatura, mesReferenci
             cartao={cartao}
             aoSalvarLimite={aoSalvarLimite}
             aoAlternarFatura={aoAlternarFatura}
+            aoAdicionarAdiantamento={aoAdicionarAdiantamento}
+            aoRemoverAdiantamento={aoRemoverAdiantamento}
             mesReferencia={mesReferencia}
           />
         ))}

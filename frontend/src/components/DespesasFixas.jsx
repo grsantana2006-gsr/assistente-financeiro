@@ -14,11 +14,6 @@ function formatarMesAno(anoMes) {
   return `${meses[idx] || mes}/${ano}`
 }
 
-// Módulo de Despesas Fixas:
-// - Checklist mensal inteligente (status Pago / Pendente por mês)
-// - Separação clara entre contas do mês atual e contas agendadas para início futuro
-// - Contas contínuas ou com prazo determinado (recorrência finita)
-// - Resumo em tempo real do total, pago no mês e a pagar
 function DespesasFixas({
   fixas = [],
   bancos = [],
@@ -87,7 +82,6 @@ function DespesasFixas({
     setEditandoId(null)
   }
 
-  // Separar contas ativas do mês atual vs contas agendadas para começar em meses futuros
   const ehFutura = (t) => {
     const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
     return Boolean(mesInicio && mesInicio > mesAtualRef)
@@ -96,36 +90,30 @@ function DespesasFixas({
   const despesasDoMes = fixas.filter((t) => !ehFutura(t))
   const despesasFuturas = fixas.filter(ehFutura)
 
-  // Despesas filtradas pelo seletor rápido (todas | conta | credito)
   const despesasFiltradas = despesasDoMes.filter((t) => {
     if (filtroTipo === 'conta') return t.forma_pagamento !== 'Crédito'
     if (filtroTipo === 'credito') return t.forma_pagamento === 'Crédito'
     return true
   })
 
-  // Cálculos de resumo do mês (apenas contas do mês atual!)
   const ativas = despesasDoMes.filter((t) => t.ativa)
   const totalMensal = ativas.reduce((soma, t) => soma + t.valor, 0)
 
-  // Separar contas pagas em conta (PIX/Débito/Dinheiro/Voucher) vs contas no cartão de crédito
   const contasContaPix = ativas.filter((t) => t.forma_pagamento !== 'Crédito')
   const contasCredito = ativas.filter((t) => t.forma_pagamento === 'Crédito')
 
-  // Liquidado na conta (dinheiro que já saiu)
   const liquidadoConta = contasContaPix
     .filter((t) => t.pago)
     .reduce((soma, t) => soma + t.valor, 0)
   const qtdLiquidadaConta = contasContaPix.filter((t) => t.pago).length
   const qtdTotalConta = contasContaPix.length
 
-  // Lançado na fatura do cartão de crédito (já cobrado pela operadora)
   const lancadoFatura = contasCredito
     .filter((t) => t.pago)
     .reduce((soma, t) => soma + t.valor, 0)
   const qtdLancadaFatura = contasCredito.filter((t) => t.pago).length
   const qtdTotalCredito = contasCredito.length
 
-  // Total confirmado (liquidado + na fatura) e Total ainda pendente
   const totalConfirmado = liquidadoConta + lancadoFatura
   const totalPendente = Math.max(totalMensal - totalConfirmado, 0)
   const qtdPendentes = ativas.filter((t) => !t.pago).length
@@ -183,7 +171,7 @@ function DespesasFixas({
       </div>
 
       <div className="card fixas">
-        {/* Resumo do mês: Total, Liquidado na Conta, Lançado na Fatura e A Pagar */}
+        {/* Resumo do mês */}
         <div className="fixas__resumo">
           <div className="fixas__resumo-cards">
             <div className="fixas__resumo-item">
@@ -212,7 +200,6 @@ function DespesasFixas({
             </div>
           </div>
 
-          {/* Barra de progresso visual */}
           <div
             className="fixas__progresso-trilho"
             title={`${progresso.toFixed(0)}% processado (${formatarMoeda(totalConfirmado)} de ${formatarMoeda(totalMensal)})`}
@@ -221,28 +208,28 @@ function DespesasFixas({
           </div>
         </div>
 
-        {/* Filtro Rápido: Todas | Conta/PIX | Cartão de Crédito */}
+        {/* Filtro Rápido */}
         <div className="fixas__filtros" role="group" aria-label="Filtrar despesas fixas">
           <button
             type="button"
             className={`fixas__filtro-btn ${filtroTipo === 'todos' ? 'fixas__filtro-btn--ativo' : ''}`}
             onClick={() => setFiltroTipo('todos')}
           >
-            📋 Todas ({despesasDoMes.length})
+            Todas ({despesasDoMes.length})
           </button>
           <button
             type="button"
             className={`fixas__filtro-btn ${filtroTipo === 'conta' ? 'fixas__filtro-btn--ativo' : ''}`}
             onClick={() => setFiltroTipo('conta')}
           >
-            ⚡ Conta / PIX ({contasContaPix.length})
+            Conta / PIX ({contasContaPix.length})
           </button>
           <button
             type="button"
             className={`fixas__filtro-btn ${filtroTipo === 'credito' ? 'fixas__filtro-btn--ativo' : ''}`}
             onClick={() => setFiltroTipo('credito')}
           >
-            💳 Cartão ({contasCredito.length})
+            Cartão ({contasCredito.length})
           </button>
         </div>
 
@@ -257,7 +244,6 @@ function DespesasFixas({
               const emEdicao = editandoId === t.id
               const ehCredito = t.forma_pagamento === 'Crédito'
 
-              // Configuração inteligente de status para Crédito vs Conta/PIX
               const statusClass = t.pago
                 ? ehCredito
                   ? 'fixas__btn-status--fatura'
@@ -268,11 +254,11 @@ function DespesasFixas({
 
               const statusTexto = t.pago
                 ? ehCredito
-                  ? '💳 Na Fatura'
-                  : '✓ Liquidado'
+                  ? 'Na Fatura'
+                  : 'Liquidado'
                 : ehCredito
-                  ? '⏳ A Cobrar'
-                  : '⏳ Pendente'
+                  ? 'A Cobrar'
+                  : 'Pendente'
 
               const banco = bancos.find((b) => b.id === t.banco_id)
               const mesFaturaDestino =
@@ -280,31 +266,23 @@ function DespesasFixas({
                   ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
                   : null
 
+              const diaCobranca = t.data_compra ? Number(t.data_compra.slice(8, 10)) : null
+              const hojeDia = new Date().getDate()
+              const cobrancaPassou = !t.pago && diaCobranca && hojeDia > diaCobranca
+
               const statusTitle = t.pago
                 ? ehCredito
-                  ? `Lançada na fatura de ${formatarMesAnoCurto(mesFaturaDestino)} do ${banco?.nome || 'cartão'}. Clique para desmarcar.`
-                  : `Conta liquidada / debitada no ${banco?.nome || 'conta'}. Clique para marcar como pendente.`
+                  ? 'Confirmado na fatura deste mês. Clique para desmarcar.'
+                  : 'Liquidado na conta neste mês. Clique para desmarcar.'
                 : ehCredito
-                  ? `Ainda não cobrado no cartão este mês. Clique para marcar como lançado na fatura de ${formatarMesAnoCurto(mesFaturaDestino)} do ${banco?.nome || 'cartão'}.`
-                  : 'Conta pendente de pagamento este mês. Clique para marcar como liquidada.'
-
-              const itemClass = `fixas__item ${ativa ? '' : 'fixas__item--pausada'} ${
-                t.pago
-                  ? ehCredito
-                    ? 'fixas__item--fatura'
-                    : 'fixas__item--pago'
-                  : ''
-              }`
-
-              const hojeStr = new Date().toISOString().slice(0, 10)
-              const diaHoje = Number(hojeStr.slice(8, 10))
-              const diaCobranca = t.data_compra ? Number(t.data_compra.slice(8, 10)) : null
-              const cobrancaPassou = Boolean(
-                !t.pago && diaCobranca && diaHoje > diaCobranca && mesAtualRef <= hojeStr.slice(0, 7)
-              )
+                  ? 'Ainda não confirmado na fatura. Clique para confirmar lançamento.'
+                  : 'Pendente de pagamento na conta. Clique para marcar como liquidado.'
 
               return (
-                <li key={t.id} className={itemClass}>
+                <li
+                  key={t.id}
+                  className={`fixas__item ${ativa ? '' : 'fixas__item--pausada'}`}
+                >
                   {emEdicao ? (
                     <div className="fixas__edicao-inline">
                       <input
@@ -330,7 +308,7 @@ function DespesasFixas({
                           title="Salvar alterações"
                           onClick={() => salvarEdicao(t.id)}
                         >
-                          ✓ Salvar
+                          Salvar
                         </button>
                         <button
                           type="button"
@@ -338,7 +316,7 @@ function DespesasFixas({
                           title="Cancelar edição"
                           onClick={cancelarEdicao}
                         >
-                          ✕ Cancelar
+                          Cancelar
                         </button>
                       </div>
                     </div>
@@ -352,25 +330,23 @@ function DespesasFixas({
                               className="fixas__tag-prazo"
                               title={`Despesa com prazo: parcela ${t.parcela_atual} de ${t.total_parcelas}`}
                             >
-                              ⏱️ {t.parcela_atual}/{t.total_parcelas} meses
+                              {t.parcela_atual}/{t.total_parcelas} meses
                             </span>
                           )}
-                          {/* Tag da Fatura de Destino nas assinaturas */}
                           {ehCredito && mesFaturaDestino && (
                             <span
                               className="fixas__tag-fatura"
                               title={`Assinatura cobrada dia ${diaCobranca || ''}: entra na fatura que vence em ${formatarMesAnoCurto(mesFaturaDestino)}`}
                             >
-                              🗓️ Fatura {formatarMesAnoCurto(mesFaturaDestino)}
+                              Fatura {formatarMesAnoCurto(mesFaturaDestino)}
                             </span>
                           )}
-                          {/* Alerta de Cobrança Prevista Ultrapassada */}
                           {cobrancaPassou && (
                             <span
                               className="fixas__tag-alerta-data"
                               title={`A data prevista de cobrança (dia ${diaCobranca}) já passou e esta conta continua pendente neste mês.`}
                             >
-                              ⚠️ Passou do dia {diaCobranca}
+                              Passou do dia {diaCobranca}
                             </span>
                           )}
                         </div>
@@ -386,19 +362,18 @@ function DespesasFixas({
                         title="Data de cobrança/início"
                       />
 
-                      {/* Seletor de forma de pagamento na linha da despesa */}
                       <select
                         className="fixas__forma-select"
                         value={t.forma_pagamento || 'Crédito'}
                         onChange={(e) => aoAtualizar(t.id, { forma_pagamento: e.target.value })}
                         aria-label={`Forma de pagamento de ${t.descricao}`}
-                        title="Forma de pagamento (altere quando quiser)"
+                        title="Forma de pagamento"
                       >
-                        <option value="PIX">⚡ PIX</option>
-                        <option value="Débito">🏦 Débito/Conta</option>
-                        <option value="Crédito">💳 Crédito</option>
-                        <option value="Voucher">🍽️ Voucher</option>
-                        <option value="Dinheiro">💵 Dinheiro</option>
+                        <option value="PIX">PIX</option>
+                        <option value="Débito">Débito/Conta</option>
+                        <option value="Crédito">Crédito</option>
+                        <option value="Voucher">Voucher</option>
+                        <option value="Dinheiro">Dinheiro</option>
                       </select>
 
                       <span className="fixas__valor">{formatarMoeda(t.valor)}</span>
@@ -410,10 +385,9 @@ function DespesasFixas({
                         title="Editar valor e descrição"
                         onClick={() => iniciarEdicao(t)}
                       >
-                        ✏️
+                        Editar
                       </button>
 
-                      {/* Botão de Status Inteligente: Liquidado vs Na Fatura vs Pendente */}
                       <button
                         id={`pago-fixa-${t.id}`}
                         type="button"
@@ -423,10 +397,9 @@ function DespesasFixas({
                         title={statusTitle}
                         aria-label={`${t.descricao}: ${statusTexto}`}
                       >
-                        {processandoId === t.id ? '⏳ Salvando…' : statusTexto}
+                        {processandoId === t.id ? 'Salvando…' : statusTexto}
                       </button>
 
-                      {/* Interruptor ativar/pausar */}
                       <button
                         id={`alternar-fixa-${t.id}`}
                         type="button"
@@ -446,7 +419,7 @@ function DespesasFixas({
                         onClick={() => aoRemover(t.id)}
                         title="Remover conta"
                       >
-                        ✕
+                        Excluir
                       </button>
                     </>
                   )}
@@ -456,11 +429,11 @@ function DespesasFixas({
           </ul>
         )}
 
-        {/* Seção de Contas Agendadas para Início Futuro */}
+        {/* Contas de Início Futuro */}
         {despesasFuturas.length > 0 && (
           <div className="fixas__secao-futuras">
             <div className="fixas__futuras-cabecalho">
-              <span className="fixas__badge-futuro">🗓️ Início Futuro ({despesasFuturas.length})</span>
+              <span className="fixas__badge-futuro">Início Futuro ({despesasFuturas.length})</span>
               <p className="card-subtitle">
                 Contas agendadas para começar nos próximos meses. Não impactam os gastos nem o total do mês atual ({formatarMesAno(mesAtualRef)}).
               </p>
@@ -502,7 +475,7 @@ function DespesasFixas({
                             title="Salvar alterações"
                             onClick={() => salvarEdicao(t.id)}
                           >
-                            ✓ Salvar
+                            Salvar
                           </button>
                           <button
                             type="button"
@@ -510,7 +483,7 @@ function DespesasFixas({
                             title="Cancelar edição"
                             onClick={cancelarEdicao}
                           >
-                            ✕ Cancelar
+                            Cancelar
                           </button>
                         </div>
                       </div>
@@ -523,11 +496,11 @@ function DespesasFixas({
                               className="fixas__tag-agendada"
                               title={`Esta conta começará a ser cobrada a partir de ${formatarMesAno(mesInicio)}`}
                             >
-                              🗓️ Inicia em {formatarMesAno(mesInicio)}
+                              Inicia em {formatarMesAno(mesInicio)}
                             </span>
                             {ehTemporaria && (
                               <span className="fixas__tag-prazo">
-                                ⏱️ {t.total_parcelas} meses
+                                {t.total_parcelas} meses
                               </span>
                             )}
                           </div>
@@ -549,11 +522,11 @@ function DespesasFixas({
                           onChange={(e) => aoAtualizar(t.id, { forma_pagamento: e.target.value })}
                           aria-label={`Forma de pagamento de ${t.descricao}`}
                         >
-                          <option value="PIX">⚡ PIX</option>
-                          <option value="Débito">🏦 Débito</option>
-                          <option value="Crédito">💳 Crédito</option>
-                          <option value="Voucher">🍽️ Voucher</option>
-                          <option value="Dinheiro">💵 Dinheiro</option>
+                          <option value="PIX">PIX</option>
+                          <option value="Débito">Débito</option>
+                          <option value="Crédito">Crédito</option>
+                          <option value="Voucher">Voucher</option>
+                          <option value="Dinheiro">Dinheiro</option>
                         </select>
 
                         <span className="fixas__valor">{formatarMoeda(t.valor)}</span>
@@ -565,7 +538,7 @@ function DespesasFixas({
                           title="Editar valor e descrição"
                           onClick={() => iniciarEdicao(t)}
                         >
-                          ✏️
+                          Editar
                         </button>
 
                         <button
@@ -590,8 +563,8 @@ function DespesasFixas({
                           aria-label={`${t.descricao}: ${t.pago ? 'Confirmado' : 'Agendada'}`}
                         >
                           {processandoId === t.id
-                            ? '⏳ Salvando…'
-                            : (t.pago ? (t.forma_pagamento === 'Crédito' ? '💳 Na Fatura' : '✓ Liquidado') : '⏳ Agendada')}
+                            ? 'Salvando…'
+                            : (t.pago ? (t.forma_pagamento === 'Crédito' ? 'Na Fatura' : 'Liquidado') : 'Agendada')}
                         </button>
 
                         <button
@@ -613,7 +586,7 @@ function DespesasFixas({
                           onClick={() => aoRemover(t.id)}
                           title="Remover conta"
                         >
-                          ✕
+                          Excluir
                         </button>
                       </>
                     )}
@@ -650,7 +623,7 @@ function DespesasFixas({
               value={dataCompra}
               onChange={(e) => setDataCompra(e.target.value)}
               aria-label="Data de início ou pagamento"
-              title="Data de pagamento ou início (se for mês futuro, ficará agendada)"
+              title="Data de pagamento ou início"
             />
             <select
               id="fixa-banco"
@@ -670,15 +643,14 @@ function DespesasFixas({
               onChange={(e) => aoMudarForma(e.target.value)}
               aria-label="Forma de pagamento da despesa fixa"
             >
-              <option value="PIX">⚡ PIX / Transferência</option>
-              <option value="Débito">🏦 Débito em Conta / PIX</option>
-              <option value="Crédito">💳 Cartão de Crédito</option>
-              <option value="Voucher">🍽️ Voucher (Vale Refeição)</option>
-              <option value="Dinheiro">💵 Dinheiro</option>
+              <option value="PIX">PIX / Transferência</option>
+              <option value="Débito">Débito em Conta / PIX</option>
+              <option value="Crédito">Cartão de Crédito</option>
+              <option value="Voucher">Voucher (Vale Refeição)</option>
+              <option value="Dinheiro">Dinheiro</option>
             </select>
           </div>
 
-          {/* Opção para despesa com prazo determinado */}
           <div className="fixas__form-duracao">
             <label className="fixas__checkbox-rotulo">
               <input
@@ -721,7 +693,7 @@ function DespesasFixas({
           </div>
 
           <button id="fixa-adicionar" type="submit" className="btn btn--primary" disabled={enviando}>
-            {enviando ? 'Adicionando…' : '+ Adicionar'}
+            {enviando ? 'Adicionando…' : 'Adicionar'}
           </button>
         </form>
       </div>

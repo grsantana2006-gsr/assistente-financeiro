@@ -138,7 +138,7 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
                         >
                           {bancos.map((b) => (
                             <option key={b.id} value={b.id}>
-                              {b.tipo === 'Benefício' ? `🍽️ ${b.nome}` : b.nome}
+                              {b.nome}
                             </option>
                           ))}
                         </select>
@@ -148,11 +148,11 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
                           onChange={(e) => setEditForma(e.target.value)}
                           aria-label="Forma de pagamento"
                         >
-                          <option value="Crédito">💳 Crédito</option>
-                          <option value="Débito">🏦 Débito</option>
-                          <option value="PIX">⚡ PIX</option>
-                          <option value="Dinheiro">💵 Dinheiro</option>
-                          <option value="Voucher">🍽️ Voucher</option>
+                          <option value="Crédito">Crédito</option>
+                          <option value="Débito">Débito</option>
+                          <option value="PIX">PIX</option>
+                          <option value="Dinheiro">Dinheiro</option>
+                          <option value="Voucher">Voucher</option>
                         </select>
                       </div>
                       <div className="extrato__edit-acoes">
@@ -162,7 +162,7 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
                           title="Salvar alterações"
                           onClick={() => salvarEdicao(t.id)}
                         >
-                          ✓ Salvar
+                          Salvar
                         </button>
                         <button
                           type="button"
@@ -170,7 +170,7 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
                           title="Cancelar edição"
                           onClick={cancelarEdicao}
                         >
-                          ✕ Cancelar
+                          Cancelar
                         </button>
                       </div>
                     </div>
@@ -180,7 +180,7 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
                         <span className="extrato__nome">{t.descricao}</span>
                         <div className="extrato__detalhes">
                           <span className="extrato__data-hora" title="Data e hora do lançamento">
-                            🕒 {formatarDataHora(t.data_compra)}
+                            {formatarDataHora(t.data_compra)}
                           </span>
                           <span>&bull;</span>
                           <span>{nomeDoBanco(t.banco_id)}</span>
@@ -190,7 +190,7 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
                             <>
                               <span>&bull;</span>
                               <span className="extrato__tag-fatura" title={`Vence na fatura de ${rotuloMesFatura(mesFatura)}`}>
-                                📅 Fatura: {rotuloMesFatura(mesFatura)}
+                                Fatura: {rotuloMesFatura(mesFatura)}
                               </span>
                             </>
                           )}
@@ -205,7 +205,7 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
                           title="Editar este gasto"
                           onClick={() => iniciarEdicao(t)}
                         >
-                          ✏️
+                          Editar
                         </button>
                         <button
                           type="button"
@@ -214,7 +214,7 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
                           title="Excluir este gasto"
                           onClick={() => aoRemover(t.id)}
                         >
-                          ✕
+                          Excluir
                         </button>
                       </div>
                     </>
@@ -248,7 +248,7 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
           >
             {bancos.map((b) => (
               <option key={b.id} value={b.id}>
-                {b.tipo === 'Benefício' ? `🍽️ ${b.nome}` : b.nome}
+                {b.nome}
               </option>
             ))}
           </select>
@@ -269,11 +269,11 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
             }}
             aria-label="Forma de Pagamento"
           >
-            <option value="Crédito">💳 Crédito</option>
-            <option value="Débito">🏦 Débito</option>
-            <option value="PIX">⚡ PIX</option>
-            <option value="Dinheiro">💵 Dinheiro</option>
-            <option value="Voucher">🍽️ Voucher (Vale Refeição)</option>
+            <option value="Crédito">Crédito</option>
+            <option value="Débito">Débito</option>
+            <option value="PIX">PIX</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Voucher">Voucher (Vale Refeição)</option>
           </select>
           <select
             value={parcelas}
@@ -294,7 +294,6 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
 
           {mesFaturaPrevista && bancoSelecionado && (
             <div className="extrato__dica-fatura">
-              <span className="extrato__dica-icone" aria-hidden="true">ℹ️</span>
               <div className="extrato__dica-conteudo">
                 Compras no <strong>{bancoSelecionado.nome}</strong> hoje entram na fatura de{' '}
                 <strong className="extrato__dica-mes">{rotuloMesFatura(mesFaturaPrevista)}</strong>

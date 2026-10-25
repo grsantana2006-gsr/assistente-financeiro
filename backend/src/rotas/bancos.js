@@ -63,6 +63,46 @@ router.delete('/:id', async (req, res) => {
   res.status(204).end()
 })
 
+// Adicionar adiantamento à fatura (não apaga outros adiantamentos)
+router.post('/:id/adiantamentos', async (req, res) => {
+  const id = lerId(req)
+  if (!id) return idInvalido(res)
+  const banco = await buscarPorId(id)
+  if (!banco) return naoEncontrado(res, 'Banco')
+
+  const mes = req.body?.mes || new Date().toISOString().slice(0, 7)
+  const valor = Number(req.body?.valor)
+  if (Number.isNaN(valor) || valor <= 0) {
+    return erroValidacao(res, ['Informe um valor válido maior que zero para o adiantamento'])
+  }
+  const descricao = req.body?.descricao?.trim() || 'Adiantamento'
+  const pagoEm = req.body?.pago_em ? new Date(req.body.pago_em).toISOString() : new Date().toISOString()
+
+  const resultado = await db.prepare(
+    'INSERT INTO pagamentos_faturas (banco_id, mes, valor_pago, descricao, pago_em) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, mes, valor, descricao, pagoEm)
+
+  res.status(201).json({
+    id: resultado.lastInsertRowid,
+    banco_id: id,
+    mes,
+    valor_pago: valor,
+    descricao,
+    pago_em: pagoEm,
+  })
+})
+
+// Excluir um adiantamento específico
+router.delete('/:id/adiantamentos/:pagamentoId', async (req, res) => {
+  const id = lerId(req)
+  const pagamentoId = Number(req.params.pagamentoId)
+  if (!id || Number.isNaN(pagamentoId)) return idInvalido(res)
+
+  await db.prepare('DELETE FROM pagamentos_faturas WHERE id = ? AND banco_id = ?').run(pagamentoId, id)
+  res.status(204).end()
+})
+
+// Quitar integralmente ou reabrir fatura
 router.post('/:id/alternar-fatura', async (req, res) => {
   const id = lerId(req)
   if (!id) return idInvalido(res)
@@ -82,7 +122,14 @@ router.post('/:id/alternar-fatura', async (req, res) => {
   const valorPago = req.body?.valor_pago !== undefined ? (req.body.valor_pago === null ? null : Number(req.body.valor_pago)) : null
 
   if (marcarComoPago) {
-    await db.prepare('INSERT INTO pagamentos_faturas (banco_id, mes, valor_pago) VALUES (?, ?, ?) ON CONFLICT (banco_id, mes) DO UPDATE SET valor_pago = excluded.valor_pago').run(id, mes, valorPago)
+    if (valorPago === null) {
+      // Quitação integral: limpa pagamentos parciais e registra quitação de 100%
+      await db.prepare('DELETE FROM pagamentos_faturas WHERE banco_id = ? AND mes = ?').run(id, mes)
+      await db.prepare('INSERT INTO pagamentos_faturas (banco_id, mes, valor_pago, descricao) VALUES (?, ?, NULL, ?)').run(id, mes, 'Quitação Integral')
+    } else {
+      // Adiciona o adiantamento sem apagar outros
+      await db.prepare('INSERT INTO pagamentos_faturas (banco_id, mes, valor_pago, descricao) VALUES (?, ?, ?, ?)').run(id, mes, valorPago, 'Adiantamento')
+    }
   } else {
     await db.prepare('DELETE FROM pagamentos_faturas WHERE banco_id = ? AND mes = ?').run(id, mes)
   }

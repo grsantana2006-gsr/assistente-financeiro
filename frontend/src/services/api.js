@@ -70,6 +70,10 @@ export const api = {
     const corpo = typeof payload === 'object' && payload !== null ? payload : { mes: payload }
     return requisitar('POST', `/bancos/${bancoId}/alternar-fatura`, corpo)
   },
+  adicionarAdiantamentoFatura: (bancoId, dados) =>
+    requisitar('POST', `/bancos/${bancoId}/adiantamentos`, dados),
+  removerAdiantamentoFatura: (bancoId, pagamentoId) =>
+    requisitar('DELETE', `/bancos/${bancoId}/adiantamentos/${pagamentoId}`),
   removerTransacao: (id) => requisitar('DELETE', `/transacoes/${id}`),
   criarCofre: (dados) => requisitar('POST', '/cofre', dados),
   atualizarCofre: (id, dados) => requisitar('PATCH', `/cofre/${id}`, dados),

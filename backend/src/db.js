@@ -100,9 +100,11 @@ export async function criarTabelas() {
       mes            TEXT    NOT NULL,
       pago_em        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       valor_pago     NUMERIC(10, 2),
-      UNIQUE(banco_id, mes)
+      descricao      TEXT DEFAULT 'Adiantamento'
     );
     ALTER TABLE pagamentos_faturas ADD COLUMN IF NOT EXISTS valor_pago NUMERIC(10, 2);
+    ALTER TABLE pagamentos_faturas ADD COLUMN IF NOT EXISTS descricao TEXT DEFAULT 'Adiantamento';
+    ALTER TABLE pagamentos_faturas DROP CONSTRAINT IF EXISTS pagamentos_faturas_banco_id_mes_key;
 
     CREATE INDEX IF NOT EXISTS idx_transacoes_banco ON transacoes(banco_id);
     CREATE INDEX IF NOT EXISTS idx_transacoes_data  ON transacoes(data_compra);

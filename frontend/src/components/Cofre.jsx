@@ -104,7 +104,7 @@ function Cofre({ cofre, aoAdicionar, aoAtualizar, aoRemover }) {
                           title="Salvar alterações"
                           onClick={() => salvarEdicao(c.id)}
                         >
-                          ✓ Salvar
+                          Salvar
                         </button>
                         <button
                           type="button"
@@ -112,7 +112,7 @@ function Cofre({ cofre, aoAdicionar, aoAtualizar, aoRemover }) {
                           title="Cancelar edição"
                           onClick={cancelarEdicao}
                         >
-                          ✕ Cancelar
+                          Cancelar
                         </button>
                       </div>
                     </div>
@@ -132,7 +132,7 @@ function Cofre({ cofre, aoAdicionar, aoAtualizar, aoRemover }) {
                         title="Editar saldo e objetivo"
                         onClick={() => iniciarEdicao(c)}
                       >
-                        ✏️
+                        Editar
                       </button>
 
                       <button
@@ -141,7 +141,7 @@ function Cofre({ cofre, aoAdicionar, aoAtualizar, aoRemover }) {
                         aria-label={`Remover ${c.objetivo}`}
                         onClick={() => aoRemover(c.id)}
                       >
-                        ✕
+                        Excluir
                       </button>
                     </>
                   )}

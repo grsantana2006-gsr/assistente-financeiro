@@ -4,13 +4,13 @@ import { rotuloMesFatura } from '../utils/fatura'
 import './Sidebar.css'
 
 const ITENS_MENU = [
-  { id: 'geral', label: 'Visão Geral', icone: '📊', desc: 'Painel completo' },
-  { id: 'receitas', label: 'Receitas', icone: '💵', desc: 'Salários e entradas' },
-  { id: 'fixas', label: 'Despesas Fixas', icone: '📌', desc: 'Contas do mês' },
-  { id: 'variaveis', label: 'Gastos Variáveis', icone: '🛒', desc: 'Dia a dia e faturas' },
-  { id: 'cartoes', label: 'Cartões e Limites', icone: '💳', desc: 'Ciclos de fatura' },
-  { id: 'cofre', label: 'Cofre e Metas', icone: '🎯', desc: 'Reservas e economia' },
-  { id: 'forecast', label: 'Forecast', icone: '🔮', desc: 'Previsão 6 a 12 meses' },
+  { id: 'geral', label: 'Visão Geral', desc: 'Painel completo' },
+  { id: 'receitas', label: 'Receitas', desc: 'Salários e entradas' },
+  { id: 'fixas', label: 'Despesas Fixas', desc: 'Contas do mês' },
+  { id: 'variaveis', label: 'Gastos Variáveis', desc: 'Dia a dia e faturas' },
+  { id: 'cartoes', label: 'Cartões e Limites', desc: 'Ciclos de fatura' },
+  { id: 'cofre', label: 'Cofre e Metas', desc: 'Reservas e economia' },
+  { id: 'forecast', label: 'Forecast', desc: 'Previsão 6 a 12 meses' },
 ]
 
 function Sidebar({ abaAtiva, aoMudarAba, saldoMes, statusMes, mesReferencia }) {
@@ -46,9 +46,9 @@ function Sidebar({ abaAtiva, aoMudarAba, saldoMes, statusMes, mesReferencia }) {
           aria-label={abertoMobile ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
           aria-expanded={abertoMobile}
         >
-          <span className="mobile-topbar__icone-hamburguer">{abertoMobile ? '✕' : '☰'}</span>
+          <span className="mobile-topbar__icone-hamburguer">{abertoMobile ? 'Fechar' : 'Menu'}</span>
           <span className="mobile-topbar__aba-atual">
-            {itemAtivo.icone} {itemAtivo.label}
+            {itemAtivo.label}
           </span>
         </button>
 
@@ -72,7 +72,6 @@ function Sidebar({ abaAtiva, aoMudarAba, saldoMes, statusMes, mesReferencia }) {
       <aside className={`sidebar ${abertoMobile ? 'sidebar--aberta' : ''}`}>
         <div className="sidebar__topo">
           <div className="sidebar__logo">
-            <span className="sidebar__logo-icone">✨</span>
             <div className="sidebar__logo-textos">
               <span className="sidebar__logo-titulo">Assistente</span>
               <span className="sidebar__logo-sub">Financeiro Pessoal</span>
@@ -80,7 +79,7 @@ function Sidebar({ abaAtiva, aoMudarAba, saldoMes, statusMes, mesReferencia }) {
           </div>
           {mesReferencia && (
             <span className="sidebar__badge-mes" title="Mês de referência dos cálculos">
-              🗓️ {rotuloMesFatura(mesReferencia)}
+              {rotuloMesFatura(mesReferencia)}
             </span>
           )}
         </div>
@@ -98,7 +97,6 @@ function Sidebar({ abaAtiva, aoMudarAba, saldoMes, statusMes, mesReferencia }) {
                     className={`sidebar__btn ${estaAtivo ? 'sidebar__btn--ativo' : ''}`}
                     onClick={() => selecionarAba(item.id)}
                   >
-                    <span className="sidebar__icone">{item.icone}</span>
                     <div className="sidebar__textos">
                       <span className="sidebar__label">{item.label}</span>
                       <span className="sidebar__desc">{item.desc}</span>
@@ -118,7 +116,7 @@ function Sidebar({ abaAtiva, aoMudarAba, saldoMes, statusMes, mesReferencia }) {
               {formatarMoeda(saldoMes)}
             </span>
             <span className="sidebar__saldo-dica">
-              {statusMes === 'positivo' ? '🟢 Margem positiva' : '🔴 Atenção ao limite'}
+              {statusMes === 'positivo' ? 'Margem positiva' : 'Atenção ao limite'}
             </span>
           </div>
         </div>

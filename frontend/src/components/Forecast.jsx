@@ -205,7 +205,7 @@ function Forecast({ projecao }) {
                     style={{ display: 'block', fontSize: '0.75rem', color: 'var(--success, #10b981)', fontWeight: 500 }}
                     title={`Total de parcelas brutas: ${formatarMoeda(mesAtivo.parcelas_brutas || 0)} | Já adiantado: -${formatarMoeda(mesAtivo.adiantado)}`}
                   >
-                    ⚡ {formatarMoeda(mesAtivo.adiantado)} pago
+                    {formatarMoeda(mesAtivo.adiantado)} pago
                   </span>
                 )}
               </dd>
@@ -237,12 +237,12 @@ function Forecast({ projecao }) {
               ))}
             </ul>
           ) : (
-            <p className="card-subtitle">Nenhuma fatura ou parcela neste mês. 🎉</p>
+            <p className="card-subtitle">Nenhuma fatura ou parcela neste mês.</p>
           )}
         </div>
 
         <p className="forecast__nota">
-          ℹ️ A projeção considera renda fixa, despesas fixas ativas e compras/parcelas de cartão de crédito. Compras à vista no débito ou PIX saem no ato e não geram faturas futuras.
+          A projeção considera renda fixa, despesas fixas ativas e compras/parcelas de cartão de crédito. Compras à vista no débito ou PIX saem no ato e não geram faturas futuras.
         </p>
       </div>
     </section>

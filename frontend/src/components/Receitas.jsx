@@ -139,7 +139,7 @@ function Receitas({ receitas, bancos, aoAdicionar, aoAtualizar, aoRemover, aoAlt
                           title="Salvar alterações"
                           onClick={() => salvarEdicao(r.id)}
                         >
-                          ✓ Salvar
+                          Salvar
                         </button>
                         <button
                           type="button"
@@ -147,7 +147,7 @@ function Receitas({ receitas, bancos, aoAdicionar, aoAtualizar, aoRemover, aoAlt
                           title="Cancelar edição"
                           onClick={cancelarEdicao}
                         >
-                          ✕ Cancelar
+                          Cancelar
                         </button>
                       </div>
                     </div>
@@ -166,7 +166,7 @@ function Receitas({ receitas, bancos, aoAdicionar, aoAtualizar, aoRemover, aoAlt
                         title="Editar esta receita"
                         onClick={() => iniciarEdicao(r)}
                       >
-                        ✏️
+                        Editar
                       </button>
 
                       <button
@@ -184,7 +184,7 @@ function Receitas({ receitas, bancos, aoAdicionar, aoAtualizar, aoRemover, aoAlt
                         aria-label={`Remover ${r.descricao}`}
                         onClick={() => aoRemover(r.id)}
                       >
-                        ✕
+                        Excluir
                       </button>
                     </>
                   )}

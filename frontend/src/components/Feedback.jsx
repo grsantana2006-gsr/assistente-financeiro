@@ -16,7 +16,6 @@ export function TelaErro({ mensagem, aoTentarNovamente }) {
   return (
     <main className="app app--centro">
       <div className="card erro-tela" role="alert">
-        <p className="erro-tela__icone" aria-hidden="true">🔌</p>
         <h1>Não foi possível carregar</h1>
         <p className="card-subtitle">{mensagem}</p>
         <p className="card-subtitle">
@@ -42,8 +41,8 @@ export function Toast({ mensagem, aoFechar }) {
   if (!mensagem) return null
   return (
     <div id="aviso" className="toast" role="alert">
-      <span>⚠️ {mensagem}</span>
-      <button type="button" aria-label="Fechar aviso" onClick={aoFechar}>✕</button>
+      <span>{mensagem}</span>
+      <button type="button" aria-label="Fechar aviso" onClick={aoFechar}>Fechar</button>
     </div>
   )
 }

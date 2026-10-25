@@ -56,6 +56,12 @@ function App() {
   const alternarPagamentoFatura = (bancoId, dados) =>
     executar(() => api.alternarPagamentoFatura(bancoId, dados || MES_REFERENCIA))
 
+  const adicionarAdiantamentoFatura = (bancoId, dados) =>
+    executar(() => api.adicionarAdiantamentoFatura(bancoId, dados))
+
+  const removerAdiantamentoFatura = (bancoId, pagamentoId) =>
+    executar(() => api.removerAdiantamentoFatura(bancoId, pagamentoId))
+
   const adicionarVariavel = (dados) =>
     executar(() => api.criarTransacao({ ...dados, tipo: 'Despesa', categoria: 'Variável' }))
 
@@ -161,6 +167,8 @@ function App() {
               cartoes={cartoes}
               aoSalvarLimite={salvarLimite}
               aoAlternarFatura={alternarPagamentoFatura}
+              aoAdicionarAdiantamento={adicionarAdiantamentoFatura}
+              aoRemoverAdiantamento={removerAdiantamentoFatura}
               mesReferencia={MES_REFERENCIA}
             />
           )}

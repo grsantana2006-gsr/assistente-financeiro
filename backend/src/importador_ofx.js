@@ -246,6 +246,30 @@ export async function importarArquivoOfx(caminhoArquivo) {
     })
   }
 
+  // 6. Registra adiantamentos de fatura detectados no extrato (Pagamento recebido)
+  for (const p of pagamentos) {
+    if (ehCartaoCredito && p.valor > 0) {
+      const mesFatura = obterMesFatura(p.data, banco.dia_fechamento, banco.dia_vencimento)
+      // Verifica se já existe pagamento registrado com o mesmo valor e mês
+      const jaExiste = await db.prepare(
+        'SELECT id FROM pagamentos_faturas WHERE banco_id = ? AND mes = ? AND ABS(valor_pago - ?) < 0.05'
+      ).get(banco.id, mesFatura, p.valor)
+
+      if (!jaExiste) {
+        await db.prepare(
+          'INSERT INTO pagamentos_faturas (banco_id, mes, valor_pago, descricao, pago_em) VALUES (?, ?, ?, ?, ?)'
+        ).run(banco.id, mesFatura, p.valor, `Adiantamento (${p.memo})`, `${p.data}T12:00:00Z`)
+
+        relatorio.detalhes.push({
+          status: 'PAGAMENTO_REGISTRADO',
+          mes: mesFatura,
+          valor: p.valor,
+          descricao: p.memo
+        })
+      }
+    }
+  }
+
   return relatorio
 }
 

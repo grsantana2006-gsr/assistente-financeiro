@@ -24,16 +24,34 @@ export async function calcularDashboard(mes) {
   const cofre = Number(result?.total || 0)
 
   // Status de faturas pagas ou adiantadas (de qualquer mês)
-  const todosPagamentos = await db.prepare('SELECT banco_id, mes, valor_pago FROM pagamentos_faturas').all()
-  const faturasPagasMap = new Map(
-    todosPagamentos
-      .filter((pf) => pf.mes === mes)
-      .map((pf) => [pf.banco_id, { pago: true, valor_pago: pf.valor_pago != null ? Number(pf.valor_pago) : null }]),
-  )
+  const todosPagamentos = await db.prepare(
+    'SELECT id, banco_id, mes, valor_pago, pago_em, descricao FROM pagamentos_faturas ORDER BY pago_em ASC, id ASC'
+  ).all()
+
   const pagamentosPorBanco = new Map()
   for (const pf of todosPagamentos) {
     if (!pagamentosPorBanco.has(pf.banco_id)) pagamentosPorBanco.set(pf.banco_id, [])
-    pagamentosPorBanco.get(pf.banco_id).push({ mes: pf.mes, valor_pago: pf.valor_pago != null ? Number(pf.valor_pago) : null })
+    pagamentosPorBanco.get(pf.banco_id).push({
+      id: pf.id,
+      mes: pf.mes,
+      valor_pago: pf.valor_pago != null ? Number(pf.valor_pago) : null,
+      pago_em: pf.pago_em,
+      descricao: pf.descricao || 'Adiantamento',
+    })
+  }
+
+  const faturasPagasMap = new Map()
+  for (const b of bancos) {
+    const pgs = (pagamentosPorBanco.get(b.id) || []).filter((p) => p.mes === mes)
+    if (pgs.length > 0) {
+      const quitadaIntegral = pgs.some((p) => p.valor_pago == null)
+      const somaAdiantamentos = pgs.reduce((s, p) => s + (p.valor_pago != null ? Number(p.valor_pago) : 0), 0)
+      faturasPagasMap.set(b.id, {
+        pago: quitadaIntegral,
+        valor_pago: quitadaIntegral ? null : somaAdiantamentos,
+        pagamentos: pgs,
+      })
+    }
   }
 
   const receitaMes = calcularReceitaDoMes(transacoes, mes)

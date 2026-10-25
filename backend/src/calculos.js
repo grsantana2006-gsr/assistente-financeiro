@@ -235,8 +235,10 @@ function montarFaturaDoMes(transacoes, banco, mesK, mesReferencia, pagamentos) {
   const valorTotal = valorLancado + valorACobrar
 
   // Pagamento/adiantamento já feito para a fatura deste mês (valor_pago nulo = quitada por inteiro)
-  const pg = pagamentos.find((p) => p.mes === mesK)
-  const valorPago = pg ? Math.min(pg.valor_pago != null ? Number(pg.valor_pago) : valorTotal, valorTotal) : 0
+  const pgsDoMes = pagamentos.filter((p) => p.mes === mesK)
+  const quitadaIntegral = pgsDoMes.some((p) => p.valor_pago == null)
+  const somaAdiantamentos = pgsDoMes.reduce((s, p) => s + (p.valor_pago != null ? Number(p.valor_pago) : 0), 0)
+  const valorPago = quitadaIntegral ? valorTotal : Math.min(somaAdiantamentos, valorTotal)
 
   return {
     mes: mesK,
@@ -247,10 +249,13 @@ function montarFaturaDoMes(transacoes, banco, mesK, mesReferencia, pagamentos) {
     // Quanto ainda falta pagar do que já foi lançado no cartão (é o número que o app do banco mostra)
     saldo_lancado_restante: arredondar(Math.max(valorLancado - valorPago, 0)),
     saldo_restante: arredondar(Math.max(valorTotal - valorPago, 0)),
+    fatura_paga: quitadaIntegral || (valorPago >= valorTotal && valorTotal > 0),
+    fatura_parcial: !quitadaIntegral && valorPago > 0 && valorPago < valorTotal,
     qtd_itens: itensDoMes.length,
     qtd_lancados: itensComStatus.filter((it) => it.lancado).length,
     qtd_a_cobrar: itensComStatus.filter((it) => !it.lancado).length,
     itens: itensComStatus,
+    pagamentos_registrados: pgsDoMes,
   }
 }
 
@@ -364,6 +369,7 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
       saldo_restante_fatura: arredondar(saldoRestanteFatura),
       fatura_paga: faturaPagaTotal,
       fatura_parcial: faturaParcial,
+      pagamentos_registrados: pagamentosDoBanco.filter((p) => p.mes === mesReferencia),
       proximas_faturas: proximasFaturas,
       limite_disponivel: arredondar(Math.max(banco.limite_total - gastoEfetivo, 0)),
       uso: banco.limite_total > 0 ? Math.min(gastoEfetivo / banco.limite_total, 1) : 0,

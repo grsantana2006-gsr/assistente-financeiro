@@ -1,9 +1,6 @@
 import { formatarMoeda } from '../utils/format'
 import './StatusHeader.css'
 
-// StatusHeader:
-// - Banner executivo de veredito: Mostra na hora se você está no AZUL (lucro) ou no VERMELHO (prejuízo)
-// - 4 Indicadores chave: Dinheiro no Cofre, Receita Líquida, Faturas de Cartão, Débito & PIX
 function StatusHeader({
   totalCofre,
   receitaMes,
@@ -18,16 +15,15 @@ function StatusHeader({
   statusMes,
 }) {
   const ehPositivo = (statusMes ?? (saldoMes >= 0 ? 'positivo' : 'negativo')) === 'positivo'
-
   const valorFaturasExibir = faturasPendentesTotal !== undefined ? faturasPendentesTotal : faturasCartao
 
   const indicadores = [
-    { id: 'cofre', rotulo: 'Dinheiro no Cofre', valor: totalCofre, icone: '🏦', classe: '' },
-    { id: 'receita', rotulo: 'Receita do Mês', valor: receitaMes, icone: '📈', classe: 'positive' },
+    { id: 'cofre', rotulo: 'Dinheiro no Cofre', valor: totalCofre, classe: '' },
+    { id: 'receita', rotulo: 'Receita do Mês', valor: receitaMes, classe: 'positive' },
     {
       id: 'faturas',
       rotulo: todasFaturasPagas
-        ? 'Faturas (Todas Pagas 🎉)'
+        ? 'Faturas (Todas Pagas)'
         : faturasPagasTotal > 0
           ? 'Faturas a Pagar'
           : 'Faturas de Cartão',
@@ -39,10 +35,9 @@ function StatusHeader({
           : qtdFaturasTotal > 0
             ? `${qtdFaturasTotal} fatura(s) a pagar`
             : null,
-      icone: '💳',
       classe: todasFaturasPagas ? 'positive' : 'negative',
     },
-    { id: 'debito-pix', rotulo: 'Débito & PIX (Conta)', valor: despesasContaPix, icone: '⚡', classe: 'warning' },
+    { id: 'debito-pix', rotulo: 'Débito & PIX (Conta)', valor: despesasContaPix, classe: 'warning' },
   ]
 
   return (
@@ -50,20 +45,17 @@ function StatusHeader({
       <div className="status-header__intro fade-up">
         <p className="status-header__eyebrow">Assistente Financeiro</p>
         <h1 className="status-header__title">
-          Olá, Guilherme <span aria-hidden="true">👋</span>
+          Olá, Guilherme
         </h1>
         <p className="card-subtitle">Veja como está sua saúde financeira neste mês.</p>
       </div>
 
-      {/* Banner de Veredito (No Azul vs No Vermelho) */}
+      {/* Banner de Veredito */}
       <section
         id="status-veredito"
         className={`status-banner ${ehPositivo ? 'status-banner--positivo' : 'status-banner--negativo'} fade-up`}
         aria-label="Veredito financeiro do mês"
       >
-        <div className="status-banner__icone" aria-hidden="true">
-          {ehPositivo ? '🟢' : '🔴'}
-        </div>
         <div className="status-banner__info">
           <p className="status-banner__status">
             {ehPositivo
@@ -91,7 +83,6 @@ function StatusHeader({
             className="card status-card fade-up"
             style={{ animationDelay: `${0.08 * (i + 1)}s` }}
           >
-            <span className="status-card__icon" aria-hidden="true">{item.icone}</span>
             <p className="card-subtitle">{item.rotulo}</p>
             <p className={`status-card__value ${item.classe}`}>{formatarMoeda(item.valor)}</p>
             {item.sub && <span className="status-card__sub">{item.sub}</span>}

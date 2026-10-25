@@ -76,50 +76,45 @@
 }
 
 .extrato__remover {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text-muted);
-  transition: background var(--transition), color var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
 .extrato__remover:hover {
   background: rgba(251, 113, 133, 0.15);
   color: var(--danger);
+  border-color: rgba(251, 113, 133, 0.3);
 }
 
 .extrato__acoes {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .extrato__btn-editar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text-muted);
-  font-size: 0.95rem;
-  transition: background var(--transition), transform var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
 .extrato__btn-editar:hover {
   background: rgba(139, 92, 246, 0.2);
-  transform: scale(1.1);
+  color: #c4b5fd;
+  border-color: rgba(139, 92, 246, 0.35);
 }
 
 .extrato__data-hora {

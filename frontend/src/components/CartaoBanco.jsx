@@ -3,12 +3,14 @@ import { formatarMoeda, formatarPercentual, formatarMesAnoCurto } from '../utils
 import { nivelDeAlerta } from '../utils/calculos'
 import './CartaoBanco.css'
 
-// Um card para UM banco. Recebe:
-// - cartao: dados do banco + gasto, limite_disponivel, uso, valor_fatura e fatura_paga
-// - aoSalvarLimite: função do pai chamada para salvar novo limite
-// - aoAlternarFatura: função para alternar status da fatura (aberta vs paga / adiantada)
-// - mesReferencia: mês de referência (ex: '2026-10')
-function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }) {
+function CartaoBanco({
+  cartao,
+  aoSalvarLimite,
+  aoAlternarFatura,
+  aoAdicionarAdiantamento,
+  aoRemoverAdiantamento,
+  mesReferencia,
+}) {
   const [editando, setEditando] = useState(false)
   const [rascunho, setRascunho] = useState('')
   const [salvando, setSalvando] = useState(false)
@@ -18,8 +20,8 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
   // Estado do Modal de Pagamento / Adiantamento de Fatura
   const [modalPagamentoAberto, setModalPagamentoAberto] = useState(false)
   const [mesSelecionado, setMesSelecionado] = useState(mesReferencia || new Date().toISOString().slice(0, 7))
-  const [tipoPagamento, setTipoPagamento] = useState('integral') // 'integral' ou 'parcial'
-  const [valorParcialInput, setValorParcialInput] = useState('')
+  const [valorNovoAdiantamento, setValorNovoAdiantamento] = useState('')
+  const [descricaoNovoAdiantamento, setDescricaoNovoAdiantamento] = useState('')
   const [salvandoPagamento, setSalvandoPagamento] = useState(false)
 
   const banco = cartao
@@ -29,7 +31,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
   const mesAtual = mesReferencia || new Date().toISOString().slice(0, 7)
   const proximaFatura = banco.proximas_faturas?.[0]
 
-  // Se a fatura do mês atual já está paga, permite alternar ou focar na fatura aberta do ciclo seguinte (ex: Nov/26)
+  // Foco na fatura do mês atual ou fatura aberta do ciclo seguinte
   const [faturaFocoMes, setFaturaFocoMes] = useState(null)
   const mesExibido = faturaFocoMes || (banco.fatura_paga && proximaFatura ? proximaFatura.mes : mesAtual)
   const ehFocoProxima = Boolean(proximaFatura && mesExibido === proximaFatura.mes)
@@ -83,73 +85,67 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
   function abrirModalPagamento(mesAlvo) {
     const alvo = mesAlvo || mesAtual
     setMesSelecionado(alvo)
-
-    let info = null
-    if (alvo === mesAtual) {
-      info = {
-        valor_pago_adiantado: banco.valor_pago_adiantado || 0,
-      }
-    } else {
-      const pf = banco.proximas_faturas?.find((f) => f.mes === alvo)
-      info = {
-        valor_pago_adiantado: pf?.valor_pago_adiantado || 0,
-      }
-    }
-
-    if (info && info.valor_pago_adiantado > 0) {
-      setTipoPagamento('parcial')
-      setValorParcialInput(String(info.valor_pago_adiantado))
-    } else {
-      setTipoPagamento('integral')
-      setValorParcialInput('')
-    }
-
+    setValorNovoAdiantamento('')
+    setDescricaoNovoAdiantamento('')
     setModalPagamentoAberto(true)
   }
 
   function mudarMesNoModal(m) {
     setMesSelecionado(m)
-    let info = null
-    if (m === mesAtual) {
-      info = { valor_pago_adiantado: banco.valor_pago_adiantado || 0 }
-    } else {
-      const pf = banco.proximas_faturas?.find((f) => f.mes === m)
-      info = { valor_pago_adiantado: pf?.valor_pago_adiantado || 0 }
-    }
-    if (info && info.valor_pago_adiantado > 0) {
-      setTipoPagamento('parcial')
-      setValorParcialInput(String(info.valor_pago_adiantado))
-    } else {
-      setTipoPagamento('integral')
-      setValorParcialInput('')
-    }
+    setValorNovoAdiantamento('')
+    setDescricaoNovoAdiantamento('')
   }
 
-  async function confirmarPagamento(evento) {
+  async function handleAdicionarAdiantamento(evento) {
     if (evento) evento.preventDefault()
-    if (!aoAlternarFatura) return
+    const valor = Number(valorNovoAdiantamento.replace(',', '.'))
+    if (Number.isNaN(valor) || valor <= 0) return
+
     setSalvandoPagamento(true)
     try {
-      if (tipoPagamento === 'integral') {
-        await aoAlternarFatura(banco.id, { mes: mesSelecionado, pago: true, valor_pago: null })
-      } else {
-        const valor = Number(valorParcialInput.replace(',', '.'))
-        if (!Number.isNaN(valor) && valor > 0) {
-          await aoAlternarFatura(banco.id, { mes: mesSelecionado, pago: true, valor_pago: valor })
-        }
+      if (aoAdicionarAdiantamento) {
+        await aoAdicionarAdiantamento(banco.id, {
+          mes: mesSelecionado,
+          valor,
+          descricao: descricaoNovoAdiantamento.trim() || 'Adiantamento',
+        })
+      } else if (aoAlternarFatura) {
+        await aoAlternarFatura(banco.id, { mes: mesSelecionado, pago: true, valor_pago: valor })
       }
-      setModalPagamentoAberto(false)
+      setValorNovoAdiantamento('')
+      setDescricaoNovoAdiantamento('')
     } finally {
       setSalvandoPagamento(false)
     }
   }
 
-  async function reabrirFatura() {
+  async function handleRemoverAdiantamento(pagamentoId) {
+    if (!pagamentoId) return
+    setSalvandoPagamento(true)
+    try {
+      if (aoRemoverAdiantamento) {
+        await aoRemoverAdiantamento(banco.id, pagamentoId)
+      }
+    } finally {
+      setSalvandoPagamento(false)
+    }
+  }
+
+  async function handleQuitarIntegral() {
+    if (!aoAlternarFatura) return
+    setSalvandoPagamento(true)
+    try {
+      await aoAlternarFatura(banco.id, { mes: mesSelecionado, pago: true, valor_pago: null })
+    } finally {
+      setSalvandoPagamento(false)
+    }
+  }
+
+  async function handleLimparPagamentos() {
     if (!aoAlternarFatura) return
     setSalvandoPagamento(true)
     try {
       await aoAlternarFatura(banco.id, { mes: mesSelecionado, pago: false })
-      setModalPagamentoAberto(false)
     } finally {
       setSalvandoPagamento(false)
     }
@@ -161,8 +157,10 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
         valorTotal: banco.valor_fatura || 0,
         valorLancado: banco.valor_fatura_lancada || 0,
         valorPago: banco.valor_pago_adiantado || 0,
+        saldoRestante: banco.saldo_restante_fatura ?? Math.max((banco.valor_fatura_lancada || 0) - (banco.valor_pago_adiantado || 0), 0),
         pago: banco.fatura_paga,
         parcial: banco.fatura_parcial,
+        pagamentos: banco.pagamentos_registrados || [],
       }
     : (() => {
         const pf = banco.proximas_faturas?.find((f) => f.mes === mesSelecionado)
@@ -171,12 +169,14 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
           valorTotal: pf?.valor || 0,
           valorLancado: pf?.valor_lancado || 0,
           valorPago: pf?.valor_pago_adiantado || 0,
+          saldoRestante: pf?.saldo_lancado_restante ?? Math.max((pf?.valor_lancado || 0) - (pf?.valor_pago_adiantado || 0), 0),
           pago: Boolean(pf && pf.valor_pago_adiantado >= pf.valor && pf.valor > 0),
           parcial: Boolean(pf && pf.valor_pago_adiantado > 0),
+          pagamentos: pf?.pagamentos_registrados || [],
         }
       })()
 
-  const temPagamentoNoMes = faturaSelecionadaInfo.pago || faturaSelecionadaInfo.parcial || faturaSelecionadaInfo.valorPago > 0
+  const temPagamentoNoMes = faturaSelecionadaInfo.pago || faturaSelecionadaInfo.parcial || faturaSelecionadaInfo.valorPago > 0 || (faturaSelecionadaInfo.pagamentos?.length > 0)
 
   return (
     <article id={`cartao-${banco.id}`} className="card cartao" style={{ '--cor-banco': banco.cor }}>
@@ -202,7 +202,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
         <p className="cartao__valor">{formatarMoeda(disponivel)}</p>
       </div>
 
-      {/* Barra de progresso: a largura vem da porcentagem de uso */}
+      {/* Barra de progresso */}
       <div
         className="barra"
         role="progressbar"
@@ -222,7 +222,6 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
       {/* Bloco de Fatura do Mês e Botão de Quitação / Adiantamento */}
       {!ehBeneficio && (
         <div className={`cartao__fatura-bloco ${faturaExibidaPaga ? 'cartao__fatura-bloco--paga' : ''}`}>
-          {/* Seletor rápido de faturas quando há próximas faturas ou quando o mês atual já está pago */}
           {proximaFatura && (
             <div className="cartao__fatura-abas">
               <button
@@ -231,7 +230,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                 onClick={() => setFaturaFocoMes(mesAtual)}
                 title={`Ver fatura de ${formatarMesAnoCurto(mesAtual)}`}
               >
-                {formatarMesAnoCurto(mesAtual)} {banco.fatura_paga ? '✓ Paga' : ''}
+                {formatarMesAnoCurto(mesAtual)} {banco.fatura_paga ? 'Paga' : ''}
               </button>
               <button
                 type="button"
@@ -239,7 +238,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                 onClick={() => setFaturaFocoMes(proximaFatura.mes)}
                 title={`Ver fatura de ${formatarMesAnoCurto(proximaFatura.mes)}`}
               >
-                {formatarMesAnoCurto(proximaFatura.mes)} {banco.fatura_paga ? '⏳ Atual Aberta' : ''}
+                {formatarMesAnoCurto(proximaFatura.mes)} {banco.fatura_paga ? 'Atual Aberta' : ''}
               </button>
             </div>
           )}
@@ -258,7 +257,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                     className="cartao__fatura-sub-adiantado"
                     title={`Total: ${formatarMoeda(faturaExibidaPrevisto || 0)} | Adiantado: -${formatarMoeda(faturaExibidaAdiantado || 0)}`}
                   >
-                    ⚡ {formatarMoeda(faturaExibidaAdiantado)} adiantado
+                    Adiantado: {formatarMoeda(faturaExibidaAdiantado)}
                   </span>
                 )}
                 {!faturaExibidaParcial && faturaExibidaTemACobrar && (
@@ -285,17 +284,17 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
               onClick={() => abrirModalPagamento(mesExibido)}
               title={
                 faturaExibidaPaga
-                  ? 'Fatura quitada! Clique para gerenciar ou reabrir.'
+                  ? 'Fatura quitada. Clique para gerenciar pagamentos.'
                   : faturaExibidaParcial
                   ? `Adiantamento de ${formatarMoeda(faturaExibidaAdiantado)} realizado. Resta ${formatarMoeda(faturaExibidaValor)}. Clique para gerenciar.`
                   : 'Clique para registrar pagamento integral ou adiantamento desta fatura.'
               }
             >
               {faturaExibidaPaga
-                ? '✓ Fatura Paga'
+                ? 'Fatura Paga'
                 : faturaExibidaParcial
-                ? `⚡ ${formatarMoeda(faturaExibidaAdiantado)} Pago`
-                : '⏳ Fatura Aberta'}
+                ? `Adiantado: ${formatarMoeda(faturaExibidaAdiantado)}`
+                : 'Fatura Aberta'}
             </button>
           </div>
         </div>
@@ -306,7 +305,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
         <div className="cartao__proximas-bloco">
           <div className="cartao__proximas-cabecalho">
             <span className="cartao__proximas-titulo">
-              🔮 Faturas dos Próximos Meses:
+              Faturas dos Próximos Meses:
             </span>
             <button
               type="button"
@@ -314,7 +313,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
               onClick={() => setMostrarProximas(!mostrarProximas)}
               aria-label={mostrarProximas ? 'Recolher próximas faturas' : 'Ver próximas faturas'}
             >
-              {mostrarProximas ? 'Recolher ▲' : `Ver ${banco.proximas_faturas.length} meses ▼`}
+              {mostrarProximas ? 'Recolher' : `Ver ${banco.proximas_faturas.length} meses`}
             </button>
           </div>
 
@@ -349,7 +348,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                         className="cartao__fatura-sub-adiantado"
                         title={`Lançado: ${formatarMoeda(faturaFutura.valor_lancado)} | Adiantado: -${formatarMoeda(faturaFutura.valor_pago_adiantado)}`}
                       >
-                        ⚡ {formatarMoeda(faturaFutura.valor_pago_adiantado)} pago
+                        Pago: {formatarMoeda(faturaFutura.valor_pago_adiantado)}
                       </span>
                     )}
                     {temACobrar && (
@@ -366,7 +365,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
             </div>
           )}
 
-          {/* Detalhes inline das contas que compõem a fatura futura selecionada */}
+          {/* Detalhes inline das contas da fatura futura selecionada */}
           {mostrarProximas && faturaAbertaModal && (
             <div className="cartao__proxima-detalhes">
               <div className="cartao__proxima-detalhes-topo">
@@ -380,7 +379,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                     onClick={() => abrirModalPagamento(faturaAbertaModal.mes)}
                     title={`Registrar adiantamento ou pagamento para ${formatarMesAnoCurto(faturaAbertaModal.mes)}`}
                   >
-                    ⚡ Adiantar esta fatura
+                    Adiantar fatura
                   </button>
                   <button
                     type="button"
@@ -388,7 +387,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                     onClick={() => setFaturaAbertaModal(null)}
                     title="Fechar detalhe"
                   >
-                    ✕
+                    Fechar
                   </button>
                 </div>
               </div>
@@ -405,7 +404,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                         )}
                       </span>
                       <span className={`cartao__item-badge ${item.lancado ? 'cartao__item-badge--lancado' : 'cartao__item-badge--a-cobrar'}`}>
-                        {item.lancado ? '💳 Lançado' : `⏳ A cobrar ${item.dia_cobranca ? `dia ${item.dia_cobranca}` : ''}`}
+                        {item.lancado ? 'Lançado' : `A cobrar ${item.dia_cobranca ? `dia ${item.dia_cobranca}` : ''}`}
                       </span>
                     </div>
                     <strong className="cartao__proxima-item-valor">{formatarMoeda(item.valor)}</strong>
@@ -417,7 +416,7 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
         </div>
       )}
 
-      {/* Renderização condicional: mostra o formulário OU o botão */}
+      {/* Edição de limite */}
       {editando ? (
         <form className="cartao__form" onSubmit={salvar}>
           <input
@@ -438,17 +437,17 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
         </form>
       ) : (
         <button id={`editar-limite-${banco.id}`} className="btn" onClick={iniciarEdicao}>
-          ✏️ {ehBeneficio ? 'Editar recarga mensal' : 'Editar limite'}
+          {ehBeneficio ? 'Editar recarga mensal' : 'Editar limite'}
         </button>
       )}
 
-      {/* Modal Interativo de Pagamento e Adiantamento de Fatura */}
+      {/* Modal de Pagamento e Adiantamentos de Fatura */}
       {modalPagamentoAberto && (
         <div className="cartao__modal-overlay" onClick={() => !salvandoPagamento && setModalPagamentoAberto(false)}>
           <div className="cartao__modal" onClick={(e) => e.stopPropagation()}>
             <div className="cartao__modal-cabecalho">
               <div>
-                <h4 className="cartao__modal-titulo">💳 Pagamento / Adiantamento de Fatura</h4>
+                <h4 className="cartao__modal-titulo">Pagamento / Adiantamento de Fatura</h4>
                 <span className="cartao__modal-sub">{banco.nome}</span>
               </div>
               <button
@@ -457,11 +456,11 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
                 onClick={() => setModalPagamentoAberto(false)}
                 disabled={salvandoPagamento}
               >
-                ✕
+                Fechar
               </button>
             </div>
 
-            <form onSubmit={confirmarPagamento} className="cartao__modal-form">
+            <div className="cartao__modal-corpo">
               <label className="cartao__modal-campo">
                 <span className="cartao__modal-rotulo">Selecione o mês da fatura:</span>
                 <select
@@ -480,90 +479,108 @@ function CartaoBanco({ cartao, aoSalvarLimite, aoAlternarFatura, mesReferencia }
 
               <div className="cartao__modal-resumo">
                 <div className="cartao__modal-resumo-linha">
-                  <span>Valor total da fatura:</span>
-                  <strong>{formatarMoeda(faturaSelecionadaInfo.valorTotal)}</strong>
+                  <span>Valor lançado da fatura:</span>
+                  <strong>{formatarMoeda(faturaSelecionadaInfo.valorLancado || faturaSelecionadaInfo.valorTotal)}</strong>
                 </div>
                 {faturaSelecionadaInfo.valorPago > 0 && (
                   <div className="cartao__modal-resumo-linha cartao__modal-resumo-linha--destaque">
-                    <span>⚡ Adiantado até agora:</span>
+                    <span>Total adiantado:</span>
                     <strong>{formatarMoeda(faturaSelecionadaInfo.valorPago)}</strong>
                   </div>
                 )}
+                <div className="cartao__modal-resumo-linha">
+                  <span>Saldo restante a pagar:</span>
+                  <strong>{formatarMoeda(faturaSelecionadaInfo.saldoRestante)}</strong>
+                </div>
               </div>
 
-              <div className="cartao__modal-opcoes">
-                <label className={`cartao__modal-opcao ${tipoPagamento === 'integral' ? 'cartao__modal-opcao--ativa' : ''}`}>
-                  <input
-                    type="radio"
-                    name="tipoPagamento"
-                    value="integral"
-                    checked={tipoPagamento === 'integral'}
-                    onChange={() => setTipoPagamento('integral')}
-                    disabled={salvandoPagamento}
-                  />
-                  <div>
-                    <strong>✓ Quitar Fatura Integralmente</strong>
-                    <small>Dá baixa de 100% no saldo e libera o limite correspondente</small>
-                  </div>
-                </label>
-
-                <label className={`cartao__modal-opcao ${tipoPagamento === 'parcial' ? 'cartao__modal-opcao--ativa' : ''}`}>
-                  <input
-                    type="radio"
-                    name="tipoPagamento"
-                    value="parcial"
-                    checked={tipoPagamento === 'parcial'}
-                    onChange={() => setTipoPagamento('parcial')}
-                    disabled={salvandoPagamento}
-                  />
-                  <div>
-                    <strong>⚡ Adiantamento / Pagamento Parcial</strong>
-                    <small>Para adiantar valor avulso antes do vencimento (ex: compras repassadas a terceiros)</small>
-                  </div>
-                </label>
+              {/* Lista de Adiantamentos Registrados */}
+              <div className="cartao__modal-historico">
+                <span className="cartao__modal-rotulo">
+                  Adiantamentos Registrados ({faturaSelecionadaInfo.pagamentos?.length || 0}):
+                </span>
+                {faturaSelecionadaInfo.pagamentos && faturaSelecionadaInfo.pagamentos.length > 0 ? (
+                  <ul className="cartao__modal-historico-lista">
+                    {faturaSelecionadaInfo.pagamentos.map((pg) => (
+                      <li key={pg.id} className="cartao__modal-historico-item">
+                        <div className="cartao__modal-historico-info">
+                          <strong>{pg.valor_pago != null ? formatarMoeda(pg.valor_pago) : 'Quitação Integral'}</strong>
+                          <span className="cartao__modal-historico-sub">
+                            {pg.descricao || 'Adiantamento'}
+                            {pg.pago_em && ` · ${new Date(pg.pago_em).toLocaleDateString('pt-BR')}`}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="cartao__modal-btn-excluir"
+                          onClick={() => handleRemoverAdiantamento(pg.id)}
+                          disabled={salvandoPagamento}
+                          title="Excluir este adiantamento"
+                        >
+                          Excluir
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="cartao__modal-vazio">Nenhum adiantamento avulso registrado para este mês.</p>
+                )}
               </div>
 
-              {tipoPagamento === 'parcial' && (
-                <label className="cartao__modal-campo">
-                  <span className="cartao__modal-rotulo">Valor pago / adiantado (R$):</span>
+              {/* Formulário para Adicionar Novo Adiantamento */}
+              <form onSubmit={handleAdicionarAdiantamento} className="cartao__modal-novo-form">
+                <span className="cartao__modal-rotulo">Adicionar Novo Adiantamento:</span>
+                <div className="cartao__modal-novo-grid">
                   <input
                     type="text"
                     inputMode="decimal"
-                    placeholder="Ex: 708,00"
-                    value={valorParcialInput}
-                    onChange={(e) => setValorParcialInput(e.target.value)}
+                    placeholder="Valor (ex: 417,00)"
+                    value={valorNovoAdiantamento}
+                    onChange={(e) => setValorNovoAdiantamento(e.target.value)}
                     disabled={salvandoPagamento}
-                    autoFocus
                     required
                   />
-                </label>
-              )}
+                  <input
+                    type="text"
+                    placeholder="Descrição / nota (opcional)"
+                    value={descricaoNovoAdiantamento}
+                    onChange={(e) => setDescricaoNovoAdiantamento(e.target.value)}
+                    disabled={salvandoPagamento}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="btn btn--primary cartao__modal-btn-adicionar"
+                  disabled={salvandoPagamento}
+                >
+                  {salvandoPagamento ? 'Salvando…' : 'Adicionar Adiantamento'}
+                </button>
+              </form>
 
-              <div className="cartao__modal-acoes">
-                <button type="submit" className="btn btn--primary" disabled={salvandoPagamento}>
-                  {salvandoPagamento ? 'Salvando…' : '✓ Confirmar Pagamento'}
+              {/* Ações Rápidas: Quitação Integral e Limpar */}
+              <div className="cartao__modal-acoes-rapidas">
+                <button
+                  type="button"
+                  className="btn btn--success"
+                  onClick={handleQuitarIntegral}
+                  disabled={salvandoPagamento}
+                  title="Marca a fatura como 100% quitada"
+                >
+                  Quitar Fatura Integralmente
                 </button>
                 {temPagamentoNoMes && (
                   <button
                     type="button"
                     className="btn btn--danger"
-                    onClick={reabrirFatura}
+                    onClick={handleLimparPagamentos}
                     disabled={salvandoPagamento}
-                    title="Exclui o pagamento registrado e reabre a fatura"
+                    title="Remove todos os pagamentos e reabre a fatura"
                   >
-                    🗑️ Reabrir / Limpar
+                    Limpar Pagamentos
                   </button>
                 )}
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => setModalPagamentoAberto(false)}
-                  disabled={salvandoPagamento}
-                >
-                  Cancelar
-                </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
