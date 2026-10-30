@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { formatarMoeda, formatarPercentual, formatarMesAnoCurto } from '../utils/format'
 import { nivelDeAlerta } from '../utils/calculos'
@@ -20,7 +20,7 @@ function CartaoBanco({
 
   // Estado do Modal de Pagamento / Adiantamento de Fatura
   const [modalPagamentoAberto, setModalPagamentoAberto] = useState(false)
-  const [mesSelecionado, setMesSelecionado] = useState(mesReferencia || new Date().toISOString().slice(0, 7))
+  const [mesSelecionado, setMesSelecionado] = useState(mesReferencia || '')
   const [valorNovoAdiantamento, setValorNovoAdiantamento] = useState('')
   const [descricaoNovoAdiantamento, setDescricaoNovoAdiantamento] = useState('')
   const [salvandoPagamento, setSalvandoPagamento] = useState(false)

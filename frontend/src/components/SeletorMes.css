@@ -1,0 +1,155 @@
+/* =====================================================
+   SELETOR DE MÊS (SEM ÍCONES E SEM EMOJIS)
+   Design minimalista, moderno e altamente legível
+   ===================================================== */
+
+.seletor-mes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.seletor-mes__grupo {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  gap: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.seletor-mes__btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius-sm) - 3px);
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.seletor-mes__btn:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.seletor-mes__btn:active {
+  transform: scale(0.97);
+}
+
+.seletor-mes__seletor {
+  position: relative;
+  display: inline-block;
+}
+
+.seletor-mes__select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius-sm) - 3px);
+  padding: 8px 16px;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  outline: none;
+  transition: all var(--transition);
+  min-width: 170px;
+}
+
+.seletor-mes__select:hover {
+  background: var(--surface-hover);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.seletor-mes__select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-soft);
+}
+
+.seletor-mes__select option {
+  background: #14141f;
+  color: #f3f3f8;
+  padding: 10px;
+}
+
+.seletor-mes__btn-hoje {
+  background: var(--primary-soft);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.seletor-mes__btn-hoje:hover {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.seletor-mes__btn-hoje:active {
+  transform: scale(0.97);
+}
+
+/* Ocultação para acessibilidade */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@media (max-width: 680px) {
+  .seletor-mes {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .seletor-mes__grupo {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .seletor-mes__seletor {
+    flex: 1;
+  }
+
+  .seletor-mes__select {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .seletor-mes__btn-hoje {
+    width: 100%;
+    text-align: center;
+  }
+}

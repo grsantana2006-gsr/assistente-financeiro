@@ -21,15 +21,27 @@ function App() {
   const [versao, setVersao] = useState(0)
   const [aviso, setAviso] = useState(null)
   const [abaAtiva, setAbaAtiva] = useState('geral')
+  const [mesReferencia, setMesReferencia] = useState(
+    () => localStorage.getItem('assistente_mes_referencia') || MES_REFERENCIA
+  )
   const recarregar = () => setVersao((v) => v + 1)
 
+  const mudarMesReferencia = (novoMes) => {
+    setMesReferencia(novoMes)
+    try {
+      localStorage.setItem('assistente_mes_referencia', novoMes)
+    } catch {
+      // Ignora erro de localStorage caso indisponível
+    }
+  }
+
   // ---------- Leitura: chamadas à API ----------
-  const dashboard = useDados(() => api.obterDashboard(MES_REFERENCIA), [versao])
-  const fixas = useDados(() => api.listarDespesasFixas(MES_REFERENCIA), [versao])
+  const dashboard = useDados(() => api.obterDashboard(mesReferencia), [versao, mesReferencia])
+  const fixas = useDados(() => api.listarDespesasFixas(mesReferencia), [versao, mesReferencia])
   const extrato = useDados(() => api.listarDespesasVariaveis(), [versao])
   const receitas = useDados(() => api.listarReceitas(), [versao])
   const cofre = useDados(() => api.obterCofre(), [versao])
-  const forecast = useDados(() => api.obterForecast(MES_REFERENCIA, 12), [versao])
+  const forecast = useDados(() => api.obterForecast(mesReferencia, 12), [versao, mesReferencia])
 
   // ---------- Escrita ----------
   // Executa uma ação na API; se der certo, recarrega os dados. Se falhar, mostra um aviso.
@@ -51,10 +63,10 @@ function App() {
     executar(() => api.criarTransacao({ ...dados, tipo: 'Despesa', categoria: 'Fixo' }))
 
   const alternarPagamentoFixa = (id, mes) =>
-    executar(() => api.alternarPagamentoFixa(id, mes || MES_REFERENCIA))
+    executar(() => api.alternarPagamentoFixa(id, mes || mesReferencia))
 
   const alternarPagamentoFatura = (bancoId, dados) =>
-    executar(() => api.alternarPagamentoFatura(bancoId, dados || MES_REFERENCIA))
+    executar(() => api.alternarPagamentoFatura(bancoId, dados || mesReferencia))
 
   const adicionarAdiantamentoFatura = (bancoId, dados) =>
     executar(() => api.adicionarAdiantamentoFatura(bancoId, dados))
@@ -108,7 +120,7 @@ function App() {
         aoMudarAba={setAbaAtiva}
         saldoMes={saldo_mes ?? (receita_mes - (faturas_abertas ?? 0))}
         statusMes={status_mes ?? (saldo_mes >= 0 ? 'positivo' : 'negativo')}
-        mesReferencia={MES_REFERENCIA}
+        mesReferencia={mesReferencia}
       />
 
       <div className="layout-conteudo">
@@ -126,6 +138,8 @@ function App() {
             despesasContaPix={despesas_conta_pix ?? 0}
             saldoMes={saldo_mes ?? (receita_mes - (faturas_abertas ?? 0))}
             statusMes={status_mes ?? (saldo_mes >= 0 ? 'positivo' : 'negativo')}
+            mesReferencia={mesReferencia}
+            aoMudarMes={mudarMesReferencia}
           />
 
           {(abaAtiva === 'geral' || abaAtiva === 'receitas') && (
@@ -143,7 +157,7 @@ function App() {
             <DespesasFixas
               fixas={fixas.dados}
               bancos={cartoes}
-              mesReferencia={MES_REFERENCIA}
+              mesReferencia={mesReferencia}
               aoAdicionar={adicionarFixa}
               aoAlternar={alternarFixa}
               aoAtualizar={atualizarTransacao}
@@ -169,7 +183,7 @@ function App() {
               aoAlternarFatura={alternarPagamentoFatura}
               aoAdicionarAdiantamento={adicionarAdiantamentoFatura}
               aoRemoverAdiantamento={removerAdiantamentoFatura}
-              mesReferencia={MES_REFERENCIA}
+              mesReferencia={mesReferencia}
             />
           )}
 

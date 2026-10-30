@@ -4,6 +4,19 @@
   gap: 22px;
 }
 
+.status-header__topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.status-header__intro {
+  display: flex;
+  flex-direction: column;
+}
+
 .status-header__eyebrow {
   font-size: 0.8rem;
   font-weight: 600;
@@ -19,6 +32,14 @@
 .status-header__title {
   font-size: clamp(1.8rem, 4vw, 2.6rem);
   line-height: 1.15;
+}
+
+@media (max-width: 680px) {
+  .status-header__topo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
 }
 
 /* ---------- Banner de Veredito Executivo ---------- */

@@ -1,4 +1,6 @@
 import { formatarMoeda } from '../utils/format'
+import { formatarMesExtenso } from '../utils/meses'
+import SeletorMes from './SeletorMes'
 import './StatusHeader.css'
 
 function StatusHeader({
@@ -13,6 +15,8 @@ function StatusHeader({
   despesasContaPix,
   saldoMes,
   statusMes,
+  mesReferencia,
+  aoMudarMes,
 }) {
   const ehPositivo = (statusMes ?? (saldoMes >= 0 ? 'positivo' : 'negativo')) === 'positivo'
   const valorFaturasExibir = faturasPendentesTotal !== undefined ? faturasPendentesTotal : faturasCartao
@@ -42,12 +46,22 @@ function StatusHeader({
 
   return (
     <header className="status-header">
-      <div className="status-header__intro fade-up">
-        <p className="status-header__eyebrow">Assistente Financeiro</p>
-        <h1 className="status-header__title">
-          Olá, Guilherme
-        </h1>
-        <p className="card-subtitle">Veja como está sua saúde financeira neste mês.</p>
+      <div className="status-header__topo fade-up">
+        <div className="status-header__intro">
+          <p className="status-header__eyebrow">Assistente Financeiro</p>
+          <h1 className="status-header__title">
+            Olá, Guilherme
+          </h1>
+          <p className="card-subtitle">
+            {mesReferencia
+              ? `Saúde financeira de ${formatarMesExtenso(mesReferencia)}.`
+              : 'Veja como está sua saúde financeira neste mês.'}
+          </p>
+        </div>
+
+        {mesReferencia && aoMudarMes && (
+          <SeletorMes mesReferencia={mesReferencia} aoMudarMes={aoMudarMes} />
+        )}
       </div>
 
       {/* Banner de Veredito */}
