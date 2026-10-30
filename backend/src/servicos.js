@@ -105,7 +105,8 @@ export async function calcularDashboard(mes) {
     })
     .reduce((soma, t) => soma + t.valor, 0)
 
-  const totalDespesas = faturasCartao + despesasContaPix
+  // Saídas efetivas a pagar no mês (faturas pendentes após abater adiantamentos + débito/PIX da conta)
+  const totalDespesas = faturasPendentesTotal + despesasContaPix
   const saldoMes = receitaMes - totalDespesas
 
   return {
