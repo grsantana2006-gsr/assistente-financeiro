@@ -146,6 +146,7 @@ function App() {
             <Receitas
               receitas={receitas.dados}
               bancos={cartoes}
+              mesReferencia={mesReferencia}
               aoAdicionar={adicionarReceita}
               aoAtualizar={atualizarTransacao}
               aoAlternar={alternarFixa}
@@ -170,6 +171,7 @@ function App() {
             <Extrato
               transacoes={extrato.dados}
               bancos={cartoes}
+              mesReferencia={mesReferencia}
               aoAdicionar={adicionarVariavel}
               aoAtualizar={atualizarTransacao}
               aoRemover={removerFixa}

@@ -2,6 +2,39 @@
   transform: none; /* card grande: sem "pulo" ao passar o mouse */
 }
 
+/* ---------- Filtros de Período ---------- */
+.extrato__filtros {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.extrato__filtro-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.extrato__filtro-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.extrato__filtro-btn--ativo {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: #c4b5fd;
+  font-weight: 600;
+}
+
 .extrato__lista {
   list-style: none;
   display: flex;

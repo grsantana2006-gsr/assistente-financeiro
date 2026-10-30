@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { formatarMoeda } from '../utils/format'
+import { formatarMoeda, formatarMesAnoCurto } from '../utils/format'
 import './DespesasFixas.css'
 
-function Receitas({ receitas, bancos, aoAdicionar, aoAtualizar, aoRemover, aoAlternar }) {
+function Receitas({ receitas = [], bancos = [], mesReferencia, aoAdicionar, aoAtualizar, aoRemover, aoAlternar }) {
+  const mesAtualRef = mesReferencia || new Date().toISOString().slice(0, 7)
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
   const [bancoId, setBancoId] = useState(bancos[0]?.id ?? '')
@@ -44,7 +45,16 @@ function Receitas({ receitas, bancos, aoAdicionar, aoAtualizar, aoRemover, aoAlt
     setEditandoId(null)
   }
 
-  const totalAtivas = receitas.filter(r => r.ativa).reduce((soma, r) => soma + r.valor, 0)
+  const receitasDoMes = receitas.filter((r) => {
+    if (!r.ativa) return false
+    const mesInicio = r.data_compra ? r.data_compra.slice(0, 7) : null
+    if (r.categoria === 'Fixo') {
+      return !mesInicio || mesInicio <= mesAtualRef
+    }
+    return r.data_compra && r.data_compra.startsWith(mesAtualRef)
+  })
+
+  const totalAtivas = receitasDoMes.reduce((soma, r) => soma + r.valor, 0)
 
   function nomeDoBanco(id) {
     return bancos.find((b) => b.id === id)?.nome ?? '—'
@@ -59,10 +69,11 @@ function Receitas({ receitas, bancos, aoAdicionar, aoAtualizar, aoRemover, aoAlt
     const deuCerto = await aoAdicionar({
       descricao: descricao.trim(),
       valor: valorNumerico,
-      banco_id: Number(bancoId),
+      banco_id: Number(bancoId || bancos[0]?.id),
       categoria: categoria,
       tipo: 'Receita',
-      forma_pagamento: 'Dinheiro' // Receitas geralmente não tem forma de pagamento de crédito
+      forma_pagamento: 'Dinheiro',
+      data_compra: `${mesAtualRef}-01`,
     })
     setEnviando(false)
 
@@ -76,12 +87,12 @@ function Receitas({ receitas, bancos, aoAdicionar, aoAtualizar, aoRemover, aoAlt
     <section aria-labelledby="titulo-receitas">
       <div className="secao__cabecalho">
         <h2 id="titulo-receitas">Receitas & Entradas</h2>
-        <p className="card-subtitle">Seus salários, rendimentos e recebimentos do mês.</p>
+        <p className="card-subtitle">Seus salários, rendimentos e recebimentos do mês ({formatarMesAnoCurto(mesAtualRef)}).</p>
       </div>
 
       <div className="card fixas">
         <div className="fixas__total" style={{ borderBottomColor: 'var(--positive)' }}>
-          <p className="card-subtitle">Total (ativas)</p>
+          <p className="card-subtitle">Total do Mês ({formatarMesAnoCurto(mesAtualRef)})</p>
           <p className="fixas__total-valor positive">{formatarMoeda(totalAtivas)}</p>
         </div>
 

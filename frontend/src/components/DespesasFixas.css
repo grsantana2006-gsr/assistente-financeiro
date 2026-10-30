@@ -608,3 +608,76 @@
   background: rgba(255, 255, 255, 0.15);
   color: var(--text);
 }
+
+/* ---------- Seção de Contas Encerradas / Concluídas ---------- */
+.fixas__secao-encerradas {
+  margin-top: 24px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.fixas__encerradas-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fixas__badge-encerrada {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.fixas__btn-toggle-encerradas {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.fixas__btn-toggle-encerradas:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.fixas__lista--encerradas {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
+.fixas__item--encerrada {
+  opacity: 0.65;
+  border-left: 3px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.fixas__item--encerrada:hover {
+  opacity: 0.95;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fixas__tag-encerrada {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}

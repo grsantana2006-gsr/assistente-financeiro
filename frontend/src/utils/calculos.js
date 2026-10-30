@@ -50,3 +50,76 @@ export function obterMesFatura(dataStr, diaFechamento, diaVencimento) {
 
   return `${ano}-${String(mes).padStart(2, '0')}`
 }
+
+/**
+ * Classifica uma despesa fixa para um determinado mês de referência.
+ * Retorna se ela é:
+ * - 'ativa': está em vigor no mês de referência (calcula também a parcela específica do mês)
+ * - 'futura': agendada para começar após o mês de referência
+ * - 'encerrada': despesa com prazo que já foi concluída antes do mês de referência
+ */
+export function classificarDespesaFixa(t, mesReferencia, bancos = []) {
+  const banco = bancos.find((b) => b.id === t.banco_id)
+  const ehCredito = t.forma_pagamento === 'Crédito' && banco && banco.tipo !== 'Benefício'
+  const mesInicio = ehCredito
+    ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+    : (t.data_compra ? t.data_compra.slice(0, 7) : null)
+
+  const mesRef = mesReferencia || new Date().toISOString().slice(0, 7)
+
+  if (!mesInicio) {
+    return {
+      status: 'ativa',
+      parcelaNoMes: t.parcela_atual || 1,
+      totalParcelas: t.total_parcelas || 1,
+      mesInicio: mesRef,
+    }
+  }
+
+  const [anoRef, mRef] = mesRef.split('-').map(Number)
+  const [anoIni, mIni] = mesInicio.split('-').map(Number)
+  const diffMeses = (anoRef - anoIni) * 12 + (mRef - mIni)
+
+  if (t.total_parcelas > 1) {
+    const parcelaNoMes = (t.parcela_atual || 1) + diffMeses
+    if (parcelaNoMes < 1) {
+      return {
+        status: 'futura',
+        parcelaNoMes,
+        totalParcelas: t.total_parcelas,
+        mesInicio,
+      }
+    }
+    if (parcelaNoMes > t.total_parcelas) {
+      return {
+        status: 'encerrada',
+        parcelaNoMes,
+        totalParcelas: t.total_parcelas,
+        mesInicio,
+      }
+    }
+    return {
+      status: 'ativa',
+      parcelaNoMes,
+      totalParcelas: t.total_parcelas,
+      mesInicio,
+    }
+  }
+
+  // Despesa fixa contínua (ex: assinaturas mensais)
+  if (mesRef < mesInicio) {
+    return {
+      status: 'futura',
+      parcelaNoMes: 1,
+      totalParcelas: 1,
+      mesInicio,
+    }
+  }
+
+  return {
+    status: 'ativa',
+    parcelaNoMes: 1,
+    totalParcelas: 1,
+    mesInicio,
+  }
+}

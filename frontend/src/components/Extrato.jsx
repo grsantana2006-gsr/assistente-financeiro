@@ -1,9 +1,22 @@
 import { useState } from 'react'
-import { formatarMoeda, formatarDataHora } from '../utils/format'
+import { formatarMoeda, formatarDataHora, formatarMesAnoCurto } from '../utils/format'
 import { obterMesFatura, rotuloMesFatura } from '../utils/fatura'
 import './Extrato.css'
 
-function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
+function formatarMesAno(anoMes) {
+  if (!anoMes) return ''
+  const [ano, mes] = anoMes.split('-')
+  const meses = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ]
+  const idx = parseInt(mes, 10) - 1
+  return `${meses[idx] || mes}/${ano}`
+}
+
+function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoAtualizar, aoRemover }) {
+  const mesAtualRef = mesReferencia || new Date().toISOString().slice(0, 7)
+  const [filtroPeriodo, setFiltroPeriodo] = useState('mes')
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
   const [bancoId, setBancoId] = useState(bancos[0]?.id ?? '')
@@ -79,8 +92,28 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
     }
   }
 
-  // Pegamos apenas as 50 transações mais recentes para não poluir a tela
-  const recentes = transacoes.slice(0, 50)
+  function pertenceAoMes(t, mesRef) {
+    const banco = bancos.find((b) => b.id === t.banco_id)
+    const ehCredito = t.forma_pagamento === 'Crédito' && banco && banco.tipo !== 'Benefício'
+    const mesDestino = ehCredito
+      ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+      : (t.data_compra ? t.data_compra.slice(0, 7) : null)
+
+    if (!mesDestino) return false
+
+    if (t.total_parcelas > 1) {
+      const [anoRef, mRef] = mesRef.split('-').map(Number)
+      const [anoIni, mIni] = mesDestino.split('-').map(Number)
+      const diffMeses = (anoRef - anoIni) * 12 + (mRef - mIni)
+      const numParcela = (t.parcela_atual || 1) + diffMeses
+      return numParcela >= 1 && numParcela <= t.total_parcelas
+    }
+
+    return mesDestino === mesRef
+  }
+
+  const transacoesDoMes = transacoes.filter((t) => pertenceAoMes(t, mesAtualRef))
+  const transacoesExibidas = filtroPeriodo === 'mes' ? transacoesDoMes : transacoes.slice(0, 50)
 
   const bancoSelecionado = bancos.find((b) => b.id === Number(bancoId || bancos[0]?.id))
   const mesFaturaPrevista =
@@ -92,15 +125,39 @@ function Extrato({ transacoes, bancos, aoAdicionar, aoAtualizar, aoRemover }) {
     <section id="extrato-variaveis" aria-labelledby="titulo-extrato">
       <div className="secao__cabecalho">
         <h2 id="titulo-extrato">Gastos Variáveis</h2>
-        <p className="card-subtitle">Despesas do dia a dia (mercado, uber, etc.) inseridas via Bot ou formulário abaixo.</p>
+        <p className="card-subtitle">
+          Despesas do dia a dia inseridas via Bot ou formulário abaixo. Exibindo {filtroPeriodo === 'mes' ? `gastos de ${formatarMesAno(mesAtualRef)}` : 'todas as compras recentes'}.
+        </p>
       </div>
 
       <div className="card extrato">
-        {recentes.length === 0 ? (
-          <p className="extrato__vazio">Nenhum gasto variável registrado.</p>
+        {/* Filtros de Período */}
+        <div className="extrato__filtros" role="group" aria-label="Filtrar período do extrato">
+          <button
+            type="button"
+            className={`extrato__filtro-btn ${filtroPeriodo === 'mes' ? 'extrato__filtro-btn--ativo' : ''}`}
+            onClick={() => setFiltroPeriodo('mes')}
+          >
+            Deste Mês ({formatarMesAnoCurto(mesAtualRef)} - {transacoesDoMes.length})
+          </button>
+          <button
+            type="button"
+            className={`extrato__filtro-btn ${filtroPeriodo === 'todos' ? 'extrato__filtro-btn--ativo' : ''}`}
+            onClick={() => setFiltroPeriodo('todos')}
+          >
+            Todas as Compras ({transacoes.length})
+          </button>
+        </div>
+
+        {transacoesExibidas.length === 0 ? (
+          <p className="extrato__vazio">
+            {filtroPeriodo === 'mes'
+              ? `Nenhum gasto variável registrado para ${formatarMesAno(mesAtualRef)}.`
+              : 'Nenhum gasto variável registrado.'}
+          </p>
         ) : (
           <ul className="extrato__lista">
-            {recentes.map((t) => {
+            {transacoesExibidas.map((t) => {
               const banco = bancos.find((b) => b.id === t.banco_id)
               const mesFatura =
                 t.forma_pagamento === 'Crédito' && banco && banco.tipo !== 'Benefício'

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { formatarMoeda, formatarMesAnoCurto } from '../utils/format'
-import { obterMesFatura } from '../utils/calculos'
+import { obterMesFatura, classificarDespesaFixa } from '../utils/calculos'
 import './DespesasFixas.css'
 
 function formatarMesAno(anoMes) {
@@ -39,6 +39,7 @@ function DespesasFixas({
   const [totalParcelas, setTotalParcelas] = useState('12')
   const [parcelaAtual, setParcelaAtual] = useState('1')
   const [enviando, setEnviando] = useState(false)
+  const [mostrarEncerradas, setMostrarEncerradas] = useState(false)
 
   // Estado de edição de despesa fixa (valor e descrição)
   const [editandoId, setEditandoId] = useState(null)
@@ -82,13 +83,20 @@ function DespesasFixas({
     setEditandoId(null)
   }
 
-  const ehFutura = (t) => {
-    const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
-    return Boolean(mesInicio && mesInicio > mesAtualRef)
-  }
+  const despesasClassificadas = fixas.map((t) => {
+    const info = classificarDespesaFixa(t, mesAtualRef, bancos)
+    return {
+      ...t,
+      statusNoMes: info.status,
+      parcelaNoMes: info.parcelaNoMes,
+      totalParcelasNoMes: info.totalParcelas,
+      mesInicioCalculado: info.mesInicio,
+    }
+  })
 
-  const despesasDoMes = fixas.filter((t) => !ehFutura(t))
-  const despesasFuturas = fixas.filter(ehFutura)
+  const despesasDoMes = despesasClassificadas.filter((t) => t.statusNoMes === 'ativa')
+  const despesasFuturas = despesasClassificadas.filter((t) => t.statusNoMes === 'futura')
+  const despesasEncerradas = despesasClassificadas.filter((t) => t.statusNoMes === 'encerrada')
 
   const despesasFiltradas = despesasDoMes.filter((t) => {
     if (filtroTipo === 'conta') return t.forma_pagamento !== 'Crédito'
@@ -261,14 +269,14 @@ function DespesasFixas({
                   : 'Pendente'
 
               const banco = bancos.find((b) => b.id === t.banco_id)
-              const mesFaturaDestino =
-                ehCredito && banco && t.data_compra
-                  ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
-                  : null
-
               const diaCobranca = t.data_compra ? Number(t.data_compra.slice(8, 10)) : null
-              const hojeDia = new Date().getDate()
-              const cobrancaPassou = !t.pago && diaCobranca && hojeDia > diaCobranca
+              const hoje = new Date()
+              const hojeDia = hoje.getDate()
+              const mesRealAtual = hoje.toISOString().slice(0, 7)
+              const cobrancaPassou =
+                !t.pago &&
+                Boolean(diaCobranca) &&
+                (mesAtualRef < mesRealAtual || (mesAtualRef === mesRealAtual && hojeDia > diaCobranca))
 
               const statusTitle = t.pago
                 ? ehCredito
@@ -328,17 +336,17 @@ function DespesasFixas({
                           {ehTemporaria && (
                             <span
                               className="fixas__tag-prazo"
-                              title={`Despesa com prazo: parcela ${t.parcela_atual} de ${t.total_parcelas}`}
+                              title={`Despesa com prazo: parcela ${t.parcelaNoMes} de ${t.total_parcelas}`}
                             >
-                              {t.parcela_atual}/{t.total_parcelas} meses
+                              {t.parcelaNoMes}/{t.total_parcelas} meses
                             </span>
                           )}
-                          {ehCredito && mesFaturaDestino && (
+                          {ehCredito && (
                             <span
                               className="fixas__tag-fatura"
-                              title={`Assinatura cobrada dia ${diaCobranca || ''}: entra na fatura que vence em ${formatarMesAnoCurto(mesFaturaDestino)}`}
+                              title={`Assinatura cobrada dia ${diaCobranca || ''}: entra na fatura que vence em ${formatarMesAnoCurto(mesAtualRef)}`}
                             >
-                              Fatura {formatarMesAnoCurto(mesFaturaDestino)}
+                              Fatura {formatarMesAnoCurto(mesAtualRef)}
                             </span>
                           )}
                           {cobrancaPassou && (
@@ -594,6 +602,58 @@ function DespesasFixas({
                 )
               })}
             </ul>
+          </div>
+        )}
+
+        {/* Contas Encerradas / Concluídas */}
+        {despesasEncerradas.length > 0 && (
+          <div className="fixas__secao-encerradas">
+            <div className="fixas__encerradas-cabecalho">
+              <div>
+                <span className="fixas__badge-encerrada">Encerradas / Concluídas ({despesasEncerradas.length})</span>
+                <p className="card-subtitle">
+                  Contas com prazo determinado que já foram quitadas antes de {formatarMesAno(mesAtualRef)}. Não pesam mais no seu orçamento.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="fixas__btn-toggle-encerradas"
+                onClick={() => setMostrarEncerradas((prev) => !prev)}
+              >
+                {mostrarEncerradas ? 'Ocultar contas encerradas' : 'Ver contas encerradas'}
+              </button>
+            </div>
+            {mostrarEncerradas && (
+              <ul className="fixas__lista fixas__lista--encerradas">
+                {despesasEncerradas.map((t) => (
+                  <li key={t.id} className="fixas__item fixas__item--encerrada">
+                    <div className="fixas__info">
+                      <div className="fixas__nome-linha">
+                        <span className="fixas__nome">{t.descricao}</span>
+                        <span className="fixas__tag-encerrada">
+                          Concluída ({t.total_parcelas} meses)
+                        </span>
+                      </div>
+                      <span className="card-subtitle">
+                        {nomeDoBanco(t.banco_id)} &bull; {t.forma_pagamento}
+                      </span>
+                    </div>
+                    <span className="fixas__valor" style={{ opacity: 0.6 }}>
+                      {formatarMoeda(t.valor)}
+                    </span>
+                    <button
+                      type="button"
+                      className="fixas__remover"
+                      aria-label={`Remover ${t.descricao}`}
+                      onClick={() => aoRemover(t.id)}
+                      title="Remover conta do histórico"
+                    >
+                      Excluir
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 

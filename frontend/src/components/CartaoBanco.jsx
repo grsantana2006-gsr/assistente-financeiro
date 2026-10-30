@@ -34,6 +34,10 @@ function CartaoBanco({
 
   // Foco na fatura do mês atual ou fatura aberta do ciclo seguinte
   const [faturaFocoMes, setFaturaFocoMes] = useState(null)
+
+  useEffect(() => {
+    setFaturaFocoMes(null)
+  }, [mesReferencia])
   const mesExibido = faturaFocoMes || (banco.fatura_paga && proximaFatura ? proximaFatura.mes : mesAtual)
   const ehFocoProxima = Boolean(proximaFatura && mesExibido === proximaFatura.mes)
   const faturaFocoDados = ehFocoProxima ? proximaFatura : null
