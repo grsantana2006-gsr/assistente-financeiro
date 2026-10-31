@@ -22,16 +22,16 @@ function App() {
   const [aviso, setAviso] = useState(null)
   const [abaAtiva, setAbaAtiva] = useState('geral')
   const [mesReferencia, setMesReferencia] = useState(
-    () => localStorage.getItem('assistente_mes_referencia') || MES_REFERENCIA
+    () => sessionStorage.getItem('assistente_mes_referencia') || MES_REFERENCIA
   )
   const recarregar = () => setVersao((v) => v + 1)
 
   const mudarMesReferencia = (novoMes) => {
     setMesReferencia(novoMes)
     try {
-      localStorage.setItem('assistente_mes_referencia', novoMes)
+      sessionStorage.setItem('assistente_mes_referencia', novoMes)
     } catch {
-      // Ignora erro de localStorage caso indisponível
+      // Ignora erro se indisponível
     }
   }
 
