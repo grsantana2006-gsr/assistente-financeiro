@@ -184,9 +184,9 @@ function StatusHeader({
           {faturasPagasTotal > 0 && (
             <div className="status-banner__esclarecimento">
               <span className="status-banner__esclarecimento-tag">Faturas quitadas</span>
-              <span className="status-banner__esclarecimento-texto">
+              <p className="status-banner__esclarecimento-texto">
                 O saldo real de <strong>{formatarMoeda(saldoMes)}</strong> reflete suas despesas reais: a fatura quitada no mês ({formatarMoeda(faturasPagasTotal)}) foi paga com o seu salário{faturasPendentesTotal > 0 ? `, restando ${formatarMoeda(faturasPendentesTotal)} a pagar` : ''}. Esse valor não volta como sobra porque já foi utilizado para quitar o cartão.
-              </span>
+              </p>
             </div>
           )}
         </div>
