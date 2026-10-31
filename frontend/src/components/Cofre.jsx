@@ -70,6 +70,26 @@ function Cofre({ cofre, aoAdicionar, aoAtualizar, aoRemover }) {
           <p className="fixas__total-valor" style={{ color: 'var(--primary)' }}>{formatarMoeda(total)}</p>
         </div>
 
+        {/* Formulário de criar objetivo no topo */}
+        <form className="fixas__form" onSubmit={enviar}>
+          <input
+            type="text"
+            placeholder="Ex.: Viagem para a praia"
+            value={objetivo}
+            onChange={(e) => setObjetivo(e.target.value)}
+          />
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="Saldo Atual (R$)"
+            value={saldo}
+            onChange={(e) => setSaldo(e.target.value)}
+          />
+          <button type="submit" className="btn btn--primary" disabled={enviando}>
+            {enviando ? '...' : '+ Criar Objetivo'}
+          </button>
+        </form>
+
         {itens.length === 0 ? (
           <p className="fixas__vazio">Nenhum objetivo cadastrado.</p>
         ) : (
@@ -150,25 +170,6 @@ function Cofre({ cofre, aoAdicionar, aoAtualizar, aoRemover }) {
             })}
           </ul>
         )}
-
-        <form className="fixas__form" onSubmit={enviar}>
-          <input
-            type="text"
-            placeholder="Ex.: Viagem para a praia"
-            value={objetivo}
-            onChange={(e) => setObjetivo(e.target.value)}
-          />
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder="Saldo Atual (R$)"
-            value={saldo}
-            onChange={(e) => setSaldo(e.target.value)}
-          />
-          <button type="submit" className="btn btn--primary" disabled={enviando}>
-            {enviando ? '...' : '+ Criar Objetivo'}
-          </button>
-        </form>
       </div>
     </section>
   )

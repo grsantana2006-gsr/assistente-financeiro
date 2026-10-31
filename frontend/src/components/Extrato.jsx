@@ -131,6 +131,87 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
       </div>
 
       <div className="card extrato">
+        {/* Formulário de novo gasto variável no topo */}
+        <form className="extrato__form" onSubmit={enviar}>
+          <input
+            type="text"
+            placeholder="Ex.: Padaria"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            aria-label="Descrição"
+          />
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="Valor (R$)"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            aria-label="Valor"
+          />
+          <select
+            value={bancoId}
+            onChange={(e) => setBancoId(e.target.value)}
+            aria-label="Banco / Cartão de Origem"
+          >
+            {bancos.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.nome}
+              </option>
+            ))}
+          </select>
+          <select
+            value={forma}
+            onChange={(e) => {
+              const novaForma = e.target.value
+              setForma(novaForma)
+              if (novaForma === 'Voucher') {
+                const vr = bancos.find(
+                  (b) =>
+                    b.tipo === 'Benefício' ||
+                    b.nome.toLowerCase().includes('refeição') ||
+                    b.nome.toLowerCase().includes('vale'),
+                )
+                if (vr) setBancoId(vr.id)
+              }
+            }}
+            aria-label="Forma de Pagamento"
+          >
+            <option value="Crédito">Crédito</option>
+            <option value="Débito">Débito</option>
+            <option value="PIX">PIX</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Voucher">Voucher (Vale Refeição)</option>
+          </select>
+          <select
+            value={parcelas}
+            onChange={(e) => setParcelas(e.target.value)}
+            aria-label="Parcelas"
+            title="Quantidade de parcelas"
+            style={{ flex: '1 1 80px' }}
+            disabled={forma === 'Voucher'}
+          >
+            <option value="1">1x (À vista)</option>
+            {[...Array(11)].map((_, i) => (
+              <option key={i + 2} value={i + 2}>{i + 2}x</option>
+            ))}
+          </select>
+          <button type="submit" className="btn btn--primary" disabled={enviando}>
+            {enviando ? 'Adicionando…' : '+ Adicionar'}
+          </button>
+
+          {mesFaturaPrevista && bancoSelecionado && (
+            <div className="extrato__dica-fatura">
+              <div className="extrato__dica-conteudo">
+                Compras no <strong>{bancoSelecionado.nome}</strong> hoje entram na fatura de{' '}
+                <strong className="extrato__dica-mes">{rotuloMesFatura(mesFaturaPrevista)}</strong>
+                <span className="extrato__dica-datas">
+                  {' '}(fecha dia {bancoSelecionado.dia_fechamento} • vence dia {bancoSelecionado.dia_vencimento})
+                </span>
+              </div>
+            </div>
+          )}
+        </form>
+
         {/* Filtros de Período */}
         <div className="extrato__filtros" role="group" aria-label="Filtrar período do extrato">
           <button
@@ -281,86 +362,6 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
             })}
           </ul>
         )}
-
-        <form className="extrato__form" onSubmit={enviar}>
-          <input
-            type="text"
-            placeholder="Ex.: Padaria"
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
-            aria-label="Descrição"
-          />
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder="Valor (R$)"
-            value={valor}
-            onChange={(e) => setValor(e.target.value)}
-            aria-label="Valor"
-          />
-          <select
-            value={bancoId}
-            onChange={(e) => setBancoId(e.target.value)}
-            aria-label="Banco / Cartão de Origem"
-          >
-            {bancos.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.nome}
-              </option>
-            ))}
-          </select>
-          <select
-            value={forma}
-            onChange={(e) => {
-              const novaForma = e.target.value
-              setForma(novaForma)
-              if (novaForma === 'Voucher') {
-                const vr = bancos.find(
-                  (b) =>
-                    b.tipo === 'Benefício' ||
-                    b.nome.toLowerCase().includes('refeição') ||
-                    b.nome.toLowerCase().includes('vale'),
-                )
-                if (vr) setBancoId(vr.id)
-              }
-            }}
-            aria-label="Forma de Pagamento"
-          >
-            <option value="Crédito">Crédito</option>
-            <option value="Débito">Débito</option>
-            <option value="PIX">PIX</option>
-            <option value="Dinheiro">Dinheiro</option>
-            <option value="Voucher">Voucher (Vale Refeição)</option>
-          </select>
-          <select
-            value={parcelas}
-            onChange={(e) => setParcelas(e.target.value)}
-            aria-label="Parcelas"
-            title="Quantidade de parcelas"
-            style={{ flex: '1 1 80px' }}
-            disabled={forma === 'Voucher'}
-          >
-            <option value="1">1x (À vista)</option>
-            {[...Array(11)].map((_, i) => (
-              <option key={i + 2} value={i + 2}>{i + 2}x</option>
-            ))}
-          </select>
-          <button type="submit" className="btn btn--primary" disabled={enviando}>
-            {enviando ? 'Adicionando…' : '+ Adicionar'}
-          </button>
-
-          {mesFaturaPrevista && bancoSelecionado && (
-            <div className="extrato__dica-fatura">
-              <div className="extrato__dica-conteudo">
-                Compras no <strong>{bancoSelecionado.nome}</strong> hoje entram na fatura de{' '}
-                <strong className="extrato__dica-mes">{rotuloMesFatura(mesFaturaPrevista)}</strong>
-                <span className="extrato__dica-datas">
-                  {' '}(fecha dia {bancoSelecionado.dia_fechamento} • vence dia {bancoSelecionado.dia_vencimento})
-                </span>
-              </div>
-            </div>
-          )}
-        </form>
       </div>
     </section>
   )

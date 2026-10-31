@@ -96,6 +96,35 @@ function Receitas({ receitas = [], bancos = [], mesReferencia, aoAdicionar, aoAt
           <p className="fixas__total-valor positive">{formatarMoeda(totalAtivas)}</p>
         </div>
 
+        {/* Formulário de adicionar nova receita no topo */}
+        <form className="fixas__form" onSubmit={enviar}>
+          <input
+            type="text"
+            placeholder="Ex.: Salário"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+          />
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="Valor (R$)"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+          />
+          <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+            <option value="Fixo">Mensal (Fixo)</option>
+            <option value="Variável">Avulso (Variável)</option>
+          </select>
+          <select value={bancoId} onChange={(e) => setBancoId(e.target.value)}>
+            {bancos.map((b) => (
+              <option key={b.id} value={b.id}>{b.nome}</option>
+            ))}
+          </select>
+          <button type="submit" className="btn btn--primary" style={{ background: 'var(--positive)', borderColor: 'var(--positive)' }} disabled={enviando}>
+            {enviando ? '...' : '+ Adicionar'}
+          </button>
+        </form>
+
         {receitas.length === 0 ? (
           <p className="fixas__vazio">Nenhuma receita cadastrada ainda.</p>
         ) : (
@@ -204,34 +233,6 @@ function Receitas({ receitas = [], bancos = [], mesReferencia, aoAdicionar, aoAt
             })}
           </ul>
         )}
-
-        <form className="fixas__form" onSubmit={enviar}>
-          <input
-            type="text"
-            placeholder="Ex.: Salário"
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
-          />
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder="Valor (R$)"
-            value={valor}
-            onChange={(e) => setValor(e.target.value)}
-          />
-          <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-            <option value="Fixo">Mensal (Fixo)</option>
-            <option value="Variável">Avulso (Variável)</option>
-          </select>
-          <select value={bancoId} onChange={(e) => setBancoId(e.target.value)}>
-            {bancos.map((b) => (
-              <option key={b.id} value={b.id}>{b.nome}</option>
-            ))}
-          </select>
-          <button type="submit" className="btn btn--primary" style={{ background: 'var(--positive)', borderColor: 'var(--positive)' }} disabled={enviando}>
-            {enviando ? '...' : '+ Adicionar'}
-          </button>
-        </form>
       </div>
     </section>
   )

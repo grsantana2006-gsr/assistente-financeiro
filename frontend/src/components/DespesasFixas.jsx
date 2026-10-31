@@ -216,6 +216,106 @@ function DespesasFixas({
           </div>
         </div>
 
+        {/* Formulário de adicionar nova despesa fixa no topo */}
+        <form className="fixas__form" onSubmit={enviar}>
+          <div className="fixas__form-campos">
+            <input
+              id="fixa-descricao"
+              type="text"
+              placeholder="Ex.: Curso de Programação"
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              aria-label="Descrição da despesa fixa"
+            />
+            <input
+              id="fixa-valor"
+              type="text"
+              inputMode="decimal"
+              placeholder="Valor (R$)"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              aria-label="Valor da despesa fixa"
+            />
+            <input
+              id="fixa-data"
+              type="date"
+              value={dataCompra}
+              onChange={(e) => setDataCompra(e.target.value)}
+              aria-label="Data de início ou pagamento"
+              title="Data de pagamento ou início"
+            />
+            <select
+              id="fixa-banco"
+              value={bancoId}
+              onChange={(e) => setBancoId(e.target.value)}
+              aria-label="Banco da despesa fixa"
+            >
+              {bancos.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.nome}
+                </option>
+              ))}
+            </select>
+            <select
+              id="fixa-forma"
+              value={formaPagamento}
+              onChange={(e) => aoMudarForma(e.target.value)}
+              aria-label="Forma de pagamento da despesa fixa"
+            >
+              <option value="PIX">PIX / Transferência</option>
+              <option value="Débito">Débito em Conta / PIX</option>
+              <option value="Crédito">Cartão de Crédito</option>
+              <option value="Voucher">Voucher (Vale Refeição)</option>
+              <option value="Dinheiro">Dinheiro</option>
+            </select>
+          </div>
+
+          <div className="fixas__form-duracao">
+            <label className="fixas__checkbox-rotulo">
+              <input
+                id="fixa-tem-prazo"
+                type="checkbox"
+                checked={temPrazo}
+                onChange={(e) => setTemPrazo(e.target.checked)}
+              />
+              <span>Tem duração / prazo determinado (ex: curso de 12 meses, seguro em 10x)</span>
+            </label>
+
+            {temPrazo && (
+              <div className="fixas__duracao-inputs">
+                <label className="fixas__duracao-campo">
+                  <span>Total de meses:</span>
+                  <input
+                    id="fixa-total-meses"
+                    type="number"
+                    min="2"
+                    max="120"
+                    placeholder="12"
+                    value={totalParcelas}
+                    onChange={(e) => setTotalParcelas(e.target.value)}
+                  />
+                </label>
+                <label className="fixas__duracao-campo">
+                  <span>Mês / parcela atual:</span>
+                  <input
+                    id="fixa-mes-atual"
+                    type="number"
+                    min="1"
+                    max={totalParcelas || 120}
+                    placeholder="1"
+                    value={parcelaAtual}
+                    onChange={(e) => setParcelaAtual(e.target.value)}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+
+          <button id="fixa-adicionar" type="submit" className="btn btn--primary" disabled={enviando}>
+            {enviando ? 'Adicionando…' : 'Adicionar'}
+          </button>
+        </form>
+
         {/* Filtro Rápido */}
         <div className="fixas__filtros" role="group" aria-label="Filtrar despesas fixas">
           <button
@@ -656,106 +756,6 @@ function DespesasFixas({
             )}
           </div>
         )}
-
-        {/* Formulário de adicionar nova despesa fixa */}
-        <form className="fixas__form" onSubmit={enviar}>
-          <div className="fixas__form-campos">
-            <input
-              id="fixa-descricao"
-              type="text"
-              placeholder="Ex.: Curso de Programação"
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              aria-label="Descrição da despesa fixa"
-            />
-            <input
-              id="fixa-valor"
-              type="text"
-              inputMode="decimal"
-              placeholder="Valor (R$)"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              aria-label="Valor da despesa fixa"
-            />
-            <input
-              id="fixa-data"
-              type="date"
-              value={dataCompra}
-              onChange={(e) => setDataCompra(e.target.value)}
-              aria-label="Data de início ou pagamento"
-              title="Data de pagamento ou início"
-            />
-            <select
-              id="fixa-banco"
-              value={bancoId}
-              onChange={(e) => setBancoId(e.target.value)}
-              aria-label="Banco da despesa fixa"
-            >
-              {bancos.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.nome}
-                </option>
-              ))}
-            </select>
-            <select
-              id="fixa-forma"
-              value={formaPagamento}
-              onChange={(e) => aoMudarForma(e.target.value)}
-              aria-label="Forma de pagamento da despesa fixa"
-            >
-              <option value="PIX">PIX / Transferência</option>
-              <option value="Débito">Débito em Conta / PIX</option>
-              <option value="Crédito">Cartão de Crédito</option>
-              <option value="Voucher">Voucher (Vale Refeição)</option>
-              <option value="Dinheiro">Dinheiro</option>
-            </select>
-          </div>
-
-          <div className="fixas__form-duracao">
-            <label className="fixas__checkbox-rotulo">
-              <input
-                id="fixa-tem-prazo"
-                type="checkbox"
-                checked={temPrazo}
-                onChange={(e) => setTemPrazo(e.target.checked)}
-              />
-              <span>Tem duração / prazo determinado (ex: curso de 12 meses, seguro em 10x)</span>
-            </label>
-
-            {temPrazo && (
-              <div className="fixas__duracao-inputs">
-                <label className="fixas__duracao-campo">
-                  <span>Total de meses:</span>
-                  <input
-                    id="fixa-total-meses"
-                    type="number"
-                    min="2"
-                    max="120"
-                    placeholder="12"
-                    value={totalParcelas}
-                    onChange={(e) => setTotalParcelas(e.target.value)}
-                  />
-                </label>
-                <label className="fixas__duracao-campo">
-                  <span>Mês / parcela atual:</span>
-                  <input
-                    id="fixa-mes-atual"
-                    type="number"
-                    min="1"
-                    max={totalParcelas || 120}
-                    placeholder="1"
-                    value={parcelaAtual}
-                    onChange={(e) => setParcelaAtual(e.target.value)}
-                  />
-                </label>
-              </div>
-            )}
-          </div>
-
-          <button id="fixa-adicionar" type="submit" className="btn btn--primary" disabled={enviando}>
-            {enviando ? 'Adicionando…' : 'Adicionar'}
-          </button>
-        </form>
       </div>
     </section>
   )
