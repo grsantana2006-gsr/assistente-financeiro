@@ -380,7 +380,6 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
 // Projeta os próximos meses: renda fixa, despesas fixas (contínuas e temporárias) e parcelas/faturas restantes.
 export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, bancos = [], pagamentos = []) {
   const [ano, mes] = mesReferencia.split('-').map(Number)
-  const bancosMap = new Map(bancos.map((b) => [b.id, b]))
 
   const rendaContinuas = transacoes.filter(
     (t) => t.tipo === 'Receita' && t.categoria === 'Fixo' && t.ativa && (t.total_parcelas === 1 || !t.total_parcelas),
@@ -389,29 +388,24 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, banc
     (t) => t.tipo === 'Receita' && t.categoria === 'Fixo' && t.ativa && t.total_parcelas > 1,
   )
 
-  const fixasContinuas = transacoes.filter(
+  // Despesas fixas de conta corrente / PIX / débito (que não entram em faturas de cartão de crédito nem benefício)
+  const fixasContaContinuas = transacoes.filter(
     (t) =>
       t.tipo === 'Despesa' &&
       t.categoria === 'Fixo' &&
       t.ativa &&
+      t.forma_pagamento !== 'Crédito' &&
       t.forma_pagamento !== 'Voucher' &&
       (t.total_parcelas === 1 || !t.total_parcelas),
   )
-  const fixasTemporarias = transacoes.filter(
+  const fixasContaTemporarias = transacoes.filter(
     (t) =>
       t.tipo === 'Despesa' &&
       t.categoria === 'Fixo' &&
       t.ativa &&
+      t.forma_pagamento !== 'Crédito' &&
       t.forma_pagamento !== 'Voucher' &&
       t.total_parcelas > 1,
-  )
-
-  const variaveis = transacoes.filter(
-    (t) =>
-      t.tipo === 'Despesa' &&
-      t.categoria !== 'Fixo' &&
-      t.ativa &&
-      t.forma_pagamento !== 'Voucher',
   )
 
   const meses = []
@@ -440,68 +434,96 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, banc
         })
       )
 
-    // Fixas contínuas no mês k: só conta a partir de mesInicio (levando em conta a fatura se for crédito)
-    const fixasContinuasNoMes = fixasContinuas.filter((t) => {
-      const banco = bancosMap.get(t.banco_id)
-      const mesInicio = mesDaTransacao(t, banco)
-      return !mesInicio || mesK >= mesInicio
-    })
+    // Fixas de Conta Corrente / PIX no mês k (saem diretamente da conta, sem cartão)
+    const fixasContaNoMes =
+      soma(
+        fixasContaContinuas.filter((t) => {
+          const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
+          return !mesInicio || mesK >= mesInicio
+        })
+      ) +
+      soma(
+        fixasContaTemporarias.filter((t) => {
+          const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : null
+          if (mesInicio && mesK < mesInicio) return false
+          const diffMeses = mesInicio
+            ? (anoK - Number(mesInicio.slice(0, 4))) * 12 + (mesKNum - Number(mesInicio.slice(5, 7)))
+            : k
+          return t.parcela_atual + diffMeses <= t.total_parcelas
+        })
+      )
 
-    // Fixas temporárias no mês k: só conta a partir de mesInicio até total_parcelas
-    const fixasTemporariasNoMes = fixasTemporarias.filter((t) => {
-      const banco = bancosMap.get(t.banco_id)
-      const mesInicio = mesDaTransacao(t, banco)
-      if (mesInicio && mesK < mesInicio) return false
-      const diffMeses = mesInicio
-        ? (anoK - Number(mesInicio.slice(0, 4))) * 12 + (mesKNum - Number(mesInicio.slice(5, 7)))
-        : k
-      return t.parcela_atual + diffMeses <= t.total_parcelas
-    })
-
-    const fixas = soma(fixasContinuasNoMes) + soma(fixasTemporariasNoMes)
-
-    // Parcelas e faturas que vencem no mês k
+    // Faturas de cada cartão de crédito no mês k
+    let fixasCartaoRestante = 0
+    let parcelasCartaoRestante = 0
+    let totalFaturasBruto = 0
+    let totalPagoNoMes = 0
     const detalhesParcelas = []
-    for (const t of variaveis) {
-      const banco = bancosMap.get(t.banco_id)
-      const mesFatura1 = mesDaTransacao(t, banco)
-      if (!mesFatura1) continue
 
-      const [ano1, m1] = mesFatura1.split('-').map(Number)
-      const diff = (anoK - ano1) * 12 + (mesKNum - m1)
+    for (const banco of bancos) {
+      if (banco.tipo === 'Benefício') continue
 
-      if (t.total_parcelas > 1) {
-        const numParcela = t.parcela_atual + diff
-        if (numParcela >= 1 && numParcela <= t.total_parcelas) {
-          detalhesParcelas.push({
-            descricao: t.descricao,
-            valor: t.valor,
-            numero: numParcela,
-            total: t.total_parcelas,
-          })
+      const itensBanco = transacoes.filter(
+        (t) =>
+          t.banco_id === banco.id &&
+          t.tipo === 'Despesa' &&
+          t.ativa &&
+          t.forma_pagamento === 'Crédito' &&
+          contaNaFatura(t, mesK, banco),
+      )
+
+      const fixasBanco = itensBanco.filter((t) => t.categoria === 'Fixo').reduce((s, t) => s + t.valor, 0)
+      const varBanco = itensBanco.filter((t) => t.categoria !== 'Fixo').reduce((s, t) => s + t.valor, 0)
+      const totalFatura = fixasBanco + varBanco
+      totalFaturasBruto += totalFatura
+
+      // Pagamentos/adiantamentos registrados para este banco neste mês (null = quitação integral)
+      const pgs = pagamentos.filter((p) => p.banco_id === banco.id && p.mes === mesK)
+      const quitada = pgs.some((p) => p.valor_pago == null)
+      const somaAd = pgs.reduce((s, p) => s + (p.valor_pago != null ? Number(p.valor_pago) : 0), 0)
+      const pago = quitada ? totalFatura : Math.min(somaAd, totalFatura)
+      totalPagoNoMes += pago
+
+      let varRest = varBanco
+      let fixRest = fixasBanco
+      if (quitada) {
+        varRest = 0
+        fixRest = 0
+      } else if (pago > 0) {
+        if (pago <= varBanco) {
+          varRest = varBanco - pago
+        } else {
+          varRest = 0
+          fixRest = Math.max(fixasBanco - (pago - varBanco), 0)
         }
-      } else {
-        // Compra à vista (1x): entra exatamente no mês de vencimento da fatura
-        if (diff === 0) {
-          detalhesParcelas.push({
-            descricao: t.descricao,
-            valor: t.valor,
-            numero: 1,
-            total: 1,
-          })
+      }
+
+      fixasCartaoRestante += fixRest
+      parcelasCartaoRestante += varRest
+
+      // Detalhamento das parcelas e compras para visualização no gráfico
+      for (const t of itensBanco) {
+        let numParcela = 1
+        if (t.total_parcelas > 1) {
+          const [anoIni, mIni] = (t.data_compra ? t.data_compra.slice(0, 7) : mesK).split('-').map(Number)
+          const diff = (anoK - anoIni) * 12 + (mesKNum - mIni)
+          numParcela = (t.parcela_atual || 1) + diff
         }
+        detalhesParcelas.push({
+          descricao: t.descricao,
+          valor: t.valor,
+          banco: banco.nome,
+          categoria: t.categoria,
+          numero: numParcela,
+          total: t.total_parcelas || 1,
+          pago: quitada || (pago >= t.valor),
+        })
       }
     }
 
-    const parcelas = soma(detalhesParcelas)
-
-    // Descontar pagamentos antecipados já realizados para as faturas que vencem no mês k
-    const adiantadoNoMes = pagamentos
-      .filter((p) => p.mes === mesK && p.valor_pago != null)
-      .reduce((s, p) => s + Number(p.valor_pago), 0)
-
-    const parcelasRestantes = Math.max(parcelas - adiantadoNoMes, 0)
-    const comprometido = fixas + parcelasRestantes
+    const fixasFinal = fixasContaNoMes + fixasCartaoRestante
+    const parcelasFinal = parcelasCartaoRestante
+    const comprometido = fixasFinal + parcelasFinal
 
     meses.push({
       indice: k,
@@ -509,10 +531,10 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, banc
       rotulo: data.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
       rotuloCompleto: data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
       renda: arredondar(rendaNoMes),
-      fixas: arredondar(fixas),
-      parcelas: arredondar(parcelasRestantes),
-      parcelas_brutas: arredondar(parcelas),
-      adiantado: arredondar(adiantadoNoMes),
+      fixas: arredondar(fixasFinal),
+      parcelas: arredondar(parcelasFinal),
+      parcelas_brutas: arredondar(totalFaturasBruto),
+      adiantado: arredondar(totalPagoNoMes),
       detalhesParcelas,
       comprometido: arredondar(comprometido),
       saldo: arredondar(rendaNoMes - comprometido),

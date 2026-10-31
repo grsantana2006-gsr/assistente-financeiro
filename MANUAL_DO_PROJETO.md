@@ -66,10 +66,12 @@ $$\text{Saldo Real do Mês} = \text{Receita} - (\text{Faturas no Cartão} + \tex
    * **O que é:** Exclusivamente as despesas e parcelas cobradas no cartão de crédito que vencem na fatura do mês.
    * **Origem do cálculo:** Soma de todas as despesas do mês com `forma_pagamento === 'Crédito'`.
    * **Função financeira:** Mostra o passivo de cartão que você precisará liquidar no fechamento da fatura.
+   * **🔍 Interatividade (Novo Pop-up de Detalhamento):** Ao clicar no card, abre-se uma janela suspensa (modal) com o raio-X completo: resumo por banco (Nubank, BB, Itaú com status quitada/aberta), campo de busca em tempo real, lista de cada compra com descrição, banco, parcela (`X/Y`), data e valor, além do totalizador (faturas brutas, total quitado e saldo pendente).
 4. **⚡ Débito & PIX (Conta Corrente):**
    * **O que é:** Todos os pagamentos que saem diretamente do saldo bancário (PIX, débito em conta, limite especial/cheque especial ou dinheiro).
    * **Origem do cálculo:** Soma de todas as despesas do mês com `forma_pagamento !== 'Crédito'`.
    * **Função financeira:** Evita o "ponto cego" de achar que sobrou dinheiro na conta quando na verdade já há contas em débito agendadas.
+   * **🔍 Interatividade (Novo Pop-up de Detalhamento):** Ao clicar no card, abre-se uma janela suspensa (modal) listando todas as saídas de conta corrente do mês com filtros de busca, exibindo descrição, banco/conta, forma de pagamento (PIX, Débito, etc.), data e valor.
 
 ---
 

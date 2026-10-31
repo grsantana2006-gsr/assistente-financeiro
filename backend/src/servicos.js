@@ -105,9 +105,48 @@ export async function calcularDashboard(mes) {
     })
     .reduce((soma, t) => soma + t.valor, 0)
 
-  // Saídas efetivas a pagar no mês (faturas pendentes após abater adiantamentos + débito/PIX da conta)
-  const totalDespesas = faturasPendentesTotal + despesasContaPix
+  // Despesas totais incorridas no mês (faturas de cartão de crédito + débito/PIX da conta)
+  // O pagamento da fatura quita o passivo com o dinheiro da receita; não elimina a despesa do mês.
+  const totalDespesas = faturasCartao + despesasContaPix
   const saldoMes = receitaMes - totalDespesas
+
+  // Detalhamento individual das despesas para visualização detalhada em modais
+  const itensFaturas = despesasMes
+    .filter((t) => t.forma_pagamento === 'Crédito')
+    .map((t) => {
+      const banco = bancosMap.get(t.banco_id)
+      return {
+        id: t.id,
+        descricao: t.descricao,
+        valor: arredondar(t.valor),
+        categoria: t.categoria,
+        forma_pagamento: t.forma_pagamento,
+        banco_id: t.banco_id,
+        banco_nome: banco?.nome || 'Cartão',
+        parcela_atual: t.parcela_atual,
+        total_parcelas: t.total_parcelas,
+        data_compra: t.data_compra,
+      }
+    })
+
+  const itensContaPix = despesasMes
+    .filter((t) => t.forma_pagamento !== 'Crédito' && t.forma_pagamento !== 'Voucher')
+    .map((t) => {
+      const banco = bancosMap.get(t.banco_id)
+      return {
+        id: t.id,
+        descricao: t.descricao,
+        valor: arredondar(t.valor),
+        categoria: t.categoria,
+        forma_pagamento: t.forma_pagamento,
+        banco_id: t.banco_id,
+        banco_nome: banco?.nome || 'Conta',
+        parcela_atual: t.parcela_atual,
+        total_parcelas: t.total_parcelas,
+        data_compra: t.data_compra,
+        pago: t.pago,
+      }
+    })
 
   return {
     mes,
@@ -126,5 +165,7 @@ export async function calcularDashboard(mes) {
     saldo_mes: arredondar(saldoMes),
     status_mes: saldoMes >= 0 ? 'positivo' : 'negativo',
     cartoes: montarCartoes(bancos, transacoes, mes, faturasPagasMap, pagamentosPorBanco),
+    itens_faturas: itensFaturas,
+    itens_conta_pix: itensContaPix,
   }
 }

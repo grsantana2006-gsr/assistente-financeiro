@@ -124,6 +124,46 @@
   transform: translateY(-4px);
 }
 
+.status-card__topo-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.status-card--interativo {
+  cursor: pointer;
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.status-card--interativo:hover {
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+}
+
+.status-card--interativo:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.status-card__tag-ver {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: all var(--transition);
+}
+
+.status-card--interativo:hover .status-card__tag-ver {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
 .status-card__icon {
   display: inline-grid;
   place-items: center;
@@ -159,5 +199,430 @@
   }
   .status-banner__detalhe {
     font-size: 0.85rem;
+  }
+}
+
+/* =========================================================
+   MODAL DE DETALHAMENTO DE FATURAS E DÉBITO & PIX
+   ========================================================= */
+.status-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  animation: statusFadeIn 0.2s ease-out;
+}
+
+.status-modal {
+  background: #171821;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg, 16px);
+  width: 100%;
+  max-width: 680px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+  animation: statusPopIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.status-modal__cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.status-modal__titulo {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.status-modal__sub {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.status-modal__fechar {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 0.95rem;
+}
+
+.status-modal__fechar:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.status-modal__corpo {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Resumo de bancos */
+.status-modal__bancos-resumo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.status-modal__secao-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.status-modal__bancos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.status-modal__banco-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-modal__banco-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-modal__banco-nome {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.status-modal__badge-status {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.status-modal__badge-status.badge--paga {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-modal__badge-status.badge--aberta {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+.status-modal__badge-status.badge--parcial {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-modal__banco-numeros {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.status-modal__banco-valor strong {
+  color: var(--text);
+}
+
+/* Filtros e Busca */
+.status-modal__filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.status-modal__campo-busca {
+  position: relative;
+  width: 100%;
+}
+
+.status-modal__input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  color: var(--text);
+  transition: border-color var(--transition);
+}
+
+.status-modal__input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.status-modal__btn-limpar-busca {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.status-modal__banco-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.status-modal__chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.status-modal__chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.status-modal__chip--ativo {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Lista de Despesas */
+.status-modal__lista-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-modal__lista-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.status-modal__lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-modal__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+
+.status-modal__item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.status-modal__item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.status-modal__item-desc {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-modal__item-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.status-modal__tag {
+  font-size: 0.72rem;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.status-modal__tag--banco {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.status-modal__tag--forma {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-modal__tag--parcela {
+  background: rgba(56, 189, 248, 0.12);
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.status-modal__tag--a-vista {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+}
+
+.status-modal__tag--cat {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+}
+
+.status-modal__item-data {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.status-modal__item-valor {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.98rem;
+  white-space: nowrap;
+}
+
+.status-modal__aviso-contexto {
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 3px solid #f59e0b;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.status-modal__vazio {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+/* Rodapé do Modal */
+.status-modal__rodape {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+  flex-wrap: wrap;
+}
+
+.status-modal__totais {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.status-modal__total-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.status-modal__total-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.status-modal__total-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+@keyframes statusFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes statusPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
