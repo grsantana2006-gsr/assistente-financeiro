@@ -49,10 +49,11 @@ Localizado no topo da aplicação, este setor funciona como o **painel de bordo 
 
 #### A. Banner de Veredito: No Azul (Superávit) vs. No Vermelho (Déficit)
 Logo abaixo da saudação, uma barra visual inteligente calcula a equação fundamental das finanças:
-$$\text{Saldo Líquido do Mês} = \text{Receita} - (\text{Faturas a Pagar no Cartão} + \text{Gastos em Débito/PIX})$$
-* O cálculo abate os adiantamentos já pagos (`faturasPendentesTotal`), considerando apenas o valor que você realmente deve pagar no mês (não soma mais a fatura bruta pré-adiantamento).
-* 🟢 **No Azul (Superávit):** Se suas receitas forem maiores que suas saídas a pagar, o banner se acende em verde indicando exatamente quanto dinheiro você tem de folga/lucro livre neste mês.
-* 🔴 **No Vermelho (Déficit):** Se seus compromissos a pagar superarem suas entradas, o banner dispara um alerta vermelho com o valor negativo exato do prejuízo, avisando que você está gastando mais do que ganha.
+$$\text{Saldo Líquido do Mês} = \text{Receita} - (\text{Faturas a Cargo do Salário} + \text{Gastos em Débito/PIX})$$
+* **Faturas a Cargo do Salário:** Para cada cartão de crédito, o sistema calcula o valor bruto da fatura menos os adiantamentos prévios já realizados (`Math.max(valFaturaBruta - adiantamentos, 0)`).
+* **Blindagem Contra Falsos Saldos (O dinheiro pago não volta como sobra fictícia):** Quando você quita a fatura do cartão com o seu salário, o valor pago **permaneceu como gasto do mês**, pois o dinheiro saiu da sua receita para pagar a operadora. O saldo livre permanece exatamente em **+ R$ 169,10** (ou sua margem real), acompanhado de uma nota de esclarecimento explícita no banner explicando que a fatura foi quitada no mês com a sua receita.
+* 🟢 **No Azul (Superávit):** Se suas receitas forem maiores que suas despesas do mês, o banner se acende indicando exatamente quanto dinheiro você tem de margem livre real neste mês.
+* 🔴 **No Vermelho (Déficit):** Se seus compromissos superarem suas receitas, o banner dispara um alerta com o valor negativo exato do déficit.
 
 #### B. Os Quatro Indicadores Chave:
 1. **🏦 Dinheiro no Cofre:**
@@ -63,16 +64,17 @@ $$\text{Saldo Líquido do Mês} = \text{Receita} - (\text{Faturas a Pagar no Car
    * **O que é:** Todo o dinheiro que entra na sua conta no mês de referência (salário fixo + rendimentos avulsos).
    * **Origem do cálculo:** Função `calcularReceitaDoMes` no backend.
    * **Função financeira:** Estabelece o teto máximo de recursos disponíveis.
-3. **💳 Faturas no Cartão (Crédito):**
-   * **O que é:** Exclusivamente as despesas e parcelas cobradas no cartão de crédito que vencem na fatura do mês.
-   * **Origem do cálculo:** Soma de todas as despesas do mês com `forma_pagamento === 'Crédito'`.
-   * **Função financeira:** Mostra o passivo de cartão que você precisará liquidar no fechamento da fatura.
-   * **🔍 Interatividade (Novo Pop-up de Detalhamento):** Ao clicar no card, abre-se uma janela suspensa (modal) com o raio-X completo: resumo por banco (Nubank, BB, Itaú com status quitada/aberta), campo de busca em tempo real, lista de cada compra com descrição, banco, parcela (`X/Y`), data e valor, além do totalizador (faturas brutas, total quitado e saldo pendente).
+3. **💳 Faturas do Mês (Cartão de Crédito a Cargo do Salário):**
+   * **O que é:** O passivo real de faturas de cartão cobrado no mês a cargo da sua receita (bruto menos adiantamentos externos).
+   * **Origem do cálculo:** Soma das faturas de crédito a cargo do salário (`faturas_mes_cargo_salario`).
+   * **Função financeira:** Fecha a conta exata com os outros cards: `Receita - Faturas - Débito/PIX = Saldo do Mês` (100% alinhado).
+   * **Subtexto informativo:** Indica claramente quanto já foi quitado no mês com a receita e quanto ainda resta a pagar no caixa bancário.
+   * **🔍 Interatividade (Pop-up de Detalhamento):** Ao clicar no card, abre-se uma janela suspensa (modal) com o resumo por banco (Nubank, BB, Itaú com status Quitada/Pendente, total da fatura, adiantamentos abatidos e valor a cargo do salário), campo de busca em tempo real e a lista detalhada de cada despesa.
 4. **⚡ Débito & PIX (Conta Corrente):**
    * **O que é:** Todos os pagamentos que saem diretamente do saldo bancário (PIX, débito em conta, limite especial/cheque especial ou dinheiro).
    * **Origem do cálculo:** Soma de todas as despesas do mês com `forma_pagamento !== 'Crédito'`.
    * **Função financeira:** Evita o "ponto cego" de achar que sobrou dinheiro na conta quando na verdade já há contas em débito agendadas.
-   * **🔍 Interatividade (Novo Pop-up de Detalhamento):** Ao clicar no card, abre-se uma janela suspensa (modal) listando todas as saídas de conta corrente do mês com filtros de busca, exibindo descrição, banco/conta, forma de pagamento (PIX, Débito, etc.), data e valor.
+   * **🔍 Interatividade (Pop-up de Detalhamento):** Ao clicar no card, abre-se uma janela suspensa (modal) listando todas as saídas de conta corrente do mês com filtros de busca, exibindo descrição, banco/conta, forma de pagamento (PIX, Débito, etc.), data e valor.
 
 ---
 

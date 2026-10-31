@@ -341,34 +341,37 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
     const valorFaturaACobrar = itensAtualComStatus.filter((it) => !it.lancado).reduce((s, it) => s + it.valor, 0)
     const valorFaturaTotal = valorFaturaLancada + valorFaturaACobrar
 
-    const infoPagamento = faturasPagasMap.get(banco.id)
-    const ehPagoObjeto = infoPagamento && typeof infoPagamento === 'object'
-    const faturaPagaTotal = ehPagoObjeto
-      ? (infoPagamento.valor_pago == null || infoPagamento.valor_pago >= valorFaturaTotal)
-      : Boolean(infoPagamento)
-    const valorAdiantado = ehPagoObjeto && infoPagamento.valor_pago != null
-      ? infoPagamento.valor_pago
-      : (faturaPagaTotal ? valorFaturaTotal : 0)
-    const faturaParcial = Boolean(ehPagoObjeto && infoPagamento.valor_pago != null && infoPagamento.valor_pago < valorFaturaTotal && infoPagamento.valor_pago > 0)
+    const somaAd = pagamentosDoBanco
+      .filter((p) => p.mes === mesReferencia && p.valor_pago != null)
+      .reduce((s, p) => s + Number(p.valor_pago), 0)
+    const quitadaIntegral = pagamentosDoBanco.some((p) => p.mes === mesReferencia && p.valor_pago == null)
+    const faturaCargoSalario = Math.max(valorFaturaTotal - somaAd, 0)
+    const faturaPagaTotal = quitadaIntegral || (valorFaturaTotal > 0 && somaAd >= valorFaturaTotal)
+    const faturaParcial = !quitadaIntegral && somaAd > 0 && somaAd < valorFaturaTotal
+    const saldoRestanteFatura = faturaPagaTotal ? 0 : faturaCargoSalario
+    const valorAdiantado = quitadaIntegral ? valorFaturaTotal : somaAd
 
     // Para cartões de crédito: o gasto efetivo que abate o limite é o limite comprometido líquido
     // (fatura aberta restante + todas as parcelas futuras já lançadas no cartão)
     const gastoEfetivo = ehBeneficio
       ? Math.max(gastoAcumulado - valorAdiantado - adiantadoOutrosMeses, 0)
       : limiteComprometido.liquido
-    const saldoRestanteFatura = Math.max(valorFaturaTotal - valorAdiantado, 0)
 
     return {
       ...banco,
       gasto: arredondar(gastoEfetivo),
       gasto_acumulado: arredondar(gastoAcumulado),
       valor_fatura: arredondar(valorFaturaTotal),
+      valor_fatura_bruta: arredondar(valorFaturaTotal),
+      valor_adiantamentos: arredondar(somaAd),
+      valor_cargo_salario: arredondar(faturaCargoSalario),
       valor_fatura_lancada: arredondar(valorFaturaLancada),
       valor_fatura_a_cobrar: arredondar(valorFaturaACobrar),
       valor_pago_adiantado: arredondar(valorAdiantado),
       saldo_restante_fatura: arredondar(saldoRestanteFatura),
       fatura_paga: faturaPagaTotal,
       fatura_parcial: faturaParcial,
+      quitada_no_mes: quitadaIntegral,
       pagamentos_registrados: pagamentosDoBanco.filter((p) => p.mes === mesReferencia),
       proximas_faturas: proximasFaturas,
       limite_disponivel: arredondar(Math.max(banco.limite_total - gastoEfetivo, 0)),
@@ -457,7 +460,8 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, banc
     let fixasCartaoRestante = 0
     let parcelasCartaoRestante = 0
     let totalFaturasBruto = 0
-    let totalPagoNoMes = 0
+    let totalAdiantadoNoMes = 0
+    let totalQuitadoNoMes = 0
     const detalhesParcelas = []
 
     for (const banco of bancos) {
@@ -477,27 +481,32 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, banc
       const totalFatura = fixasBanco + varBanco
       totalFaturasBruto += totalFatura
 
-      // Pagamentos/adiantamentos registrados para este banco neste mês (null = quitação integral)
+      // Pagamentos/adiantamentos registrados para este banco neste mês
       const pgs = pagamentos.filter((p) => p.banco_id === banco.id && p.mes === mesK)
       const quitada = pgs.some((p) => p.valor_pago == null)
       const somaAd = pgs.reduce((s, p) => s + (p.valor_pago != null ? Number(p.valor_pago) : 0), 0)
-      const pago = quitada ? totalFatura : Math.min(somaAd, totalFatura)
-      totalPagoNoMes += pago
+      totalAdiantadoNoMes += somaAd
 
+      // A fatura a cargo do salário do mês é o total menos os adiantamentos já pagos
+      const faturaCargoSalario = Math.max(totalFatura - somaAd, 0)
+      if (quitada) {
+        totalQuitadoNoMes += faturaCargoSalario
+      }
+
+      // O adiantamento abate primeiro as parcelas/variáveis e depois as fixas
       let varRest = varBanco
       let fixRest = fixasBanco
-      if (quitada) {
-        varRest = 0
-        fixRest = 0
-      } else if (pago > 0) {
-        if (pago <= varBanco) {
-          varRest = varBanco - pago
+      if (somaAd > 0) {
+        if (somaAd <= varBanco) {
+          varRest = varBanco - somaAd
         } else {
           varRest = 0
-          fixRest = Math.max(fixasBanco - (pago - varBanco), 0)
+          fixRest = Math.max(fixasBanco - (somaAd - varBanco), 0)
         }
       }
 
+      // Mesmo quando quitada no mês com o salário, o valor pago continua sendo um gasto comprometido do mês.
+      // Portanto, mantemos varRest e fixRest para que o forecast reflita a realidade financeira sem inflar o saldo livre.
       fixasCartaoRestante += fixRest
       parcelasCartaoRestante += varRest
 
@@ -516,7 +525,7 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, banc
           categoria: t.categoria,
           numero: numParcela,
           total: t.total_parcelas || 1,
-          pago: quitada || (pago >= t.valor),
+          pago: quitada || (somaAd >= t.valor),
         })
       }
     }
@@ -534,7 +543,8 @@ export function gerarForecast(transacoes, mesReferencia, quantidadeDeMeses, banc
       fixas: arredondar(fixasFinal),
       parcelas: arredondar(parcelasFinal),
       parcelas_brutas: arredondar(totalFaturasBruto),
-      adiantado: arredondar(totalPagoNoMes),
+      adiantado: arredondar(totalAdiantadoNoMes),
+      quitado: arredondar(totalQuitadoNoMes),
       detalhesParcelas,
       comprometido: arredondar(comprometido),
       saldo: arredondar(rendaNoMes - comprometido),

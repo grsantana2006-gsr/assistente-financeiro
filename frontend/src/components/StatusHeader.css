@@ -108,6 +108,39 @@
   font-weight: 700;
 }
 
+.status-banner__esclarecimento {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+.status-banner__esclarecimento-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-banner__esclarecimento-texto {
+  flex: 1;
+}
+
 /* 4 colunas no desktop; adaptável e responsivo no celular */
 .status-header__grid {
   display: grid;

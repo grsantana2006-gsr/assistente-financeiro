@@ -101,9 +101,12 @@ function App() {
     total_cofre,
     receita_mes,
     faturas_cartao,
+    faturas_cartao_bruto,
     faturas_abertas,
     faturas_pagas_total,
     faturas_pendentes_total,
+    faturas_adiantadas_total,
+    faturas_mes_cargo_salario,
     qtd_faturas_pagas,
     qtd_faturas_total,
     todas_faturas_pagas,
@@ -120,7 +123,7 @@ function App() {
       <Sidebar
         abaAtiva={abaAtiva}
         aoMudarAba={setAbaAtiva}
-        saldoMes={saldo_mes ?? (receita_mes - (faturas_pendentes_total ?? faturas_abertas ?? 0) - (despesas_conta_pix ?? 0))}
+        saldoMes={saldo_mes ?? (receita_mes - (faturas_mes_cargo_salario ?? faturas_cartao ?? 0) - (despesas_conta_pix ?? 0))}
         statusMes={status_mes ?? (saldo_mes >= 0 ? 'positivo' : 'negativo')}
         mesReferencia={mesReferencia}
       />
@@ -131,14 +134,16 @@ function App() {
           <StatusHeader
             totalCofre={total_cofre}
             receitaMes={receita_mes}
-            faturasCartao={faturas_cartao ?? faturas_abertas}
+            faturasCartao={faturas_mes_cargo_salario ?? faturas_cartao}
+            faturasCartaoBruto={faturas_cartao_bruto}
             faturasPagasTotal={faturas_pagas_total ?? 0}
-            faturasPendentesTotal={faturas_pendentes_total ?? faturas_abertas}
+            faturasPendentesTotal={faturas_pendentes_total ?? 0}
+            faturasAdiantadasTotal={faturas_adiantadas_total ?? 0}
             qtdFaturasPagas={qtd_faturas_pagas ?? 0}
             qtdFaturasTotal={qtd_faturas_total ?? 0}
             todasFaturasPagas={todas_faturas_pagas ?? false}
             despesasContaPix={despesas_conta_pix ?? 0}
-            saldoMes={saldo_mes ?? (receita_mes - (faturas_pendentes_total ?? faturas_abertas ?? 0) - (despesas_conta_pix ?? 0))}
+            saldoMes={saldo_mes ?? (receita_mes - (faturas_mes_cargo_salario ?? faturas_cartao ?? 0) - (despesas_conta_pix ?? 0))}
             statusMes={status_mes ?? (saldo_mes >= 0 ? 'positivo' : 'negativo')}
             mesReferencia={mesReferencia}
             aoMudarMes={mudarMesReferencia}

@@ -123,15 +123,16 @@ router.post('/:id/alternar-fatura', async (req, res) => {
 
   if (marcarComoPago) {
     if (valorPago === null) {
-      // Quitação integral: limpa pagamentos parciais e registra quitação de 100%
-      await db.prepare('DELETE FROM pagamentos_faturas WHERE banco_id = ? AND mes = ?').run(id, mes)
+      // Quitação integral: remove quitação nula anterior e insere quitação integral sem apagar adiantamentos
+      await db.prepare('DELETE FROM pagamentos_faturas WHERE banco_id = ? AND mes = ? AND valor_pago IS NULL').run(id, mes)
       await db.prepare('INSERT INTO pagamentos_faturas (banco_id, mes, valor_pago, descricao) VALUES (?, ?, NULL, ?)').run(id, mes, 'Quitação Integral')
     } else {
       // Adiciona o adiantamento sem apagar outros
       await db.prepare('INSERT INTO pagamentos_faturas (banco_id, mes, valor_pago, descricao) VALUES (?, ?, ?, ?)').run(id, mes, valorPago, 'Adiantamento')
     }
   } else {
-    await db.prepare('DELETE FROM pagamentos_faturas WHERE banco_id = ? AND mes = ?').run(id, mes)
+    // Reabrir fatura: remove apenas a quitação integral, preservando adiantamentos parciais
+    await db.prepare('DELETE FROM pagamentos_faturas WHERE banco_id = ? AND mes = ? AND valor_pago IS NULL').run(id, mes)
   }
 
   res.json({ banco_id: id, mes, pago: marcarComoPago, valor_pago: valorPago })

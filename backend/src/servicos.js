@@ -66,27 +66,36 @@ export async function calcularDashboard(mes) {
     .filter((t) => t.forma_pagamento === 'Crédito')
     .reduce((soma, t) => soma + t.valor, 0)
 
-  // Métricas de faturas pagas vs pendentes de quitação
+  // Métricas de faturas de cartão de crédito no mês
   const cartoesCredito = bancos.filter((b) => b.tipo !== 'Benefício')
-  let faturasPagasTotal = 0
+  let faturasMesCargoSalarioTotal = 0
+  let faturasQuitadasTotal = 0
+  let faturasPendentesTotal = 0
+  let adiantamentosTotal = 0
   let qtdFaturasPagas = 0
   let qtdFaturasTotal = 0
 
   for (const b of cartoesCredito) {
-    const valFatura = calcularFaturaDoBanco(transacoes, b, mes)
-    if (valFatura > 0) {
+    const valFaturaBruta = calcularFaturaDoBanco(transacoes, b, mes)
+    if (valFaturaBruta > 0) {
       qtdFaturasTotal++
-      const infoP = faturasPagasMap.get(b.id)
-      if (infoP) {
-        const valPago = infoP.valor_pago != null ? infoP.valor_pago : valFatura
-        faturasPagasTotal += Math.min(valPago, valFatura)
-        if (valPago >= valFatura) {
-          qtdFaturasPagas++
-        }
+      const pgs = (pagamentosPorBanco.get(b.id) || []).filter((p) => p.mes === mes)
+      const somaAd = pgs.reduce((s, p) => s + (p.valor_pago != null ? Number(p.valor_pago) : 0), 0)
+      adiantamentosTotal += somaAd
+
+      // A parte da fatura a cargo do salário do mês é a fatura bruta menos adiantamentos já pagos
+      const faturaCargoSalario = Math.max(valFaturaBruta - somaAd, 0)
+      faturasMesCargoSalarioTotal += faturaCargoSalario
+
+      const quitadaIntegral = pgs.some((p) => p.valor_pago == null)
+      if (quitadaIntegral || faturaCargoSalario === 0) {
+        qtdFaturasPagas++
+        faturasQuitadasTotal += faturaCargoSalario
+      } else {
+        faturasPendentesTotal += faturaCargoSalario
       }
     }
   }
-  const faturasPendentesTotal = Math.max(faturasCartao - faturasPagasTotal, 0)
 
   // Saídas da Conta Corrente (PIX, Débito em Conta, Limite Especial, Dinheiro - excluindo Voucher)
   const despesasContaPix = despesasMes
@@ -105,8 +114,11 @@ export async function calcularDashboard(mes) {
     })
     .reduce((soma, t) => soma + t.valor, 0)
 
-  // Saídas efetivas a pagar no mês (faturas pendentes após abater adiantamentos/quitação + débito/PIX da conta)
-  const totalDespesas = faturasPendentesTotal + despesasContaPix
+  // Despesas totais a cargo da receita do mês:
+  // As faturas do mês (a cargo do salário) + contas em débito/PIX da conta corrente.
+  // IMPORTANTE: Mesmo que uma fatura já tenha sido paga/quitada no mês, o valor pago SAIU do salário
+  // e portanto continua sendo uma despesa do mês. O saldo não volta como sobra fictícia.
+  const totalDespesas = faturasMesCargoSalarioTotal + despesasContaPix
   const saldoMes = receitaMes - totalDespesas
 
   // Detalhamento individual das despesas para visualização detalhada em modais
@@ -151,10 +163,13 @@ export async function calcularDashboard(mes) {
     mes,
     total_cofre: arredondar(cofre),
     receita_mes: arredondar(receitaMes),
-    faturas_cartao: arredondar(faturasCartao),
+    faturas_cartao: arredondar(faturasMesCargoSalarioTotal),
+    faturas_cartao_bruto: arredondar(faturasCartao),
     faturas_abertas: arredondar(faturasPendentesTotal),
-    faturas_pagas_total: arredondar(faturasPagasTotal),
+    faturas_pagas_total: arredondar(faturasQuitadasTotal),
     faturas_pendentes_total: arredondar(faturasPendentesTotal),
+    faturas_adiantadas_total: arredondar(adiantamentosTotal),
+    faturas_mes_cargo_salario: arredondar(faturasMesCargoSalarioTotal),
     qtd_faturas_pagas: qtdFaturasPagas,
     qtd_faturas_total: qtdFaturasTotal,
     todas_faturas_pagas: qtdFaturasTotal > 0 && qtdFaturasPagas === qtdFaturasTotal,

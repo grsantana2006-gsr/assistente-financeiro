@@ -19,8 +19,10 @@ function StatusHeader({
   totalCofre,
   receitaMes,
   faturasCartao,
+  faturasCartaoBruto,
   faturasPagasTotal = 0,
-  faturasPendentesTotal,
+  faturasPendentesTotal = 0,
+  faturasAdiantadasTotal = 0,
   qtdFaturasPagas = 0,
   qtdFaturasTotal = 0,
   todasFaturasPagas = false,
@@ -34,7 +36,6 @@ function StatusHeader({
   cartoes = [],
 }) {
   const ehPositivo = (statusMes ?? (saldoMes >= 0 ? 'positivo' : 'negativo')) === 'positivo'
-  const valorFaturasExibir = faturasPendentesTotal !== undefined ? faturasPendentesTotal : faturasCartao
 
   // Controle de abertura do modal de detalhamento ('faturas' | 'debito-pix' | null)
   const [modalAberto, setModalAberto] = useState(null)
@@ -113,19 +114,19 @@ function StatusHeader({
     {
       id: 'faturas',
       rotulo: todasFaturasPagas
-        ? 'Faturas (Todas Pagas)'
+        ? 'Faturas do Mês (Quitadas)'
         : faturasPagasTotal > 0
-          ? 'Faturas a Pagar'
+          ? 'Faturas a Cargo do Salário'
           : 'Faturas de Cartão',
-      valor: valorFaturasExibir,
+      valor: faturasCartao,
       sub: todasFaturasPagas
-        ? `Todas as faturas do mês quitadas (${formatarMoeda(faturasPagasTotal)})`
+        ? `100% quitadas com o salário (${formatarMoeda(faturasPagasTotal)})`
         : faturasPagasTotal > 0
-          ? `${qtdFaturasPagas}/${qtdFaturasTotal} pagas (${formatarMoeda(faturasPagasTotal)} quitados)`
+          ? `${formatarMoeda(faturasPendentesTotal)} a pagar no caixa (${formatarMoeda(faturasPagasTotal)} quitado)`
           : qtdFaturasTotal > 0
             ? `${qtdFaturasTotal} fatura(s) a pagar`
             : null,
-      classe: todasFaturasPagas ? 'positive' : 'negative',
+      classe: todasFaturasPagas ? 'positive' : faturasPendentesTotal > 0 ? 'negative' : 'positive',
       clicavel: true,
       dica: 'Clique para ver despesas do cartão',
     },
@@ -181,6 +182,15 @@ function StatusHeader({
             </strong>
             {ehPositivo ? ' de margem livre.' : ' (gastando mais do que ganha).'}
           </p>
+
+          {faturasPagasTotal > 0 && (
+            <div className="status-banner__esclarecimento">
+              <span className="status-banner__esclarecimento-tag">Faturas quitadas</span>
+              <span className="status-banner__esclarecimento-texto">
+                O saldo real de <strong>{formatarMoeda(saldoMes)}</strong> reflete suas despesas reais: a fatura quitada no mês ({formatarMoeda(faturasPagasTotal)}) foi paga com o seu salário{faturasPendentesTotal > 0 ? `, restando ${formatarMoeda(faturasPendentesTotal)} a pagar` : ''}. Esse valor não volta como sobra porque já foi utilizado para quitar o cartão.
+              </span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -276,25 +286,30 @@ function StatusHeader({
                                     c.fatura_paga ? 'badge--paga' : c.fatura_parcial ? 'badge--parcial' : 'badge--aberta'
                                   }`}
                                 >
-                                  {c.fatura_paga ? '✓ Paga' : c.fatura_parcial ? '⚡ Parcial' : '⏳ Aberta'}
+                                  {c.fatura_paga ? 'Quitada' : c.fatura_parcial ? 'Parcial' : 'Pendente'}
                                 </span>
                               </div>
                               <div className="status-modal__banco-numeros">
                                 <span className="status-modal__banco-valor">
-                                  Total: <strong>{formatarMoeda(c.valor_fatura || 0)}</strong>
+                                  Fatura Total: <strong>{formatarMoeda(c.valor_fatura || 0)}</strong>
                                 </span>
-                                {c.valor_pago_adiantado > 0 && (
-                                  <span className="status-modal__banco-pago positive">
-                                    Pago: {formatarMoeda(c.valor_pago_adiantado)}
+                                {c.valor_adiantamentos > 0 && (
+                                  <span className="status-modal__banco-adiantado" style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '0.8rem' }}>
+                                    Adiantado: -{formatarMoeda(c.valor_adiantamentos)}
                                   </span>
                                 )}
-                                <span
-                                  className={`status-modal__banco-restante ${
-                                    c.saldo_restante_fatura > 0 ? 'negative' : 'positive'
-                                  }`}
-                                >
-                                  Restante: {formatarMoeda(c.saldo_restante_fatura ?? 0)}
+                                <span className="status-modal__banco-cargo">
+                                  A cargo do salário: <strong>{formatarMoeda(c.valor_cargo_salario ?? c.valor_fatura ?? 0)}</strong>
                                 </span>
+                                {c.fatura_paga ? (
+                                  <span className="status-modal__banco-pago positive" style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                                    Quitada no mês com salário
+                                  </span>
+                                ) : (
+                                  <span className="status-modal__banco-restante negative" style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                                    Falta pagar: {formatarMoeda(c.saldo_restante_fatura ?? 0)}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           ))}
