@@ -271,14 +271,18 @@ function DespesasFixas({
           </div>
 
           <div className="fixas__form-duracao">
-            <label className="fixas__checkbox-rotulo">
+            <label className={`fixas__checkbox-rotulo ${temPrazo ? 'fixas__checkbox-rotulo--ativo' : ''}`}>
               <input
                 id="fixa-tem-prazo"
                 type="checkbox"
                 checked={temPrazo}
                 onChange={(e) => setTemPrazo(e.target.checked)}
+                className="fixas__checkbox-input"
               />
-              <span>Tem duração / prazo determinado (ex: curso de 12 meses, seguro em 10x)</span>
+              <span className={`fixas__checkbox-custom ${temPrazo ? 'fixas__checkbox-custom--marcado' : ''}`} aria-hidden="true" />
+              <span className="fixas__checkbox-texto">
+                Tem duração / prazo determinado (ex: curso de 12 meses, seguro em 10x)
+              </span>
             </label>
 
             {temPrazo && (
