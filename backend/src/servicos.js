@@ -105,9 +105,8 @@ export async function calcularDashboard(mes) {
     })
     .reduce((soma, t) => soma + t.valor, 0)
 
-  // Despesas totais incorridas no mês (faturas de cartão de crédito + débito/PIX da conta)
-  // O pagamento da fatura quita o passivo com o dinheiro da receita; não elimina a despesa do mês.
-  const totalDespesas = faturasCartao + despesasContaPix
+  // Saídas efetivas a pagar no mês (faturas pendentes após abater adiantamentos/quitação + débito/PIX da conta)
+  const totalDespesas = faturasPendentesTotal + despesasContaPix
   const saldoMes = receitaMes - totalDespesas
 
   // Detalhamento individual das despesas para visualização detalhada em modais

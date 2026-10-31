@@ -49,9 +49,10 @@ Localizado no topo da aplicação, este setor funciona como o **painel de bordo 
 
 #### A. Banner de Veredito: No Azul (Superávit) vs. No Vermelho (Déficit)
 Logo abaixo da saudação, uma barra visual inteligente calcula a equação fundamental das finanças:
-$$\text{Saldo Real do Mês} = \text{Receita} - (\text{Faturas no Cartão} + \text{Gastos em Débito/PIX})$$
-* 🟢 **No Azul (Superávit):** Se suas receitas forem maiores que suas saídas, o banner se acende em verde indicando exatamente quanto dinheiro você tem de folga/lucro livre neste mês.
-* 🔴 **No Vermelho (Déficit):** Se seus compromissos superarem suas entradas, o banner dispara um alerta vermelho com o valor negativo exato do prejuízo, avisando que você está gastando mais do que ganha.
+$$\text{Saldo Líquido do Mês} = \text{Receita} - (\text{Faturas a Pagar no Cartão} + \text{Gastos em Débito/PIX})$$
+* O cálculo abate os adiantamentos já pagos (`faturasPendentesTotal`), considerando apenas o valor que você realmente deve pagar no mês (não soma mais a fatura bruta pré-adiantamento).
+* 🟢 **No Azul (Superávit):** Se suas receitas forem maiores que suas saídas a pagar, o banner se acende em verde indicando exatamente quanto dinheiro você tem de folga/lucro livre neste mês.
+* 🔴 **No Vermelho (Déficit):** Se seus compromissos a pagar superarem suas entradas, o banner dispara um alerta vermelho com o valor negativo exato do prejuízo, avisando que você está gastando mais do que ganha.
 
 #### B. Os Quatro Indicadores Chave:
 1. **🏦 Dinheiro no Cofre:**

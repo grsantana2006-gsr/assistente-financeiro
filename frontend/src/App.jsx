@@ -120,7 +120,7 @@ function App() {
       <Sidebar
         abaAtiva={abaAtiva}
         aoMudarAba={setAbaAtiva}
-        saldoMes={saldo_mes ?? (receita_mes - (faturas_cartao ?? faturas_abertas ?? 0) - (despesas_conta_pix ?? 0))}
+        saldoMes={saldo_mes ?? (receita_mes - (faturas_pendentes_total ?? faturas_abertas ?? 0) - (despesas_conta_pix ?? 0))}
         statusMes={status_mes ?? (saldo_mes >= 0 ? 'positivo' : 'negativo')}
         mesReferencia={mesReferencia}
       />
@@ -138,7 +138,7 @@ function App() {
             qtdFaturasTotal={qtd_faturas_total ?? 0}
             todasFaturasPagas={todas_faturas_pagas ?? false}
             despesasContaPix={despesas_conta_pix ?? 0}
-            saldoMes={saldo_mes ?? (receita_mes - (faturas_cartao ?? faturas_abertas ?? 0) - (despesas_conta_pix ?? 0))}
+            saldoMes={saldo_mes ?? (receita_mes - (faturas_pendentes_total ?? faturas_abertas ?? 0) - (despesas_conta_pix ?? 0))}
             statusMes={status_mes ?? (saldo_mes >= 0 ? 'positivo' : 'negativo')}
             mesReferencia={mesReferencia}
             aoMudarMes={mudarMesReferencia}
