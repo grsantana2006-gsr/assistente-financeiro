@@ -113,20 +113,18 @@ function StatusHeader({
     { id: 'receita', rotulo: 'Receita do Mês', valor: receitaMes, classe: 'positive', clicavel: false },
     {
       id: 'faturas',
-      rotulo: todasFaturasPagas
-        ? 'Faturas do Mês (Quitadas)'
-        : faturasPagasTotal > 0
-          ? 'Faturas a Cargo do Salário'
-          : 'Faturas de Cartão',
-      valor: faturasCartao,
-      sub: todasFaturasPagas
+      rotulo: todasFaturasPagas || faturasPendentesTotal === 0
+        ? 'Faturas a Pagar (Quitadas)'
+        : 'Faturas a Pagar',
+      valor: faturasPendentesTotal,
+      sub: todasFaturasPagas || faturasPendentesTotal === 0
         ? `100% quitadas com o salário (${formatarMoeda(faturasPagasTotal)})`
         : faturasPagasTotal > 0
-          ? `${formatarMoeda(faturasPendentesTotal)} a pagar no caixa (${formatarMoeda(faturasPagasTotal)} quitado)`
+          ? `${formatarMoeda(faturasPagasTotal)} quitado no mês • Total: ${formatarMoeda(faturasCartao)}`
           : qtdFaturasTotal > 0
             ? `${qtdFaturasTotal} fatura(s) a pagar`
             : null,
-      classe: todasFaturasPagas ? 'positive' : faturasPendentesTotal > 0 ? 'negative' : 'positive',
+      classe: todasFaturasPagas || faturasPendentesTotal === 0 ? 'positive' : 'negative',
       clicavel: true,
       dica: 'Clique para ver despesas do cartão',
     },

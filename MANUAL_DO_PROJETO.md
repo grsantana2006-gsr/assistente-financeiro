@@ -64,11 +64,10 @@ $$\text{Saldo Líquido do Mês} = \text{Receita} - (\text{Faturas a Cargo do Sal
    * **O que é:** Todo o dinheiro que entra na sua conta no mês de referência (salário fixo + rendimentos avulsos).
    * **Origem do cálculo:** Função `calcularReceitaDoMes` no backend.
    * **Função financeira:** Estabelece o teto máximo de recursos disponíveis.
-3. **💳 Faturas do Mês (Cartão de Crédito a Cargo do Salário):**
-   * **O que é:** O passivo real de faturas de cartão cobrado no mês a cargo da sua receita (bruto menos adiantamentos externos).
-   * **Origem do cálculo:** Soma das faturas de crédito a cargo do salário (`faturas_mes_cargo_salario`).
-   * **Função financeira:** Fecha a conta exata com os outros cards: `Receita - Faturas - Débito/PIX = Saldo do Mês` (100% alinhado).
-   * **Subtexto informativo:** Indica claramente quanto já foi quitado no mês com a receita e quanto ainda resta a pagar no caixa bancário.
+3. **💳 Faturas a Pagar (Caixa):**
+   * **O que é:** O valor que ainda resta desembolsar fisicamente no caixa bancário para quitar as faturas de cartão no mês.
+   * **Valor Principal em Destaque:** Exibe o valor pendente a pagar no caixa (ex: R$ 70,00 após quitar Nubank), facilitando a visão imediata de saídas pendentes.
+   * **Subtexto informativo:** Indica claramente o montante já quitado no mês com a receita e o total geral a cargo do salário (ex: `R$ 1.906,90 quitado no mês • Total: R$ 1.976,90`).
    * **🔍 Interatividade (Pop-up de Detalhamento):** Ao clicar no card, abre-se uma janela suspensa (modal) com o resumo por banco (Nubank, BB, Itaú com status Quitada/Pendente, total da fatura, adiantamentos abatidos e valor a cargo do salário), campo de busca em tempo real e a lista detalhada de cada despesa.
 4. **⚡ Débito & PIX (Conta Corrente):**
    * **O que é:** Todos os pagamentos que saem diretamente do saldo bancário (PIX, débito em conta, limite especial/cheque especial ou dinheiro).
