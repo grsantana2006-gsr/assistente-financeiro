@@ -385,12 +385,19 @@
 
   .extrato__form input,
   .extrato__form select {
-    flex: 1 1 100%;
-    width: 100%;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 44px !important;
+    box-sizing: border-box !important;
   }
 
   .extrato__form input[type="text"]:first-of-type {
-    flex: 1 1 100%;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 44px !important;
+    box-sizing: border-box !important;
   }
 
   .extrato__parcelas-preview {

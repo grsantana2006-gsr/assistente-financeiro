@@ -334,25 +334,44 @@
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
   margin-bottom: 20px;
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
 }
 
 .fixas__form-campos {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .fixas__form-campos input,
 .fixas__form-campos select {
   flex: 1 1 140px;
   min-width: 0;
+  max-width: 100%;
+  height: 44px;
+  box-sizing: border-box;
 }
 
 .fixas__form-campos input#fixa-descricao {
   flex: 2 1 200px;
 }
 
+.fixas__form-campos input[type="date"],
+.fixas__form-campos input#fixa-data {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .fixas__data-edit {
+  -webkit-appearance: none;
+  appearance: none;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -360,6 +379,8 @@
   color: var(--text-muted);
   font-size: 0.85rem;
   outline: none;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .fixas__data-edit:focus {
@@ -632,15 +653,52 @@
 }
 
 @media (max-width: 600px) {
+  .fixas__form {
+    padding: 14px 12px;
+  }
+
   .fixas__form-campos {
+    display: flex;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .fixas__form-campos input,
   .fixas__form-campos select {
-    width: 100%;
-    flex: 1 1 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    box-sizing: border-box !important;
+  }
+
+  .fixas__form-campos input#fixa-descricao {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+  }
+
+  .fixas__form-campos input[type="date"],
+  .fixas__form-campos input#fixa-data {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    box-sizing: border-box !important;
   }
 
   .fixas__duracao-inputs {
