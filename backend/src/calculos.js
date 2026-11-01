@@ -238,19 +238,28 @@ function montarFaturaDoMes(transacoes, banco, mesK, mesReferencia, pagamentos) {
   const pgsDoMes = pagamentos.filter((p) => p.mes === mesK)
   const quitadaIntegral = pgsDoMes.some((p) => p.valor_pago == null)
   const somaAdiantamentos = pgsDoMes.reduce((s, p) => s + (p.valor_pago != null ? Number(p.valor_pago) : 0), 0)
-  const valorPago = quitadaIntegral ? valorTotal : Math.min(somaAdiantamentos, valorTotal)
+  const faturaCargoSalario = Math.max(valorTotal - somaAdiantamentos, 0)
+  const faturaPagaTotal = quitadaIntegral || (valorTotal > 0 && somaAdiantamentos >= valorTotal)
+  const saldoRestante = faturaPagaTotal ? 0 : faturaCargoSalario
+  const saldoLancadoRestante = faturaPagaTotal ? 0 : Math.max(valorLancado - somaAdiantamentos, 0)
+  const valorPagoNoMes = quitadaIntegral ? faturaCargoSalario : 0
 
   return {
     mes: mesK,
     valor: arredondar(valorTotal),
+    valor_fatura_bruta: arredondar(valorTotal),
+    valor_adiantamentos: arredondar(somaAdiantamentos),
+    valor_cargo_salario: arredondar(faturaCargoSalario),
+    valor_pago_no_mes: arredondar(valorPagoNoMes),
     valor_lancado: arredondar(valorLancado),
     valor_a_cobrar: arredondar(valorACobrar),
-    valor_pago_adiantado: arredondar(valorPago),
+    valor_pago_adiantado: arredondar(somaAdiantamentos),
     // Quanto ainda falta pagar do que já foi lançado no cartão (é o número que o app do banco mostra)
-    saldo_lancado_restante: arredondar(Math.max(valorLancado - valorPago, 0)),
-    saldo_restante: arredondar(Math.max(valorTotal - valorPago, 0)),
-    fatura_paga: quitadaIntegral || (valorPago >= valorTotal && valorTotal > 0),
-    fatura_parcial: !quitadaIntegral && valorPago > 0 && valorPago < valorTotal,
+    saldo_lancado_restante: arredondar(saldoLancadoRestante),
+    saldo_restante: arredondar(saldoRestante),
+    fatura_paga: faturaPagaTotal,
+    fatura_parcial: !quitadaIntegral && somaAdiantamentos > 0 && somaAdiantamentos < valorTotal,
+    quitada_no_mes: quitadaIntegral,
     qtd_itens: itensDoMes.length,
     qtd_lancados: itensComStatus.filter((it) => it.lancado).length,
     qtd_a_cobrar: itensComStatus.filter((it) => !it.lancado).length,
@@ -349,12 +358,13 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
     const faturaPagaTotal = quitadaIntegral || (valorFaturaTotal > 0 && somaAd >= valorFaturaTotal)
     const faturaParcial = !quitadaIntegral && somaAd > 0 && somaAd < valorFaturaTotal
     const saldoRestanteFatura = faturaPagaTotal ? 0 : faturaCargoSalario
-    const valorAdiantado = quitadaIntegral ? valorFaturaTotal : somaAd
+    const valorPagoNoMes = quitadaIntegral ? faturaCargoSalario : 0
+    const valorRestituirLimite = quitadaIntegral ? valorFaturaTotal : somaAd
 
     // Para cartões de crédito: o gasto efetivo que abate o limite é o limite comprometido líquido
     // (fatura aberta restante + todas as parcelas futuras já lançadas no cartão)
     const gastoEfetivo = ehBeneficio
-      ? Math.max(gastoAcumulado - valorAdiantado - adiantadoOutrosMeses, 0)
+      ? Math.max(gastoAcumulado - valorRestituirLimite - adiantadoOutrosMeses, 0)
       : limiteComprometido.liquido
 
     return {
@@ -365,9 +375,10 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
       valor_fatura_bruta: arredondar(valorFaturaTotal),
       valor_adiantamentos: arredondar(somaAd),
       valor_cargo_salario: arredondar(faturaCargoSalario),
+      valor_pago_no_mes: arredondar(valorPagoNoMes),
       valor_fatura_lancada: arredondar(valorFaturaLancada),
       valor_fatura_a_cobrar: arredondar(valorFaturaACobrar),
-      valor_pago_adiantado: arredondar(valorAdiantado),
+      valor_pago_adiantado: arredondar(somaAd),
       saldo_restante_fatura: arredondar(saldoRestanteFatura),
       fatura_paga: faturaPagaTotal,
       fatura_parcial: faturaParcial,

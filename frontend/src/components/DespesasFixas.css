@@ -507,6 +507,63 @@
   box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
+.fixas__checkbox-rotulo--divisao {
+  width: 100%;
+  margin-top: 6px;
+  background: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+.fixas__checkbox-rotulo--divisao:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.fixas__parcelas-preview {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: rgba(56, 189, 248, 0.09);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.fixas__parcelas-preview-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.fixas__parcelas-preview-detalhe {
+  color: #f0f9ff;
+  font-size: 0.88rem;
+}
+
+.fixas__parcelas-preview-detalhe strong {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.fixas__parcelas-preview-total {
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
 /* ---------- Seção de Contas Agendadas para Início Futuro ---------- */
 .fixas__secao-futuras {
   margin-top: 24px;
@@ -575,6 +632,36 @@
 }
 
 @media (max-width: 600px) {
+  .fixas__form-campos {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fixas__form-campos input,
+  .fixas__form-campos select {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .fixas__duracao-inputs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .fixas__duracao-campo {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .fixas__duracao-campo input {
+    flex: 1 1 auto;
+  }
+
+  .fixas__checkbox-rotulo {
+    width: 100%;
+  }
+
   .fixas__resumo-item {
     flex: 1 1 100%;
   }

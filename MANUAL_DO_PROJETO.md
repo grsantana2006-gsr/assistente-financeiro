@@ -176,12 +176,13 @@ Este setor registra a dinâmica do dia a dia: alimentação, farmácia, transpor
   * **💳 Crédito:** Abate o limite disponível do cartão selecionado (Nubank, Banco do Brasil, Itaú ou PicPay).
   * **🏦 Débito / ⚡ PIX / 💵 Dinheiro:** Registra a despesa à vista sem comprometer limite de crédito.
   * **🍽️ Voucher (Vale Refeição):** Dedicado exclusivamente a alimentação e refeições. Abate o saldo disponível do seu cartão **Vale Refeição**, sem descontar da conta corrente e sem gerar faturas de crédito no seu nome.
-* **Lógica de Parcelamento:**
-  * Ao cadastrar uma compra parcelada (ex: um celular de R$ 1.200 em 10x):
-    * Você informa o valor total (`1200`) e a quantidade de parcelas (`10`).
-    * O sistema divide automaticamente e grava cada parcela com o valor real (`120`).
+* **Lógica de Parcelamento Automático (Valor Completo Informado):**
+  * Ao cadastrar uma compra parcelada (ex: uma compra de R$ 1.200 em 10x):
+    * Você informa o **valor total completo** da compra (`R$ 1.200,00`) e escolhe a quantidade de parcelas (de 1x até 48x).
+    * O sistema exibe um **preview visual em tempo real**: `Divisão Automática: 10x de R$ 120,00 / mês (Valor total completo informado: R$ 1.200,00)`.
+    * O sistema faz a divisão matemática exata (`Math.round((valor / parcelas) * 100) / 100`) e grava o valor de cada parcela mensal.
     * A parcela atual compromete a fatura deste mês.
-    * As parcelas futuras entram no **Forecast**, sendo debitadas mês a mês até a 10ª parcela.
+    * As parcelas futuras entram no **Forecast**, sendo debitadas mês a mês até a última parcela.
 * **Limite de Exibição:** Mostra os 50 registros mais recentes com uma faixa colorida à esquerda com a cor exata do banco utilizado.
 
 ---
@@ -241,6 +242,13 @@ Aqui você acompanha e gerencia os tetos operacionais e o ciclo de fatura de cad
   * **Ciclo de Fechamento Unificado:**
     * Tanto para despesas fixas (assinaturas e compras parceladas) quanto para despesas variáveis no cartão, o mês da fatura segue estritamente o ciclo do banco (`dia_fechamento` e `dia_vencimento`).
     * Exemplo Nubank (fecha dia 27, vence dia 03): assinaturas e compras cobradas ao longo de Outubro (como Google One, Premiere, ou compras de mercado) entram automaticamente na fatura que vence em **Novembro** (`Nov/26`), sem contaminar o boleto de Outubro.
+  * **Separação Transparente entre Fatura Real e Adiantamentos (Fim da Falsa Impressão):**
+    * Anteriormente, ao quitar a fatura do cartão após realizar adiantamentos ao longo do ciclo (ex: R$ 1.125,00 adiantados previamente e R$ 1.906,90 pagos com o salário), o sistema exibia o montante bruto unificado (R$ 3.031,90) com a etiqueta de "Fatura Paga", dando a impressão enganosa de que todo aquele valor de mais de três mil reais havia saído do salário de uma só vez neste mês.
+    * **Nova Apresentação Transparente:**
+      * O valor principal e o botão do cartão passam a destacar o **valor real a cargo do salário do mês** (ex: `R$ 1.906,90`).
+      * Logo abaixo, chips explicativos discriminam os valores: `Compras: R$ 3.031,90 • Adiantado: -R$ 1.125,00`.
+      * No botão interativo: exibe `Quitada (R$ 1.906,90)` quando paga no mês, ou `Falta R$ 1.906,90` quando ainda pendente de quitação.
+      * No modal de pagamento de fatura, o resumo exibe cada linha detalhada: *Total de compras da fatura*, *Adiantamentos prévios realizados*, *Valor real a cargo do salário*, *Pago no fechamento com salário* e *Saldo restante a pagar no caixa*.
   * **Botão Interativo de Status:**
     * 🟡 **`⏳ Fatura Aberta`:** Indica que a fatura daquele mês ainda está aguardando quitação.
     * 🟢 **`✓ Fatura Paga`:** Fatura quitada integralmente no banco.

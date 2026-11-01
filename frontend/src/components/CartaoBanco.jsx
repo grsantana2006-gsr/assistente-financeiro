@@ -44,12 +44,28 @@ function CartaoBanco({
 
   // Métricas dinâmicas da fatura selecionada no bloco
   const faturaExibidaPaga = ehFocoProxima
-    ? (faturaFocoDados.valor_pago_adiantado >= faturaFocoDados.valor_lancado && faturaFocoDados.valor_lancado > 0)
+    ? Boolean(faturaFocoDados?.fatura_paga || (faturaFocoDados?.valor_pago_adiantado >= faturaFocoDados?.valor_lancado && faturaFocoDados?.valor_lancado > 0))
     : banco.fatura_paga
 
   const faturaExibidaParcial = ehFocoProxima
-    ? Boolean(faturaFocoDados.valor_pago_adiantado > 0 && faturaFocoDados.valor_pago_adiantado < faturaFocoDados.valor_lancado)
+    ? Boolean(faturaFocoDados?.fatura_parcial || (faturaFocoDados?.valor_pago_adiantado > 0 && faturaFocoDados?.valor_pago_adiantado < faturaFocoDados?.valor_lancado))
     : banco.fatura_parcial
+
+  const faturaExibidaBruta = ehFocoProxima
+    ? (faturaFocoDados?.valor_fatura_bruta ?? faturaFocoDados?.valor ?? 0)
+    : (banco.valor_fatura_bruta ?? banco.valor_fatura ?? 0)
+
+  const faturaExibidaAdiantado = ehFocoProxima
+    ? (faturaFocoDados?.valor_adiantamentos ?? faturaFocoDados?.valor_pago_adiantado ?? 0)
+    : (banco.valor_adiantamentos ?? banco.valor_pago_adiantado ?? 0)
+
+  const faturaExibidaCargoSalario = ehFocoProxima
+    ? (faturaFocoDados?.valor_cargo_salario ?? Math.max(faturaExibidaBruta - faturaExibidaAdiantado, 0))
+    : (banco.valor_cargo_salario ?? Math.max(faturaExibidaBruta - faturaExibidaAdiantado, 0))
+
+  const faturaExibidaRestante = ehFocoProxima
+    ? (faturaFocoDados?.saldo_lancado_restante ?? faturaFocoDados?.saldo_restante ?? 0)
+    : (banco.saldo_restante_fatura ?? (faturaExibidaPaga ? 0 : faturaExibidaCargoSalario))
 
   const faturaExibidaValor = ehFocoProxima
     ? (faturaExibidaParcial
@@ -58,10 +74,6 @@ function CartaoBanco({
     : (banco.fatura_parcial
         ? banco.saldo_restante_fatura
         : (banco.valor_fatura_lancada > 0 ? banco.valor_fatura_lancada : (banco.valor_fatura || 0)))
-
-  const faturaExibidaAdiantado = ehFocoProxima
-    ? faturaFocoDados.valor_pago_adiantado
-    : banco.valor_pago_adiantado
 
   const faturaExibidaPrevisto = ehFocoProxima
     ? faturaFocoDados.valor
@@ -159,10 +171,12 @@ function CartaoBanco({
   const faturaSelecionadaInfo = mesSelecionado === mesAtual
     ? {
         rotulo: `Fatura Atual (${formatarMesAnoCurto(mesAtual)})`,
-        valorTotal: banco.valor_fatura || 0,
+        valorTotal: banco.valor_fatura_bruta ?? banco.valor_fatura ?? 0,
         valorLancado: banco.valor_fatura_lancada || 0,
-        valorPago: banco.valor_pago_adiantado || 0,
-        saldoRestante: banco.saldo_restante_fatura ?? Math.max((banco.valor_fatura_lancada || 0) - (banco.valor_pago_adiantado || 0), 0),
+        valorAdiantado: banco.valor_adiantamentos ?? banco.valor_pago_adiantado ?? 0,
+        valorCargoSalario: banco.valor_cargo_salario ?? Math.max((banco.valor_fatura || 0) - (banco.valor_adiantamentos || 0), 0),
+        valorPagoNoMes: banco.valor_pago_no_mes ?? (banco.fatura_paga ? banco.valor_cargo_salario : 0),
+        saldoRestante: banco.saldo_restante_fatura ?? (banco.fatura_paga ? 0 : banco.valor_cargo_salario),
         pago: banco.fatura_paga,
         parcial: banco.fatura_parcial,
         pagamentos: banco.pagamentos_registrados || [],
@@ -171,12 +185,14 @@ function CartaoBanco({
         const pf = banco.proximas_faturas?.find((f) => f.mes === mesSelecionado)
         return {
           rotulo: `Fatura de ${formatarMesAnoCurto(mesSelecionado)}`,
-          valorTotal: pf?.valor || 0,
+          valorTotal: pf?.valor_fatura_bruta ?? pf?.valor ?? 0,
           valorLancado: pf?.valor_lancado || 0,
-          valorPago: pf?.valor_pago_adiantado || 0,
-          saldoRestante: pf?.saldo_lancado_restante ?? Math.max((pf?.valor_lancado || 0) - (pf?.valor_pago_adiantado || 0), 0),
-          pago: Boolean(pf && pf.valor_pago_adiantado >= pf.valor && pf.valor > 0),
-          parcial: Boolean(pf && pf.valor_pago_adiantado > 0),
+          valorAdiantado: pf?.valor_adiantamentos ?? pf?.valor_pago_adiantado ?? 0,
+          valorCargoSalario: pf?.valor_cargo_salario ?? Math.max((pf?.valor || 0) - (pf?.valor_adiantamentos || 0), 0),
+          valorPagoNoMes: pf?.valor_pago_no_mes ?? 0,
+          saldoRestante: pf?.saldo_restante ?? Math.max((pf?.valor || 0) - (pf?.valor_adiantamentos || 0), 0),
+          pago: Boolean(pf?.fatura_paga || (pf && pf.valor_pago_adiantado >= pf.valor && pf.valor > 0)),
+          parcial: Boolean(pf?.fatura_parcial || (pf && pf.valor_pago_adiantado > 0)),
           pagamentos: pf?.pagamentos_registrados || [],
         }
       })()
@@ -255,22 +271,41 @@ function CartaoBanco({
               </span>
               <div className="cartao__fatura-valores-linha">
                 <strong className="cartao__fatura-valor">
-                  {formatarMoeda(faturaExibidaValor)}
+                  {formatarMoeda(
+                    faturaExibidaAdiantado > 0
+                      ? faturaExibidaCargoSalario
+                      : faturaExibidaValor
+                  )}
                 </strong>
-                {faturaExibidaParcial && (
-                  <span
-                    className="cartao__fatura-sub-adiantado"
-                    title={`Total: ${formatarMoeda(faturaExibidaPrevisto || 0)} | Adiantado: -${formatarMoeda(faturaExibidaAdiantado || 0)}`}
-                  >
-                    Adiantado: {formatarMoeda(faturaExibidaAdiantado)}
+                {faturaExibidaPaga ? (
+                  <span className="cartao__fatura-badge-status cartao__fatura-badge-status--paga">
+                    Quitada no mês
                   </span>
-                )}
-                {!faturaExibidaParcial && faturaExibidaTemACobrar && (
+                ) : faturaExibidaAdiantado > 0 ? (
+                  <span className="cartao__fatura-badge-status cartao__fatura-badge-status--aberta">
+                    A pagar no mês
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Discriminação quando há adiantamentos: separar compras brutas e adiantamentos */}
+              {faturaExibidaAdiantado > 0 ? (
+                <div className="cartao__fatura-discriminacao">
+                  <span className="cartao__fatura-chip-bruto" title="Total em compras desta fatura">
+                    Compras: {formatarMoeda(faturaExibidaBruta)}
+                  </span>
+                  <span className="cartao__fatura-chip-adiantado" title="Total adiantado previamente">
+                    Adiantado: -{formatarMoeda(faturaExibidaAdiantado)}
+                  </span>
+                </div>
+              ) : (
+                faturaExibidaTemACobrar && (
                   <span className="cartao__fatura-sub-previsto" title={`Já lançado: ${formatarMoeda(faturaExibidaValor || 0)} | Previsto total: ${formatarMoeda(faturaExibidaPrevisto || 0)}`}>
                     previsto: {formatarMoeda(faturaExibidaPrevisto || 0)}
                   </span>
-                )}
-              </div>
+                )
+              )}
+
               <span className="cartao__fatura-vencimento">
                 Vencimento: dia {banco.dia_vencimento}
               </span>
@@ -291,15 +326,13 @@ function CartaoBanco({
                 faturaExibidaPaga
                   ? 'Fatura quitada. Clique para gerenciar pagamentos.'
                   : faturaExibidaParcial
-                  ? `Adiantamento de ${formatarMoeda(faturaExibidaAdiantado)} realizado. Resta ${formatarMoeda(faturaExibidaValor)}. Clique para gerenciar.`
+                  ? `Adiantamento de ${formatarMoeda(faturaExibidaAdiantado)} realizado. Resta ${formatarMoeda(faturaExibidaRestante)}. Clique para gerenciar.`
                   : 'Clique para registrar pagamento integral ou adiantamento desta fatura.'
               }
             >
               {faturaExibidaPaga
-                ? 'Fatura Paga'
-                : faturaExibidaParcial
-                ? `Adiantado: ${formatarMoeda(faturaExibidaAdiantado)}`
-                : 'Fatura Aberta'}
+                ? (faturaExibidaAdiantado > 0 ? `Quitada (${formatarMoeda(faturaExibidaCargoSalario)})` : 'Fatura Paga')
+                : (faturaExibidaAdiantado > 0 ? `Falta ${formatarMoeda(faturaExibidaCargoSalario)}` : 'Fatura Aberta')}
             </button>
           </div>
         </div>
@@ -485,18 +518,32 @@ function CartaoBanco({
 
                 <div className="cartao__modal-resumo">
                   <div className="cartao__modal-resumo-linha">
-                    <span>Valor lançado da fatura:</span>
-                    <strong>{formatarMoeda(faturaSelecionadaInfo.valorLancado || faturaSelecionadaInfo.valorTotal)}</strong>
+                    <span>Total de compras da fatura:</span>
+                    <strong>{formatarMoeda(faturaSelecionadaInfo.valorTotal)}</strong>
                   </div>
-                  {faturaSelecionadaInfo.valorPago > 0 && (
+                  {faturaSelecionadaInfo.valorAdiantado > 0 && (
                     <div className="cartao__modal-resumo-linha cartao__modal-resumo-linha--destaque">
-                      <span>Total adiantado:</span>
-                      <strong>{formatarMoeda(faturaSelecionadaInfo.valorPago)}</strong>
+                      <span>Adiantamentos prévios realizados:</span>
+                      <strong className="cartao__modal-adiantado">- {formatarMoeda(faturaSelecionadaInfo.valorAdiantado)}</strong>
+                    </div>
+                  )}
+                  {faturaSelecionadaInfo.valorAdiantado > 0 && (
+                    <div className="cartao__modal-resumo-linha">
+                      <span>Valor real a cargo do salário:</span>
+                      <strong className="cartao__modal-cargo-salario">{formatarMoeda(faturaSelecionadaInfo.valorCargoSalario)}</strong>
+                    </div>
+                  )}
+                  {faturaSelecionadaInfo.pago && (
+                    <div className="cartao__modal-resumo-linha cartao__modal-resumo-linha--pago">
+                      <span>Pago no fechamento com salário:</span>
+                      <strong className="cartao__modal-pago">{formatarMoeda(faturaSelecionadaInfo.valorPagoNoMes || faturaSelecionadaInfo.valorCargoSalario)}</strong>
                     </div>
                   )}
                   <div className="cartao__modal-resumo-linha">
-                    <span>Saldo restante a pagar:</span>
-                    <strong className="cartao__modal-saldo-restante">{formatarMoeda(faturaSelecionadaInfo.saldoRestante)}</strong>
+                    <span>Saldo restante a pagar no caixa:</span>
+                    <strong className={`cartao__modal-saldo-restante ${faturaSelecionadaInfo.pago ? 'cartao__modal-saldo-restante--zerado' : ''}`}>
+                      {formatarMoeda(faturaSelecionadaInfo.saldoRestante)}
+                    </strong>
                   </div>
                 </div>
 

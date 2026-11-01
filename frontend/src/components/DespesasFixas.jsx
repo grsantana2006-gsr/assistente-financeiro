@@ -36,6 +36,7 @@ function DespesasFixas({
   const [formaPagamento, setFormaPagamento] = useState('PIX')
   const [dataCompra, setDataCompra] = useState(new Date().toISOString().split('T')[0])
   const [temPrazo, setTemPrazo] = useState(false)
+  const [dividirTotal, setDividirTotal] = useState(true)
   const [totalParcelas, setTotalParcelas] = useState('12')
   const [parcelaAtual, setParcelaAtual] = useState('1')
   const [enviando, setEnviando] = useState(false)
@@ -140,19 +141,31 @@ function DespesasFixas({
     }
   }
 
+  const valorNumericoFixo = Number(valor.replace(',', '.'))
+  const totalMesesFixo = temPrazo && Number(totalParcelas) > 1 ? Number(totalParcelas) : 1
+  const temDivisaoFixa = temPrazo && totalMesesFixo > 1 && dividirTotal && !Number.isNaN(valorNumericoFixo) && valorNumericoFixo > 0
+  const valorParcelaFixaCalculada = temDivisaoFixa
+    ? Math.round((valorNumericoFixo / totalMesesFixo) * 100) / 100
+    : valorNumericoFixo
+
   async function enviar(evento) {
     evento.preventDefault()
     const valorNumerico = Number(valor.replace(',', '.'))
     if (!descricao.trim() || Number.isNaN(valorNumerico) || valorNumerico <= 0) return
 
     setEnviando(true)
+    const qtdeMeses = temPrazo && Number(totalParcelas) > 1 ? Number(totalParcelas) : 1
+    const valorFinal = (temPrazo && dividirTotal && qtdeMeses > 1)
+      ? Math.round((valorNumerico / qtdeMeses) * 100) / 100
+      : valorNumerico
+
     const dados = {
       descricao: descricao.trim(),
-      valor: valorNumerico,
+      valor: valorFinal,
       banco_id: Number(bancoId || bancos[0]?.id),
       forma_pagamento: formaPagamento,
       data_compra: dataCompra || undefined,
-      total_parcelas: temPrazo && Number(totalParcelas) > 1 ? Number(totalParcelas) : 1,
+      total_parcelas: qtdeMeses,
       parcela_atual: temPrazo && Number(parcelaAtual) >= 1 ? Number(parcelaAtual) : 1,
     }
 
@@ -164,6 +177,7 @@ function DespesasFixas({
       setValor('')
       setFormaPagamento('PIX')
       setTemPrazo(false)
+      setDividirTotal(true)
       setTotalParcelas('12')
       setParcelaAtual('1')
     }
@@ -231,7 +245,11 @@ function DespesasFixas({
               id="fixa-valor"
               type="text"
               inputMode="decimal"
-              placeholder="Valor (R$)"
+              placeholder={
+                temPrazo && dividirTotal
+                  ? 'Valor Total do Contrato (R$)'
+                  : 'Valor (R$)'
+              }
               value={valor}
               onChange={(e) => setValor(e.target.value)}
               aria-label="Valor da despesa fixa"
@@ -311,6 +329,30 @@ function DespesasFixas({
                     onChange={(e) => setParcelaAtual(e.target.value)}
                   />
                 </label>
+                <label className="fixas__checkbox-rotulo fixas__checkbox-rotulo--divisao">
+                  <input
+                    type="checkbox"
+                    checked={dividirTotal}
+                    onChange={(e) => setDividirTotal(e.target.checked)}
+                    className="fixas__checkbox-input"
+                  />
+                  <span className={`fixas__checkbox-custom ${dividirTotal ? 'fixas__checkbox-custom--marcado' : ''}`} aria-hidden="true" />
+                  <span className="fixas__checkbox-texto">
+                    Dividir valor total informado igualmente entre os meses
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {temDivisaoFixa && (
+              <div className="fixas__parcelas-preview">
+                <span className="fixas__parcelas-preview-tag">Divisão Automática</span>
+                <span className="fixas__parcelas-preview-detalhe">
+                  <strong>{totalMesesFixo}x</strong> de <strong>{formatarMoeda(valorParcelaFixaCalculada)}</strong> / mês
+                </span>
+                <span className="fixas__parcelas-preview-total">
+                  (Valor total do contrato: {formatarMoeda(valorNumericoFixo)})
+                </span>
               </div>
             )}
           </div>

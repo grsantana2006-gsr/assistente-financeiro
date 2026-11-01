@@ -68,6 +68,14 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
     return bancos.find((b) => b.id === id)?.cor ?? '#8b5cf6'
   }
 
+  const opcoesParcelas = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36, 48]
+  const valorNumericoAtual = Number(valor.replace(',', '.'))
+  const qtdeParcelasAtual = Number(parcelas)
+  const temDivisaoParcelas = qtdeParcelasAtual > 1 && !Number.isNaN(valorNumericoAtual) && valorNumericoAtual > 0
+  const valorParcelaCalculada = temDivisaoParcelas
+    ? Math.round((valorNumericoAtual / qtdeParcelasAtual) * 100) / 100
+    : 0
+
   async function enviar(evento) {
     evento.preventDefault()
     const valorNumerico = Number(valor.replace(',', '.'))
@@ -75,9 +83,13 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
 
     setEnviando(true)
     const qtdeParcelas = Number(parcelas)
+    const valorParcelaFinal = qtdeParcelas > 1
+      ? Math.round((valorNumerico / qtdeParcelas) * 100) / 100
+      : valorNumerico
+
     const deuCerto = await aoAdicionar({
       descricao: descricao.trim(),
-      valor: valorNumerico / qtdeParcelas, // O banco espera o valor de CADA parcela
+      valor: valorParcelaFinal, // O banco espera o valor de CADA parcela mensal
       banco_id: Number(bancoId || bancos[0]?.id),
       forma_pagamento: forma,
       total_parcelas: qtdeParcelas,
@@ -143,7 +155,11 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
           <input
             type="text"
             inputMode="decimal"
-            placeholder="Valor (R$)"
+            placeholder={
+              forma === 'Crédito' || qtdeParcelasAtual > 1
+                ? 'Valor Total da Compra (R$)'
+                : 'Valor (R$)'
+            }
             value={valor}
             onChange={(e) => setValor(e.target.value)}
             aria-label="Valor"
@@ -187,17 +203,30 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
             onChange={(e) => setParcelas(e.target.value)}
             aria-label="Parcelas"
             title="Quantidade de parcelas"
-            style={{ flex: '1 1 80px' }}
+            style={{ flex: '1 1 95px' }}
             disabled={forma === 'Voucher'}
           >
-            <option value="1">1x (À vista)</option>
-            {[...Array(11)].map((_, i) => (
-              <option key={i + 2} value={i + 2}>{i + 2}x</option>
+            {opcoesParcelas.map((n) => (
+              <option key={n} value={n}>
+                {n === 1 ? '1x (À vista)' : `${n}x parcelado`}
+              </option>
             ))}
           </select>
           <button type="submit" className="btn btn--primary" disabled={enviando}>
             {enviando ? 'Adicionando…' : '+ Adicionar'}
           </button>
+
+          {temDivisaoParcelas && (
+            <div className="extrato__parcelas-preview">
+              <span className="extrato__parcelas-preview-tag">Divisão Automática</span>
+              <span className="extrato__parcelas-preview-detalhe">
+                <strong>{qtdeParcelasAtual}x</strong> de <strong>{formatarMoeda(valorParcelaCalculada)}</strong> / mês
+              </span>
+              <span className="extrato__parcelas-preview-total">
+                (Valor total completo informado: {formatarMoeda(valorNumericoAtual)})
+              </span>
+            </div>
+          )}
 
           {mesFaturaPrevista && bancoSelecionado && (
             <div className="extrato__dica-fatura">

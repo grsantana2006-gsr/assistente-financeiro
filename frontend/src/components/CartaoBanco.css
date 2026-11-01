@@ -216,6 +216,60 @@
   color: #34d399;
 }
 
+.cartao__fatura-badge-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.cartao__fatura-badge-status--paga {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.cartao__fatura-badge-status--aberta {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.cartao__fatura-discriminacao {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.cartao__fatura-chip-bruto {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cartao__fatura-chip-adiantado {
+  font-size: 0.72rem;
+  color: #22d3ee;
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .cartao__fatura-vencimento {
   font-size: 0.72rem;
   color: var(--text-muted);
@@ -230,6 +284,20 @@
   transition: all var(--transition);
   border: 1px solid transparent;
   white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .cartao__fatura-corpo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .cartao__btn-fatura {
+    width: 100%;
+    text-align: center;
+    padding: 8px 14px;
+  }
 }
 
 .cartao__btn-fatura--aberta {
@@ -714,10 +782,31 @@
   font-weight: 600;
 }
 
+.cartao__modal-adiantado {
+  color: #22d3ee !important;
+}
+
+.cartao__modal-cargo-salario {
+  color: #e2e8f0 !important;
+  font-weight: 700 !important;
+}
+
+.cartao__modal-resumo-linha--pago {
+  color: #34d399;
+}
+
+.cartao__modal-pago {
+  color: #34d399 !important;
+}
+
 .cartao__modal-saldo-restante {
-  color: #38bdf8 !important;
+  color: #fbbf24 !important;
   font-size: 1.15rem !important;
   font-weight: 700;
+}
+
+.cartao__modal-saldo-restante--zerado {
+  color: #34d399 !important;
 }
 
 /* Histórico de pagamentos / adiantamentos */

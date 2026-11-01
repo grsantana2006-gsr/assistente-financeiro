@@ -253,6 +253,51 @@
   flex: 2 1 180px;
 }
 
+.extrato__parcelas-preview {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: rgba(56, 189, 248, 0.09);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.extrato__parcelas-preview-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.extrato__parcelas-preview-detalhe {
+  color: #f0f9ff;
+  font-size: 0.88rem;
+}
+
+.extrato__parcelas-preview-detalhe strong {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.extrato__parcelas-preview-total {
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
 .extrato__dica-fatura {
   width: 100%;
   font-size: 0.82rem;
@@ -346,6 +391,11 @@
 
   .extrato__form input[type="text"]:first-of-type {
     flex: 1 1 100%;
+  }
+
+  .extrato__parcelas-preview {
+    order: 5;
+    padding: 10px 12px;
   }
 
   .extrato__dica-fatura {
