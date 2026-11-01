@@ -264,77 +264,76 @@ function CartaoBanco({
             </div>
           )}
 
-          <div className="cartao__fatura-corpo">
-            <div className="cartao__fatura-conteudo">
-              <span className="cartao__fatura-rotulo">
-                Fatura de {formatarMesAnoCurto(mesExibido)} {ehFocoProxima && banco.fatura_paga ? '(Atual Aberta)' : ''}:
+          <div className="cartao__fatura-cabecalho">
+            <span className="cartao__fatura-rotulo">
+              Fatura de {formatarMesAnoCurto(mesExibido)} {ehFocoProxima && banco.fatura_paga ? '(Atual Aberta)' : ''}:
+            </span>
+            {faturaExibidaPaga ? (
+              <span className="cartao__fatura-badge-status cartao__fatura-badge-status--paga">
+                Quitada no mês
               </span>
-              <div className="cartao__fatura-valores-linha">
-                <strong className="cartao__fatura-valor">
-                  {formatarMoeda(
-                    faturaExibidaAdiantado > 0
-                      ? faturaExibidaCargoSalario
-                      : faturaExibidaValor
-                  )}
-                </strong>
-                {faturaExibidaPaga ? (
-                  <span className="cartao__fatura-badge-status cartao__fatura-badge-status--paga">
-                    Quitada no mês
-                  </span>
-                ) : faturaExibidaAdiantado > 0 ? (
-                  <span className="cartao__fatura-badge-status cartao__fatura-badge-status--aberta">
-                    A pagar no mês
-                  </span>
-                ) : null}
-              </div>
+            ) : faturaExibidaAdiantado > 0 ? (
+              <span className="cartao__fatura-badge-status cartao__fatura-badge-status--aberta">
+                A pagar no mês
+              </span>
+            ) : null}
+          </div>
 
-              {/* Discriminação quando há adiantamentos: separar compras brutas e adiantamentos */}
-              {faturaExibidaAdiantado > 0 ? (
-                <div className="cartao__fatura-discriminacao">
-                  <span className="cartao__fatura-chip-bruto" title="Total em compras desta fatura">
-                    Compras: {formatarMoeda(faturaExibidaBruta)}
-                  </span>
-                  <span className="cartao__fatura-chip-adiantado" title="Total adiantado previamente">
-                    Adiantado: -{formatarMoeda(faturaExibidaAdiantado)}
-                  </span>
-                </div>
-              ) : (
-                faturaExibidaTemACobrar && (
-                  <span className="cartao__fatura-sub-previsto" title={`Já lançado: ${formatarMoeda(faturaExibidaValor || 0)} | Previsto total: ${formatarMoeda(faturaExibidaPrevisto || 0)}`}>
-                    previsto: {formatarMoeda(faturaExibidaPrevisto || 0)}
-                  </span>
-                )
+          <div className="cartao__fatura-valor-linha">
+            <strong className="cartao__fatura-valor">
+              {formatarMoeda(
+                faturaExibidaAdiantado > 0
+                  ? faturaExibidaCargoSalario
+                  : faturaExibidaValor
               )}
+            </strong>
+          </div>
 
-              <span className="cartao__fatura-vencimento">
-                Vencimento: dia {banco.dia_vencimento}
+          {/* Discriminação quando há adiantamentos: separar compras brutas e adiantamentos */}
+          {faturaExibidaAdiantado > 0 ? (
+            <div className="cartao__fatura-discriminacao">
+              <span className="cartao__fatura-chip-bruto" title="Total em compras desta fatura">
+                Compras: {formatarMoeda(faturaExibidaBruta)}
+              </span>
+              <span className="cartao__fatura-chip-adiantado" title="Total adiantado previamente">
+                Adiantado: -{formatarMoeda(faturaExibidaAdiantado)}
               </span>
             </div>
+          ) : (
+            faturaExibidaTemACobrar && (
+              <span className="cartao__fatura-sub-previsto" title={`Já lançado: ${formatarMoeda(faturaExibidaValor || 0)} | Previsto total: ${formatarMoeda(faturaExibidaPrevisto || 0)}`}>
+                previsto: {formatarMoeda(faturaExibidaPrevisto || 0)}
+              </span>
+            )
+          )}
 
-            <button
-              id={`fatura-btn-${banco.id}`}
-              type="button"
-              className={`cartao__btn-fatura ${
-                faturaExibidaPaga
-                  ? 'cartao__btn-fatura--paga'
-                  : faturaExibidaParcial
-                  ? 'cartao__btn-fatura--parcial'
-                  : 'cartao__btn-fatura--aberta'
-              }`}
-              onClick={() => abrirModalPagamento(mesExibido)}
-              title={
-                faturaExibidaPaga
-                  ? 'Fatura quitada. Clique para gerenciar pagamentos.'
-                  : faturaExibidaParcial
-                  ? `Adiantamento de ${formatarMoeda(faturaExibidaAdiantado)} realizado. Resta ${formatarMoeda(faturaExibidaRestante)}. Clique para gerenciar.`
-                  : 'Clique para registrar pagamento integral ou adiantamento desta fatura.'
-              }
-            >
-              {faturaExibidaPaga
-                ? (faturaExibidaAdiantado > 0 ? `Quitada (${formatarMoeda(faturaExibidaCargoSalario)})` : 'Fatura Paga')
-                : (faturaExibidaAdiantado > 0 ? `Falta ${formatarMoeda(faturaExibidaCargoSalario)}` : 'Fatura Aberta')}
-            </button>
-          </div>
+          <span className="cartao__fatura-vencimento">
+            Vencimento: dia {banco.dia_vencimento}
+          </span>
+
+          <button
+            id={`fatura-btn-${banco.id}`}
+            type="button"
+            className={`cartao__btn-fatura ${
+              faturaExibidaPaga
+                ? 'cartao__btn-fatura--paga'
+                : faturaExibidaParcial
+                ? 'cartao__btn-fatura--parcial'
+                : 'cartao__btn-fatura--aberta'
+            }`}
+            onClick={() => abrirModalPagamento(mesExibido)}
+            title={
+              faturaExibidaPaga
+                ? 'Fatura quitada. Clique para gerenciar pagamentos.'
+                : faturaExibidaParcial
+                ? `Adiantamento de ${formatarMoeda(faturaExibidaAdiantado)} realizado. Resta ${formatarMoeda(faturaExibidaRestante)}. Clique para gerenciar.`
+                : 'Clique para registrar pagamento integral ou adiantamento desta fatura.'
+            }
+          >
+            {faturaExibidaPaga
+              ? (faturaExibidaAdiantado > 0 ? `Fatura Quitada (${formatarMoeda(faturaExibidaCargoSalario)})` : 'Fatura Quitada')
+              : (faturaExibidaAdiantado > 0 ? `Pagar Restante (${formatarMoeda(faturaExibidaCargoSalario)})` : 'Fatura Aberta')}
+          </button>
         </div>
       )}
 

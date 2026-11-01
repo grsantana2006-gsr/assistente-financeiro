@@ -133,20 +133,20 @@
 .cartao__fatura-bloco {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: 10px;
+  padding: 12px 14px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
   transition: all var(--transition);
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
 }
 
-.cartao__fatura-corpo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
+.cartao__fatura-bloco--paga {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 .cartao__fatura-abas {
@@ -189,31 +189,18 @@
   box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
 }
 
-.cartao__fatura-bloco--paga {
-  background: rgba(16, 185, 129, 0.05);
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-.cartao__fatura-conteudo {
+.cartao__fatura-cabecalho {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
 
 .cartao__fatura-rotulo {
-  font-size: 0.76rem;
+  font-size: 0.78rem;
+  font-weight: 500;
   color: var(--text-muted);
-}
-
-.cartao__fatura-valor {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #c4b5fd;
-}
-
-.cartao__fatura-bloco--paga .cartao__fatura-valor {
-  color: #34d399;
 }
 
 .cartao__fatura-badge-status {
@@ -240,12 +227,29 @@
   border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
+.cartao__fatura-valor-linha {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.cartao__fatura-valor {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #c4b5fd;
+  line-height: 1.1;
+}
+
+.cartao__fatura-bloco--paga .cartao__fatura-valor {
+  color: #34d399;
+}
+
 .cartao__fatura-discriminacao {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  margin-top: 2px;
 }
 
 .cartao__fatura-chip-bruto {
@@ -253,7 +257,7 @@
   color: #94a3b8;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 1px 7px;
+  padding: 2px 8px;
   border-radius: 6px;
   font-weight: 500;
   white-space: nowrap;
@@ -264,40 +268,32 @@
   color: #22d3ee;
   background: rgba(34, 211, 238, 0.1);
   border: 1px solid rgba(34, 211, 238, 0.25);
-  padding: 1px 7px;
+  padding: 2px 8px;
   border-radius: 6px;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .cartao__fatura-vencimento {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
 }
 
 .cartao__btn-fatura {
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 0.8rem;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition);
   border: 1px solid transparent;
-  white-space: nowrap;
-}
-
-@media (max-width: 520px) {
-  .cartao__fatura-corpo {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .cartao__btn-fatura {
-    width: 100%;
-    text-align: center;
-    padding: 8px 14px;
-  }
+  text-align: center;
+  margin-top: 4px;
 }
 
 .cartao__btn-fatura--aberta {
