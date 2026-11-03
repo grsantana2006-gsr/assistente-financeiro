@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { formatarMoeda, formatarMesAnoCurto } from '../utils/format'
-import { obterMesFatura, classificarDespesaFixa } from '../utils/calculos'
+import { classificarDespesaFixa } from '../utils/calculos'
 import './DespesasFixas.css'
 
 function formatarMesAno(anoMes) {

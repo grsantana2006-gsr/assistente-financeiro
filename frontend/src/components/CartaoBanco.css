@@ -346,6 +346,138 @@
   gap: 3px;
 }
 
+/* Botão expansor de compras da fatura principal */
+.cartao__fatura-btn-detalhes {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #c4b5fd;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: center;
+}
+
+.cartao__fatura-btn-detalhes:hover {
+  background: rgba(139, 92, 246, 0.14);
+  color: #fff;
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.cartao__fatura-lista-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 4px;
+  animation: fadeIn 0.2s ease;
+}
+
+.cartao__fatura-lista-titulo {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.cartao__fatura-itens-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  scrollbar-width: thin;
+}
+
+.cartao__fatura-itens-lista::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cartao__fatura-itens-lista::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
+
+.cartao__fatura-lista-vazio {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* Modal: Bloco de compras que compõem a fatura */
+.cartao__modal-compras-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.cartao__modal-toggle-compras {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #c4b5fd;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.cartao__modal-toggle-compras:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.cartao__modal-compras-lista-box {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.cartao__modal-compras-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  scrollbar-width: thin;
+}
+
+.cartao__modal-compras-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
 /* ---------- Bloco de Faturas dos Próximos Meses ---------- */
 .cartao__proximas-bloco {
   display: flex;

@@ -217,13 +217,22 @@ function montarFaturaDoMes(transacoes, banco, mesK, mesReferencia, pagamentos) {
   )
 
   const itensComStatus = itensDoMes.map((t) => {
+    let numParcela = t.parcela_atual || 1
+    if (t.total_parcelas > 1 && t.data_compra && banco) {
+      const mesInicio = obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+      if (mesInicio) {
+        const [anoRef, mRef] = mesK.split('-').map(Number)
+        const [anoIni, mIni] = mesInicio.split('-').map(Number)
+        numParcela = (t.parcela_atual || 1) + (anoRef - anoIni) * 12 + (mRef - mIni)
+      }
+    }
     const lancado = itemLancadoNoCartao(t, mesK, banco, mesReferencia)
     const diaCobranca = t.data_compra ? Number(t.data_compra.slice(8, 10)) : null
     return {
       id: t.id,
       descricao: t.descricao,
       valor: t.valor,
-      parcela_atual: t.parcela_atual,
+      parcela_atual: numParcela,
       total_parcelas: t.total_parcelas,
       lancado,
       dia_cobranca: diaCobranca,
@@ -336,15 +345,26 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
             contaNaFatura(t, mesReferencia, banco),
         )
 
-    const itensAtualComStatus = itensFaturaAtual.map((t) => ({
-      id: t.id,
-      descricao: t.descricao,
-      valor: t.valor,
-      parcela_atual: t.parcela_atual,
-      total_parcelas: t.total_parcelas,
-      lancado: itemLancadoNoCartao(t, mesReferencia, banco, mesReferencia),
-      dia_cobranca: t.data_compra ? Number(t.data_compra.slice(8, 10)) : null,
-    }))
+    const itensAtualComStatus = itensFaturaAtual.map((t) => {
+      let numParcela = t.parcela_atual || 1
+      if (t.total_parcelas > 1 && t.data_compra && banco) {
+        const mesInicio = obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+        if (mesInicio) {
+          const [anoRef, mRef] = mesReferencia.split('-').map(Number)
+          const [anoIni, mIni] = mesInicio.split('-').map(Number)
+          numParcela = (t.parcela_atual || 1) + (anoRef - anoIni) * 12 + (mRef - mIni)
+        }
+      }
+      return {
+        id: t.id,
+        descricao: t.descricao,
+        valor: t.valor,
+        parcela_atual: numParcela,
+        total_parcelas: t.total_parcelas,
+        lancado: itemLancadoNoCartao(t, mesReferencia, banco, mesReferencia),
+        dia_cobranca: t.data_compra ? Number(t.data_compra.slice(8, 10)) : null,
+      }
+    })
 
     const valorFaturaLancada = itensAtualComStatus.filter((it) => it.lancado).reduce((s, it) => s + it.valor, 0)
     const valorFaturaACobrar = itensAtualComStatus.filter((it) => !it.lancado).reduce((s, it) => s + it.valor, 0)
@@ -385,6 +405,10 @@ export function montarCartoes(bancos, transacoes, mesReferencia, faturasPagasMap
       quitada_no_mes: quitadaIntegral,
       pagamentos_registrados: pagamentosDoBanco.filter((p) => p.mes === mesReferencia),
       proximas_faturas: proximasFaturas,
+      itens: itensAtualComStatus,
+      qtd_itens: itensAtualComStatus.length,
+      qtd_lancados: itensAtualComStatus.filter((it) => it.lancado).length,
+      qtd_a_cobrar: itensAtualComStatus.filter((it) => !it.lancado).length,
       limite_disponivel: arredondar(Math.max(banco.limite_total - gastoEfetivo, 0)),
       uso: banco.limite_total > 0 ? Math.min(gastoEfetivo / banco.limite_total, 1) : 0,
     }

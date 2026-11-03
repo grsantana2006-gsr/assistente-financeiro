@@ -17,6 +17,7 @@ function CartaoBanco({
   const [salvando, setSalvando] = useState(false)
   const [mostrarProximas, setMostrarProximas] = useState(true)
   const [faturaAbertaModal, setFaturaAbertaModal] = useState(null)
+  const [mostrarDespesasFatura, setMostrarDespesasFatura] = useState(false)
 
   // Estado do Modal de Pagamento / Adiantamento de Fatura
   const [modalPagamentoAberto, setModalPagamentoAberto] = useState(false)
@@ -24,6 +25,7 @@ function CartaoBanco({
   const [valorNovoAdiantamento, setValorNovoAdiantamento] = useState('')
   const [descricaoNovoAdiantamento, setDescricaoNovoAdiantamento] = useState('')
   const [salvandoPagamento, setSalvandoPagamento] = useState(false)
+  const [mostrarComprasModal, setMostrarComprasModal] = useState(false)
 
   const banco = cartao
   const { gasto, limite_disponivel: disponivel, uso } = cartao
@@ -41,6 +43,9 @@ function CartaoBanco({
   const mesExibido = faturaFocoMes || (banco.fatura_paga && proximaFatura ? proximaFatura.mes : mesAtual)
   const ehFocoProxima = Boolean(proximaFatura && mesExibido === proximaFatura.mes)
   const faturaFocoDados = ehFocoProxima ? proximaFatura : null
+  const itensFaturaExibida = ehFocoProxima
+    ? (faturaFocoDados?.itens || [])
+    : (banco.itens || [])
 
   // Métricas dinâmicas da fatura selecionada no bloco
   const faturaExibidaPaga = ehFocoProxima
@@ -104,6 +109,7 @@ function CartaoBanco({
     setMesSelecionado(alvo)
     setValorNovoAdiantamento('')
     setDescricaoNovoAdiantamento('')
+    setMostrarComprasModal(false)
     setModalPagamentoAberto(true)
   }
 
@@ -111,6 +117,7 @@ function CartaoBanco({
     setMesSelecionado(m)
     setValorNovoAdiantamento('')
     setDescricaoNovoAdiantamento('')
+    setMostrarComprasModal(false)
   }
 
   async function handleAdicionarAdiantamento(evento) {
@@ -180,6 +187,7 @@ function CartaoBanco({
         pago: banco.fatura_paga,
         parcial: banco.fatura_parcial,
         pagamentos: banco.pagamentos_registrados || [],
+        itens: banco.itens || [],
       }
     : (() => {
         const pf = banco.proximas_faturas?.find((f) => f.mes === mesSelecionado)
@@ -194,6 +202,7 @@ function CartaoBanco({
           pago: Boolean(pf?.fatura_paga || (pf && pf.valor_pago_adiantado >= pf.valor && pf.valor > 0)),
           parcial: Boolean(pf?.fatura_parcial || (pf && pf.valor_pago_adiantado > 0)),
           pagamentos: pf?.pagamentos_registrados || [],
+          itens: pf?.itens || [],
         }
       })()
 
@@ -334,6 +343,50 @@ function CartaoBanco({
               ? (faturaExibidaAdiantado > 0 ? `Fatura Quitada (${formatarMoeda(faturaExibidaCargoSalario)})` : 'Fatura Quitada')
               : (faturaExibidaAdiantado > 0 ? `Pagar Restante (${formatarMoeda(faturaExibidaCargoSalario)})` : 'Fatura Aberta')}
           </button>
+
+          {/* Botão para ver todas as despesas/compras desta fatura */}
+          <button
+            type="button"
+            className="cartao__fatura-btn-detalhes"
+            onClick={() => setMostrarDespesasFatura(!mostrarDespesasFatura)}
+            aria-expanded={mostrarDespesasFatura}
+          >
+            {mostrarDespesasFatura
+              ? 'Ocultar compras da fatura'
+              : `Ver compras desta fatura (${itensFaturaExibida.length})`}
+          </button>
+
+          {mostrarDespesasFatura && (
+            <div className="cartao__fatura-lista-container">
+              <span className="cartao__fatura-lista-titulo">
+                Compras de {formatarMesAnoCurto(mesExibido)} ({itensFaturaExibida.length}):
+              </span>
+              {itensFaturaExibida.length === 0 ? (
+                <p className="cartao__fatura-lista-vazio">Nenhuma compra nesta fatura.</p>
+              ) : (
+                <ul className="cartao__fatura-itens-lista">
+                  {itensFaturaExibida.map((item, idx) => (
+                    <li key={item.id ? `${item.id}-${idx}` : idx} className="cartao__proxima-item-linha">
+                      <div className="cartao__proxima-item-info">
+                        <span className="cartao__proxima-item-desc" title={item.descricao}>
+                          {item.descricao}
+                          {item.total_parcelas > 1 && (
+                            <span className="cartao__proxima-parc-tag">
+                              {' '}({item.parcela_atual ? `${item.parcela_atual}/` : ''}{item.total_parcelas}x)
+                            </span>
+                          )}
+                        </span>
+                        <span className={`cartao__item-badge ${item.lancado ? 'cartao__item-badge--lancado' : 'cartao__item-badge--a-cobrar'}`}>
+                          {item.lancado ? 'Lançado' : `A cobrar ${item.dia_cobranca ? `dia ${item.dia_cobranca}` : ''}`}
+                        </span>
+                      </div>
+                      <strong className="cartao__proxima-item-valor">{formatarMoeda(item.valor)}</strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -544,6 +597,48 @@ function CartaoBanco({
                       {formatarMoeda(faturaSelecionadaInfo.saldoRestante)}
                     </strong>
                   </div>
+                </div>
+
+                {/* Compras que compõem a fatura selecionada no modal */}
+                <div className="cartao__modal-compras-bloco">
+                  <button
+                    type="button"
+                    className="cartao__modal-toggle-compras"
+                    onClick={() => setMostrarComprasModal(!mostrarComprasModal)}
+                  >
+                    {mostrarComprasModal
+                      ? 'Ocultar compras desta fatura'
+                      : `Ver compras desta fatura (${faturaSelecionadaInfo.itens?.length || 0})`}
+                  </button>
+
+                  {mostrarComprasModal && (
+                    <div className="cartao__modal-compras-lista-box">
+                      {(!faturaSelecionadaInfo.itens || faturaSelecionadaInfo.itens.length === 0) ? (
+                        <p className="cartao__modal-vazio">Nenhuma compra encontrada nesta fatura.</p>
+                      ) : (
+                        <ul className="cartao__modal-compras-lista">
+                          {faturaSelecionadaInfo.itens.map((item, idx) => (
+                            <li key={item.id ? `${item.id}-${idx}` : idx} className="cartao__modal-compras-item">
+                              <div className="cartao__proxima-item-info">
+                                <span className="cartao__proxima-item-desc" title={item.descricao}>
+                                  {item.descricao}
+                                  {item.total_parcelas > 1 && (
+                                    <span className="cartao__proxima-parc-tag">
+                                      {' '}({item.parcela_atual ? `${item.parcela_atual}/` : ''}{item.total_parcelas}x)
+                                    </span>
+                                  )}
+                                </span>
+                                <span className={`cartao__item-badge ${item.lancado ? 'cartao__item-badge--lancado' : 'cartao__item-badge--a-cobrar'}`}>
+                                  {item.lancado ? 'Lançado' : `A cobrar ${item.dia_cobranca ? `dia ${item.dia_cobranca}` : ''}`}
+                                </span>
+                              </div>
+                              <strong className="cartao__proxima-item-valor">{formatarMoeda(item.valor)}</strong>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Lista de Adiantamentos Registrados */}
