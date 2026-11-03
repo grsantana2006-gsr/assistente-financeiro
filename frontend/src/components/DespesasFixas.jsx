@@ -35,10 +35,6 @@ function DespesasFixas({
   const [bancoId, setBancoId] = useState(bancos[0]?.id ?? '')
   const [formaPagamento, setFormaPagamento] = useState('PIX')
   const [dataCompra, setDataCompra] = useState(new Date().toISOString().split('T')[0])
-  const [temPrazo, setTemPrazo] = useState(false)
-  const [dividirTotal, setDividirTotal] = useState(true)
-  const [totalParcelas, setTotalParcelas] = useState('12')
-  const [parcelaAtual, setParcelaAtual] = useState('1')
   const [enviando, setEnviando] = useState(false)
   const [mostrarEncerradas, setMostrarEncerradas] = useState(false)
 
@@ -141,32 +137,22 @@ function DespesasFixas({
     }
   }
 
-  const valorNumericoFixo = Number(valor.replace(',', '.'))
-  const totalMesesFixo = temPrazo && Number(totalParcelas) > 1 ? Number(totalParcelas) : 1
-  const temDivisaoFixa = temPrazo && totalMesesFixo > 1 && dividirTotal && !Number.isNaN(valorNumericoFixo) && valorNumericoFixo > 0
-  const valorParcelaFixaCalculada = temDivisaoFixa
-    ? Math.round((valorNumericoFixo / totalMesesFixo) * 100) / 100
-    : valorNumericoFixo
-
   async function enviar(evento) {
     evento.preventDefault()
     const valorNumerico = Number(valor.replace(',', '.'))
     if (!descricao.trim() || Number.isNaN(valorNumerico) || valorNumerico <= 0) return
 
     setEnviando(true)
-    const qtdeMeses = temPrazo && Number(totalParcelas) > 1 ? Number(totalParcelas) : 1
-    const valorFinal = (temPrazo && dividirTotal && qtdeMeses > 1)
-      ? Math.round((valorNumerico / qtdeMeses) * 100) / 100
-      : valorNumerico
 
+    // Despesa fixa = conta recorrente, sem prazo de término (parcelamentos ficam em Gastos Variáveis)
     const dados = {
       descricao: descricao.trim(),
-      valor: valorFinal,
+      valor: valorNumerico,
       banco_id: Number(bancoId || bancos[0]?.id),
       forma_pagamento: formaPagamento,
       data_compra: dataCompra || undefined,
-      total_parcelas: qtdeMeses,
-      parcela_atual: temPrazo && Number(parcelaAtual) >= 1 ? Number(parcelaAtual) : 1,
+      total_parcelas: 1,
+      parcela_atual: 1,
     }
 
     const deuCerto = await aoAdicionar(dados)
@@ -176,10 +162,6 @@ function DespesasFixas({
       setDescricao('')
       setValor('')
       setFormaPagamento('PIX')
-      setTemPrazo(false)
-      setDividirTotal(true)
-      setTotalParcelas('12')
-      setParcelaAtual('1')
     }
   }
 
@@ -188,7 +170,7 @@ function DespesasFixas({
       <div className="secao__cabecalho">
         <h2 id="titulo-fixas">Despesas Fixas</h2>
         <p className="card-subtitle">
-          Checklist de contas recorrentes do mês com status de pagamento e previsão.
+          Contas e assinaturas recorrentes, sem prazo de término. Confirme todo mês o que já foi cobrado. Compras parceladas ficam em Gastos Variáveis.
         </p>
       </div>
 
@@ -236,7 +218,7 @@ function DespesasFixas({
             <input
               id="fixa-descricao"
               type="text"
-              placeholder="Ex.: Curso de Programação"
+              placeholder="Ex.: Aluguel, Netflix, Academia"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               aria-label="Descrição da despesa fixa"
@@ -245,11 +227,7 @@ function DespesasFixas({
               id="fixa-valor"
               type="text"
               inputMode="decimal"
-              placeholder={
-                temPrazo && dividirTotal
-                  ? 'Valor Total do Contrato (R$)'
-                  : 'Valor (R$)'
-              }
+              placeholder="Valor mensal (R$)"
               value={valor}
               onChange={(e) => setValor(e.target.value)}
               aria-label="Valor da despesa fixa"
@@ -286,75 +264,6 @@ function DespesasFixas({
               <option value="Voucher">Voucher (Vale Refeição)</option>
               <option value="Dinheiro">Dinheiro</option>
             </select>
-          </div>
-
-          <div className="fixas__form-duracao">
-            <label className={`fixas__checkbox-rotulo ${temPrazo ? 'fixas__checkbox-rotulo--ativo' : ''}`}>
-              <input
-                id="fixa-tem-prazo"
-                type="checkbox"
-                checked={temPrazo}
-                onChange={(e) => setTemPrazo(e.target.checked)}
-                className="fixas__checkbox-input"
-              />
-              <span className={`fixas__checkbox-custom ${temPrazo ? 'fixas__checkbox-custom--marcado' : ''}`} aria-hidden="true" />
-              <span className="fixas__checkbox-texto">
-                Tem duração / prazo determinado (ex: curso de 12 meses, seguro em 10x)
-              </span>
-            </label>
-
-            {temPrazo && (
-              <div className="fixas__duracao-inputs">
-                <label className="fixas__duracao-campo">
-                  <span>Total de meses:</span>
-                  <input
-                    id="fixa-total-meses"
-                    type="number"
-                    min="2"
-                    max="120"
-                    placeholder="12"
-                    value={totalParcelas}
-                    onChange={(e) => setTotalParcelas(e.target.value)}
-                  />
-                </label>
-                <label className="fixas__duracao-campo">
-                  <span>Mês / parcela atual:</span>
-                  <input
-                    id="fixa-mes-atual"
-                    type="number"
-                    min="1"
-                    max={totalParcelas || 120}
-                    placeholder="1"
-                    value={parcelaAtual}
-                    onChange={(e) => setParcelaAtual(e.target.value)}
-                  />
-                </label>
-                <label className="fixas__checkbox-rotulo fixas__checkbox-rotulo--divisao">
-                  <input
-                    type="checkbox"
-                    checked={dividirTotal}
-                    onChange={(e) => setDividirTotal(e.target.checked)}
-                    className="fixas__checkbox-input"
-                  />
-                  <span className={`fixas__checkbox-custom ${dividirTotal ? 'fixas__checkbox-custom--marcado' : ''}`} aria-hidden="true" />
-                  <span className="fixas__checkbox-texto">
-                    Dividir valor total informado igualmente entre os meses
-                  </span>
-                </label>
-              </div>
-            )}
-
-            {temDivisaoFixa && (
-              <div className="fixas__parcelas-preview">
-                <span className="fixas__parcelas-preview-tag">Divisão Automática</span>
-                <span className="fixas__parcelas-preview-detalhe">
-                  <strong>{totalMesesFixo}x</strong> de <strong>{formatarMoeda(valorParcelaFixaCalculada)}</strong> / mês
-                </span>
-                <span className="fixas__parcelas-preview-total">
-                  (Valor total do contrato: {formatarMoeda(valorNumericoFixo)})
-                </span>
-              </div>
-            )}
           </div>
 
           <button id="fixa-adicionar" type="submit" className="btn btn--primary" disabled={enviando}>
@@ -596,7 +505,7 @@ function DespesasFixas({
               {despesasFuturas.map((t) => {
                 const ativa = t.ativa
                 const ehTemporaria = t.total_parcelas > 1
-                const mesInicio = t.data_compra ? t.data_compra.slice(0, 7) : ''
+                const mesInicio = t.mesInicioCalculado || (t.data_compra ? t.data_compra.slice(0, 7) : '')
                 const emEdicao = editandoId === t.id
 
                 return (

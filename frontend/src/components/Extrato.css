@@ -233,24 +233,84 @@
 
 /* ---------- Formulário ---------- */
 .extrato__form {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
   padding: 16px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
   margin-bottom: 20px;
+  min-width: 0;
+}
+
+.extrato__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  grid-column: span 2;
+  min-width: 0;
+}
+
+.extrato__campo--descricao {
+  grid-column: span 4;
+}
+
+.extrato__campo--valor {
+  grid-column: span 2;
+}
+
+.extrato__rotulo {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .extrato__form input,
 .extrato__form select {
-  flex: 1 1 120px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.extrato__form input[type="date"] {
   min-width: 0;
 }
 
-.extrato__form input[type="text"]:first-of-type {
-  flex: 2 1 180px;
+.extrato__parcelas-preview,
+.extrato__dica-fatura {
+  grid-column: 1 / -1;
+}
+
+.extrato__btn-adicionar {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.extrato__nome-linha {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.extrato__tag-parcela {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .extrato__parcelas-preview {
@@ -354,7 +414,7 @@
 
   .extrato__info {
     flex: 1 1 100%;
-    padding-right: 72px; /* espaço para os botões editar e remover no topo */
+    padding-right: 128px; /* espaço para os botões editar e excluir no topo */
   }
 
   .extrato__detalhes {
@@ -379,34 +439,37 @@
   }
 
   .extrato__form {
-    flex-direction: column;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px 12px;
+  }
+
+  .extrato__campo,
+  .extrato__campo--descricao,
+  .extrato__campo--valor {
+    grid-column: 1 / -1;
   }
 
   .extrato__form input,
   .extrato__form select {
-    flex: 0 0 auto !important;
     width: 100% !important;
     max-width: 100% !important;
     height: 44px !important;
     box-sizing: border-box !important;
   }
 
-  .extrato__form input[type="text"]:first-of-type {
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 44px !important;
-    box-sizing: border-box !important;
+  .extrato__form input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: left;
+    display: block;
   }
 
   .extrato__parcelas-preview {
-    order: 5;
     padding: 10px 12px;
   }
 
   .extrato__dica-fatura {
-    order: 6;
     padding: 10px 12px;
     font-size: 0.8rem;
     gap: 8px;
@@ -421,9 +484,24 @@
   }
 
   .extrato__form button[type="submit"] {
-    order: 7;
     width: 100%;
     padding: 12px;
     font-size: 1rem;
+  }
+}
+
+/* Tablet: campos em 2 colunas */
+@media (min-width: 641px) and (max-width: 900px) {
+  .extrato__form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .extrato__campo,
+  .extrato__campo--valor {
+    grid-column: span 1;
+  }
+
+  .extrato__campo--descricao {
+    grid-column: 1 / -1;
   }
 }

@@ -14,6 +14,27 @@ function formatarMesAno(anoMes) {
   return `${meses[idx] || mes}/${ano}`
 }
 
+// "AAAA-MM-DD" do dia local (toISOString devolveria o dia em UTC)
+function dataLocalHoje() {
+  const d = new Date()
+  const dois = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${dois(d.getMonth() + 1)}-${dois(d.getDate())}`
+}
+
+// "AAAA-MM-DDTHH:mm:ss" do relógio local
+function dataHoraLocalAgora() {
+  const d = new Date()
+  const dois = (n) => String(n).padStart(2, '0')
+  return `${dataLocalHoje()}T${dois(d.getHours())}:${dois(d.getMinutes())}:${dois(d.getSeconds())}`
+}
+
+// Soma `n` meses a um mês 'AAAA-MM'
+function somarMeses(anoMes, n) {
+  const [ano, mes] = anoMes.split('-').map(Number)
+  const d = new Date(ano, mes - 1 + n, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
 function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoAtualizar, aoRemover }) {
   const mesAtualRef = mesReferencia || new Date().toISOString().slice(0, 7)
   const [filtroPeriodo, setFiltroPeriodo] = useState('mes')
@@ -22,6 +43,9 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
   const [bancoId, setBancoId] = useState(bancos[0]?.id ?? '')
   const [forma, setForma] = useState('Crédito')
   const [parcelas, setParcelas] = useState('1')
+  const [parcelaAtual, setParcelaAtual] = useState('1')
+  const [valorModo, setValorModo] = useState('total') // 'total' (divide) ou 'parcela' (valor de cada parcela)
+  const [dataCompra, setDataCompra] = useState(dataLocalHoje())
   const [enviando, setEnviando] = useState(false)
 
   // Estado de edição de gasto
@@ -68,32 +92,42 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
     return bancos.find((b) => b.id === id)?.cor ?? '#8b5cf6'
   }
 
-  const opcoesParcelas = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36, 48]
+  const opcoesParcelas = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 20, 24, 30, 36, 48]
   const valorNumericoAtual = Number(valor.replace(',', '.'))
-  const qtdeParcelasAtual = Number(parcelas)
-  const temDivisaoParcelas = qtdeParcelasAtual > 1 && !Number.isNaN(valorNumericoAtual) && valorNumericoAtual > 0
+  const valorValido = !Number.isNaN(valorNumericoAtual) && valorNumericoAtual > 0
+  const qtdeParcelasAtual = forma === 'Voucher' ? 1 : Number(parcelas)
+  const parcelaInicial = qtdeParcelasAtual > 1
+    ? Math.min(Math.max(Math.trunc(Number(parcelaAtual)) || 1, 1), qtdeParcelasAtual)
+    : 1
+  const temDivisaoParcelas = qtdeParcelasAtual > 1 && valorValido
   const valorParcelaCalculada = temDivisaoParcelas
-    ? Math.round((valorNumericoAtual / qtdeParcelasAtual) * 100) / 100
+    ? (valorModo === 'total'
+      ? Math.round((valorNumericoAtual / qtdeParcelasAtual) * 100) / 100
+      : valorNumericoAtual)
     : 0
+  const valorTotalCalculado = temDivisaoParcelas
+    ? (valorModo === 'total'
+      ? valorNumericoAtual
+      : Math.round(valorNumericoAtual * qtdeParcelasAtual * 100) / 100)
+    : valorNumericoAtual
 
   async function enviar(evento) {
     evento.preventDefault()
-    const valorNumerico = Number(valor.replace(',', '.'))
-    if (!descricao.trim() || Number.isNaN(valorNumerico) || valorNumerico <= 0) return
+    if (!descricao.trim() || !valorValido) return
 
     setEnviando(true)
-    const qtdeParcelas = Number(parcelas)
-    const valorParcelaFinal = qtdeParcelas > 1
-      ? Math.round((valorNumerico / qtdeParcelas) * 100) / 100
-      : valorNumerico
+    const valorParcelaFinal = qtdeParcelasAtual > 1 ? valorParcelaCalculada : valorNumericoAtual
+    const dataEscolhida = dataCompra || dataLocalHoje()
 
     const deuCerto = await aoAdicionar({
       descricao: descricao.trim(),
       valor: valorParcelaFinal, // O banco espera o valor de CADA parcela mensal
       banco_id: Number(bancoId || bancos[0]?.id),
       forma_pagamento: forma,
-      total_parcelas: qtdeParcelas,
-      data_compra: new Date().toISOString(),
+      total_parcelas: qtdeParcelasAtual,
+      parcela_atual: parcelaInicial,
+      // Compra de hoje guarda também a hora; datas passadas/futuras guardam só o dia
+      data_compra: dataEscolhida === dataLocalHoje() ? dataHoraLocalAgora() : dataEscolhida,
     })
     setEnviando(false)
 
@@ -101,7 +135,24 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
       setDescricao('')
       setValor('')
       setParcelas('1')
+      setParcelaAtual('1')
+      setValorModo('total')
+      setDataCompra(dataLocalHoje())
     }
+  }
+
+  // Número da parcela que cai no mês de referência (ex.: 4 em "4/5")
+  function parcelaNoMes(t, mesRef) {
+    if (!(t.total_parcelas > 1)) return null
+    const banco = bancos.find((b) => b.id === t.banco_id)
+    const ehCredito = t.forma_pagamento === 'Crédito' && banco && banco.tipo !== 'Benefício'
+    const mesDestino = ehCredito
+      ? obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+      : (t.data_compra ? t.data_compra.slice(0, 7) : null)
+    if (!mesDestino) return t.parcela_atual || 1
+    const [anoRef, mRef] = mesRef.split('-').map(Number)
+    const [anoIni, mIni] = mesDestino.split('-').map(Number)
+    return (t.parcela_atual || 1) + (anoRef - anoIni) * 12 + (mRef - mIni)
   }
 
   function pertenceAoMes(t, mesRef) {
@@ -128,102 +179,160 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
   const transacoesExibidas = filtroPeriodo === 'mes' ? transacoesDoMes : transacoes.slice(0, 50)
 
   const bancoSelecionado = bancos.find((b) => b.id === Number(bancoId || bancos[0]?.id))
-  const mesFaturaPrevista =
-    forma === 'Crédito' && bancoSelecionado && bancoSelecionado.tipo !== 'Benefício'
-      ? obterMesFatura(new Date().toISOString(), bancoSelecionado.dia_fechamento, bancoSelecionado.dia_vencimento)
-      : null
+  const ehCreditoForm = forma === 'Crédito' && bancoSelecionado && bancoSelecionado.tipo !== 'Benefício'
+  const mesFaturaPrevista = ehCreditoForm
+    ? obterMesFatura(dataCompra || dataLocalHoje(), bancoSelecionado.dia_fechamento, bancoSelecionado.dia_vencimento)
+    : null
+  const mesUltimaFatura = mesFaturaPrevista && qtdeParcelasAtual > 1
+    ? somarMeses(mesFaturaPrevista, qtdeParcelasAtual - parcelaInicial)
+    : null
 
   return (
     <section id="extrato-variaveis" aria-labelledby="titulo-extrato">
       <div className="secao__cabecalho">
         <h2 id="titulo-extrato">Gastos Variáveis</h2>
         <p className="card-subtitle">
-          Despesas do dia a dia inseridas via Bot ou formulário abaixo. Exibindo {filtroPeriodo === 'mes' ? `gastos de ${formatarMesAno(mesAtualRef)}` : 'todas as compras recentes'}.
+          Compras do dia a dia e compras parceladas, inseridas via Bot ou formulário abaixo. Exibindo {filtroPeriodo === 'mes' ? `gastos de ${formatarMesAno(mesAtualRef)}` : 'todas as compras recentes'}.
         </p>
       </div>
 
       <div className="card extrato">
         {/* Formulário de novo gasto variável no topo */}
         <form className="extrato__form" onSubmit={enviar}>
-          <input
-            type="text"
-            placeholder="Ex.: Padaria"
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
-            aria-label="Descrição"
-          />
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder={
-              forma === 'Crédito' || qtdeParcelasAtual > 1
-                ? 'Valor Total da Compra (R$)'
-                : 'Valor (R$)'
-            }
-            value={valor}
-            onChange={(e) => setValor(e.target.value)}
-            aria-label="Valor"
-          />
-          <select
-            value={bancoId}
-            onChange={(e) => setBancoId(e.target.value)}
-            aria-label="Banco / Cartão de Origem"
-          >
-            {bancos.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.nome}
-              </option>
-            ))}
-          </select>
-          <select
-            value={forma}
-            onChange={(e) => {
-              const novaForma = e.target.value
-              setForma(novaForma)
-              if (novaForma === 'Voucher') {
-                const vr = bancos.find(
-                  (b) =>
-                    b.tipo === 'Benefício' ||
-                    b.nome.toLowerCase().includes('refeição') ||
-                    b.nome.toLowerCase().includes('vale'),
-                )
-                if (vr) setBancoId(vr.id)
-              }
-            }}
-            aria-label="Forma de Pagamento"
-          >
-            <option value="Crédito">Crédito</option>
-            <option value="Débito">Débito</option>
-            <option value="PIX">PIX</option>
-            <option value="Dinheiro">Dinheiro</option>
-            <option value="Voucher">Voucher (Vale Refeição)</option>
-          </select>
-          <select
-            value={parcelas}
-            onChange={(e) => setParcelas(e.target.value)}
-            aria-label="Parcelas"
-            title="Quantidade de parcelas"
-            style={{ flex: '1 1 95px' }}
-            disabled={forma === 'Voucher'}
-          >
-            {opcoesParcelas.map((n) => (
-              <option key={n} value={n}>
-                {n === 1 ? '1x (À vista)' : `${n}x parcelado`}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="btn btn--primary" disabled={enviando}>
-            {enviando ? 'Adicionando…' : '+ Adicionar'}
-          </button>
+          <label className="extrato__campo extrato__campo--descricao">
+            <span className="extrato__rotulo">Descrição</span>
+            <input
+              type="text"
+              placeholder="Ex.: Padaria, Tênis, Curso"
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              aria-label="Descrição"
+            />
+          </label>
+          <label className="extrato__campo extrato__campo--valor">
+            <span className="extrato__rotulo">
+              {qtdeParcelasAtual > 1
+                ? (valorModo === 'total' ? 'Valor total da compra (R$)' : 'Valor de cada parcela (R$)')
+                : 'Valor (R$)'}
+            </span>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="0,00"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              aria-label="Valor"
+            />
+          </label>
+          <label className="extrato__campo">
+            <span className="extrato__rotulo">Data da compra</span>
+            <input
+              type="date"
+              value={dataCompra}
+              onChange={(e) => setDataCompra(e.target.value)}
+              aria-label="Data da compra"
+            />
+          </label>
+          <label className="extrato__campo">
+            <span className="extrato__rotulo">Banco / Cartão</span>
+            <select
+              value={bancoId}
+              onChange={(e) => setBancoId(e.target.value)}
+              aria-label="Banco / Cartão de Origem"
+            >
+              {bancos.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="extrato__campo">
+            <span className="extrato__rotulo">Forma de pagamento</span>
+            <select
+              value={forma}
+              onChange={(e) => {
+                const novaForma = e.target.value
+                setForma(novaForma)
+                if (novaForma === 'Voucher') {
+                  const vr = bancos.find(
+                    (b) =>
+                      b.tipo === 'Benefício' ||
+                      b.nome.toLowerCase().includes('refeição') ||
+                      b.nome.toLowerCase().includes('vale'),
+                  )
+                  if (vr) setBancoId(vr.id)
+                }
+              }}
+              aria-label="Forma de Pagamento"
+            >
+              <option value="Crédito">Crédito</option>
+              <option value="Débito">Débito</option>
+              <option value="PIX">PIX</option>
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="Voucher">Voucher (Vale Refeição)</option>
+            </select>
+          </label>
+          <label className="extrato__campo">
+            <span className="extrato__rotulo">Parcelas</span>
+            <select
+              value={parcelas}
+              onChange={(e) => {
+                setParcelas(e.target.value)
+                if (Number(e.target.value) <= 1) setParcelaAtual('1')
+              }}
+              aria-label="Parcelas"
+              title="Quantidade de parcelas"
+              disabled={forma === 'Voucher'}
+            >
+              {opcoesParcelas.map((n) => (
+                <option key={n} value={n}>
+                  {n === 1 ? '1x (À vista)' : `${n}x parcelado`}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {qtdeParcelasAtual > 1 && (
+            <>
+              <label className="extrato__campo">
+                <span className="extrato__rotulo">O valor informado é</span>
+                <select
+                  value={valorModo}
+                  onChange={(e) => setValorModo(e.target.value)}
+                  aria-label="Tipo do valor informado"
+                >
+                  <option value="total">Total da compra (dividir)</option>
+                  <option value="parcela">Valor de cada parcela</option>
+                </select>
+              </label>
+              <label className="extrato__campo">
+                <span className="extrato__rotulo">Parcela atual (1 a {qtdeParcelasAtual})</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={qtdeParcelasAtual}
+                  inputMode="numeric"
+                  value={parcelaAtual}
+                  onChange={(e) => setParcelaAtual(e.target.value)}
+                  aria-label="Parcela atual"
+                  title="Use para compras que já estão em andamento (ex.: já estou na parcela 3)"
+                />
+              </label>
+            </>
+          )}
 
           {temDivisaoParcelas && (
             <div className="extrato__parcelas-preview">
-              <span className="extrato__parcelas-preview-tag">Divisão Automática</span>
+              <span className="extrato__parcelas-preview-tag">
+                {valorModo === 'total' ? 'Divisão Automática' : 'Resumo do Parcelamento'}
+              </span>
               <span className="extrato__parcelas-preview-detalhe">
                 <strong>{qtdeParcelasAtual}x</strong> de <strong>{formatarMoeda(valorParcelaCalculada)}</strong> / mês
               </span>
               <span className="extrato__parcelas-preview-total">
-                (Valor total completo informado: {formatarMoeda(valorNumericoAtual)})
+                (Valor total da compra: {formatarMoeda(valorTotalCalculado)}
+                {parcelaInicial > 1 ? ` • começando na parcela ${parcelaInicial}/${qtdeParcelasAtual}` : ''})
               </span>
             </div>
           )}
@@ -231,14 +340,28 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
           {mesFaturaPrevista && bancoSelecionado && (
             <div className="extrato__dica-fatura">
               <div className="extrato__dica-conteudo">
-                Compras no <strong>{bancoSelecionado.nome}</strong> hoje entram na fatura de{' '}
-                <strong className="extrato__dica-mes">{rotuloMesFatura(mesFaturaPrevista)}</strong>
+                {qtdeParcelasAtual > 1 ? (
+                  <>
+                    A parcela <strong>{parcelaInicial}/{qtdeParcelasAtual}</strong> no <strong>{bancoSelecionado.nome}</strong> entra na fatura de{' '}
+                    <strong className="extrato__dica-mes">{rotuloMesFatura(mesFaturaPrevista)}</strong> e a última em{' '}
+                    <strong className="extrato__dica-mes">{rotuloMesFatura(mesUltimaFatura)}</strong>
+                  </>
+                ) : (
+                  <>
+                    Esta compra no <strong>{bancoSelecionado.nome}</strong> entra na fatura de{' '}
+                    <strong className="extrato__dica-mes">{rotuloMesFatura(mesFaturaPrevista)}</strong>
+                  </>
+                )}
                 <span className="extrato__dica-datas">
                   {' '}(fecha dia {bancoSelecionado.dia_fechamento} • vence dia {bancoSelecionado.dia_vencimento})
                 </span>
               </div>
             </div>
           )}
+
+          <button type="submit" className="btn btn--primary extrato__btn-adicionar" disabled={enviando}>
+            {enviando ? 'Adicionando…' : '+ Adicionar'}
+          </button>
         </form>
 
         {/* Filtros de Período */}
@@ -275,6 +398,9 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
                   : null
 
               const emEdicao = editandoId === t.id
+              const numeroParcelaExibido = filtroPeriodo === 'mes'
+                ? parcelaNoMes(t, mesAtualRef)
+                : (t.parcela_atual || 1)
 
               return (
                 <li key={t.id} className="extrato__item" style={{ borderLeftColor: corDoBanco(t.banco_id) }}>
@@ -344,7 +470,17 @@ function Extrato({ transacoes = [], bancos = [], mesReferencia, aoAdicionar, aoA
                   ) : (
                     <>
                       <div className="extrato__info">
-                        <span className="extrato__nome">{t.descricao}</span>
+                        <div className="extrato__nome-linha">
+                          <span className="extrato__nome">{t.descricao}</span>
+                          {t.total_parcelas > 1 && (
+                            <span
+                              className="extrato__tag-parcela"
+                              title={`Compra parcelada em ${t.total_parcelas}x de ${formatarMoeda(t.valor)}`}
+                            >
+                              Parcela {numeroParcelaExibido}/{t.total_parcelas}
+                            </span>
+                          )}
+                        </div>
                         <div className="extrato__detalhes">
                           <span className="extrato__data-hora" title="Data e hora do lançamento">
                             {formatarDataHora(t.data_compra)}
