@@ -4,6 +4,7 @@
 // Assim o front e o bot do Telegram mostram sempre os mesmos números.
 // =====================================================
 import { arredondar } from './ajudantes.js'
+import { hojeNoFusoApp } from './datas.js'
 
 const soma = (lista, campo = 'valor') => lista.reduce((total, item) => total + item[campo], 0)
 
@@ -213,9 +214,8 @@ export function itemLancadoNoCartao(t, mesK = null, banco = null, mesReferencia 
   // Reconhecimento automático pelo calendário real:
   // Se a data de cobrança já passou no calendário atual, já foi cobrada pelo cartão
   if (dataCobranca) {
-    const hoje = new Date()
-    const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
-    if (dataCobranca <= hojeStr) {
+    // Usa o fuso do usuário: o servidor roda em UTC e "virava o dia" às 20h locais
+    if (dataCobranca <= hojeNoFusoApp()) {
       return true
     }
   }

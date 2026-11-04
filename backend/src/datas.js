@@ -22,3 +22,17 @@ export function dataHoraLocalISO(data = new Date()) {
 export function mesLocalAtual(data = new Date()) {
   return dataLocalISO(data).slice(0, 7)
 }
+
+// Fuso do usuário. O servidor em produção (Render) roda em UTC, então depois das 20h/21h locais
+// o relógio dele já está no dia seguinte. Pode ser sobrescrito pela variável de ambiente APP_TIMEZONE.
+export const FUSO_APP = process.env.APP_TIMEZONE || 'America/Manaus'
+
+// "AAAA-MM-DD" de hoje no fuso do usuário, independente do fuso do servidor
+export function hojeNoFusoApp(data = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: FUSO_APP,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(data)
+}
