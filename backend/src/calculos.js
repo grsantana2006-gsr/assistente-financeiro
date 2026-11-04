@@ -178,41 +178,33 @@ export function itemLancadoNoCartao(t, mesK = null, banco = null, mesReferencia 
   // o banco já pré-agendou todas as parcelas nas faturas futuras
   if (t.total_parcelas > 1 && !t.descricao.toLowerCase().includes('hashtag')) return true
 
-  // Se marcada como paga / confirmada na fatura deste mês, já foi lançada
+  // Para despesas fixas contínuas (assinaturas recorrentes mensais):
+  // O banco NUNCA reserva limite de faturas futuras para assinaturas mensais recorrentes.
+  // Em faturas futuras além do mês de referência, elas NÃO estão lançadas com antecedência.
+  if (mesReferencia && mesK && mesK > mesReferencia) {
+    return false
+  }
+  if (banco && mesK) {
+    const mesInicio = obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
+    if (mesInicio && mesK > mesInicio && (!mesReferencia || mesK > mesReferencia)) {
+      return false
+    }
+  }
+
+  // Na fatura do mês de referência: se marcada como paga / confirmada na fatura pelo usuário, já foi lançada
   if (t.pago) return true
 
-  const hoje = new Date()
-  const hojeAnoMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
-  const hojeDia = hoje.getDate()
-  const mesFaturaAtualAberta = banco
-    ? obterMesFatura(hoje.toISOString().slice(0, 10), banco.dia_fechamento, banco.dia_vencimento)
-    : hojeAnoMes
-
-  // Se a fatura mesK já ficou no passado em relação à fatura atual aberta no calendário:
-  if (mesK && mesFaturaAtualAberta && mesK < mesFaturaAtualAberta) {
-    return true
-  }
-
-  // Se mesK é a fatura aberta do ciclo atual no cartão:
-  if (mesK && mesK === mesFaturaAtualAberta && t.data_compra) {
+  // Reconhecimento automático: se a data de cobrança no mês já passou no calendário atual, já foi cobrada
+  if (t.data_compra) {
     const diaCobranca = Number(t.data_compra.slice(8, 10))
-    if (hojeDia >= diaCobranca) {
+    const hoje = new Date()
+    const hojeAnoMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+    const hojeDia = hoje.getDate()
+
+    // Se o mês de referência já passou ou se é o mês corrente e o dia da cobrança já passou
+    if (!mesReferencia || mesReferencia < hojeAnoMes || (mesReferencia === hojeAnoMes && hojeDia >= diaCobranca)) {
       return true
     }
-  }
-
-  // Se mesK for o próprio mês de referência selecionado e a data de cobrança já passou
-  if (mesK && mesReferencia && mesK === mesReferencia && t.data_compra) {
-    const diaCobranca = Number(t.data_compra.slice(8, 10))
-    if (mesReferencia < hojeAnoMes || (mesReferencia === hojeAnoMes && hojeDia >= diaCobranca)) {
-      return true
-    }
-  }
-
-  // Se a data de cobrança no mês já passou no calendário atual e mesK não é futuro
-  if (t.data_compra && (!mesK || mesK <= hojeAnoMes)) {
-    const diaCobranca = Number(t.data_compra.slice(8, 10))
-    if (hojeDia >= diaCobranca) return true
   }
 
   return false
