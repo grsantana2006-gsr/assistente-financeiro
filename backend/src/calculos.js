@@ -160,15 +160,38 @@ export function calcularFaturaDoBanco(transacoes, banco, mesReferencia) {
   )
 }
 
+// Soma `n` meses a um mês 'AAAA-MM'
+export function adicionarMeses(mesReferencia, n) {
+  const [ano, mes] = mesReferencia.split('-').map(Number)
+  const data = new Date(ano, mes - 1 + n, 1)
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`
+}
+
+/**
+ * Determina a data exata em que uma despesa fixa é cobrada no calendário real para a fatura informada.
+ * Respeita se o fechamento do banco é anterior ou posterior ao vencimento.
+ */
+export function obterDataCobrancaParaFatura(t, mesFatura, banco) {
+  if (!t.data_compra || !mesFatura) return null
+  const diaCobranca = Number(t.data_compra.slice(8, 10)) || 1
+  if (!banco || !banco.dia_fechamento || !banco.dia_vencimento) {
+    return `${mesFatura}-${String(diaCobranca).padStart(2, '0')}`
+  }
+  let mesCobranca
+  if (banco.dia_fechamento < banco.dia_vencimento) {
+    mesCobranca = diaCobranca <= banco.dia_fechamento ? mesFatura : adicionarMeses(mesFatura, -1)
+  } else {
+    mesCobranca = diaCobranca <= banco.dia_fechamento ? adicionarMeses(mesFatura, -1) : adicionarMeses(mesFatura, -2)
+  }
+  return `${mesCobranca}-${String(diaCobranca).padStart(2, '0')}`
+}
+
 /**
  * Determina se uma transação que cai na fatura já foi efetivamente lançada no cartão.
  * - Gastos Variáveis: sempre true (compras feitas no cartão já foram cobradas no ato).
- * - Fixas marcadas como `parcelado_banco` (parcelas de compra que o banco já agendou):
- *   true em todos os meses — o banco reserva o limite de todas as parcelas de uma vez.
- * - Demais Fixas (assinaturas/recorrências, mesmo com prazo): dependem de uma cobrança nova do
- *   estabelecimento a cada mês. Só estão lançadas na primeira fatura em que aparecem, e apenas se
- *   a cobrança foi confirmada (t.pago). Nas faturas seguintes ainda são 'a cobrar'.
- *   Para isso, informe `mesFatura` e `banco` (usado nas faturas futuras).
+ * - Compras Parceladas com prazo: já estão com todas as parcelas agendadas pelo banco (true).
+ * - Demais Fixas (assinaturas/recorrências contínuas):
+ *   Dependem da data de cobrança no mês real ou de validação manual.
  */
 export function itemLancadoNoCartao(t, mesK = null, banco = null, mesReferencia = null) {
   // Compras avulsas ou parceladas variáveis já foram lançadas no ato da compra
@@ -178,43 +201,26 @@ export function itemLancadoNoCartao(t, mesK = null, banco = null, mesReferencia 
   // o banco já pré-agendou todas as parcelas nas faturas futuras
   if (t.total_parcelas > 1 && !t.descricao.toLowerCase().includes('hashtag')) return true
 
-  // Para despesas fixas contínuas (assinaturas recorrentes mensais):
-  // O banco NUNCA reserva limite de faturas futuras para assinaturas mensais recorrentes.
-  // Em faturas futuras além do mês de referência, elas NÃO estão lançadas com antecedência.
-  if (mesReferencia && mesK && mesK > mesReferencia) {
-    return false
-  }
-  if (banco && mesK) {
-    const mesInicio = obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
-    if (mesInicio && mesK > mesInicio && (!mesReferencia || mesK > mesReferencia)) {
-      return false
-    }
+  const mesAlvo = mesK || mesReferencia
+  const dataCobranca = obterDataCobrancaParaFatura(t, mesAlvo, banco)
+  const mesCobranca = dataCobranca ? dataCobranca.slice(0, 7) : null
+
+  // Se marcada como paga / confirmada na fatura pelo usuário para o mês correspondente
+  if (t.pago && (!mesReferencia || mesCobranca === mesReferencia || mesAlvo === mesReferencia)) {
+    return true
   }
 
-  // Na fatura do mês de referência: se marcada como paga / confirmada na fatura pelo usuário, já foi lançada
-  if (t.pago) return true
-
-  // Reconhecimento automático: se a data de cobrança no mês já passou no calendário atual, já foi cobrada
-  if (t.data_compra) {
-    const diaCobranca = Number(t.data_compra.slice(8, 10))
+  // Reconhecimento automático pelo calendário real:
+  // Se a data de cobrança já passou no calendário atual, já foi cobrada pelo cartão
+  if (dataCobranca) {
     const hoje = new Date()
-    const hojeAnoMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
-    const hojeDia = hoje.getDate()
-
-    // Se o mês de referência já passou ou se é o mês corrente e o dia da cobrança já passou
-    if (!mesReferencia || mesReferencia < hojeAnoMes || (mesReferencia === hojeAnoMes && hojeDia >= diaCobranca)) {
+    const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
+    if (dataCobranca <= hojeStr) {
       return true
     }
   }
 
   return false
-}
-
-// Soma `n` meses a um mês 'AAAA-MM'
-function adicionarMeses(mesReferencia, n) {
-  const [ano, mes] = mesReferencia.split('-').map(Number)
-  const data = new Date(ano, mes - 1 + n, 1)
-  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`
 }
 
 // Monta a fatura de UM cartão em UM mês (lançado x a cobrar x pago).
