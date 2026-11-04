@@ -171,27 +171,48 @@ export function calcularFaturaDoBanco(transacoes, banco, mesReferencia) {
  *   Para isso, informe `mesFatura` e `banco` (usado nas faturas futuras).
  */
 export function itemLancadoNoCartao(t, mesK = null, banco = null, mesReferencia = null) {
+  // Compras avulsas ou parceladas variáveis já foram lançadas no ato da compra
   if (t.categoria !== 'Fixo') return true
 
-  // Compras parceladas contratadas no cartão (exceto assinaturas como Hashtag Vitalício na Hotmart):
+  // Compras parceladas contratadas no cartão (com prazo / total_parcelas > 1):
   // o banco já pré-agendou todas as parcelas nas faturas futuras
   if (t.total_parcelas > 1 && !t.descricao.toLowerCase().includes('hashtag')) return true
 
-  // Para despesas fixas recorrentes (assinaturas):
-  // Se mesK for um mês além da primeira fatura de início, ela ainda não foi cobrada pelo banco
-  if (banco && mesK) {
-    const mesInicio = obterMesFatura(t.data_compra, banco.dia_fechamento, banco.dia_vencimento)
-    if (mesInicio && mesK > mesInicio) return false
-  }
-
-  // Na fatura atual do ciclo: se marcada como paga/confirmada, já foi lançada
+  // Se marcada como paga / confirmada na fatura deste mês, já foi lançada
   if (t.pago) return true
 
-  // Se a data de cobrança no mês já passou no calendário atual, já foi cobrada
-  if (t.data_compra) {
+  const hoje = new Date()
+  const hojeAnoMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+  const hojeDia = hoje.getDate()
+  const mesFaturaAtualAberta = banco
+    ? obterMesFatura(hoje.toISOString().slice(0, 10), banco.dia_fechamento, banco.dia_vencimento)
+    : hojeAnoMes
+
+  // Se a fatura mesK já ficou no passado em relação à fatura atual aberta no calendário:
+  if (mesK && mesFaturaAtualAberta && mesK < mesFaturaAtualAberta) {
+    return true
+  }
+
+  // Se mesK é a fatura aberta do ciclo atual no cartão:
+  if (mesK && mesK === mesFaturaAtualAberta && t.data_compra) {
     const diaCobranca = Number(t.data_compra.slice(8, 10))
-    const hoje = new Date()
-    if (hoje.getDate() >= diaCobranca) return true
+    if (hojeDia >= diaCobranca) {
+      return true
+    }
+  }
+
+  // Se mesK for o próprio mês de referência selecionado e a data de cobrança já passou
+  if (mesK && mesReferencia && mesK === mesReferencia && t.data_compra) {
+    const diaCobranca = Number(t.data_compra.slice(8, 10))
+    if (mesReferencia < hojeAnoMes || (mesReferencia === hojeAnoMes && hojeDia >= diaCobranca)) {
+      return true
+    }
+  }
+
+  // Se a data de cobrança no mês já passou no calendário atual e mesK não é futuro
+  if (t.data_compra && (!mesK || mesK <= hojeAnoMes)) {
+    const diaCobranca = Number(t.data_compra.slice(8, 10))
+    if (hojeDia >= diaCobranca) return true
   }
 
   return false

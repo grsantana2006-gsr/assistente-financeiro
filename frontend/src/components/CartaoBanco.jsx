@@ -40,7 +40,7 @@ function CartaoBanco({
   useEffect(() => {
     setFaturaFocoMes(null)
   }, [mesReferencia])
-  const mesExibido = faturaFocoMes || (banco.fatura_paga && proximaFatura ? proximaFatura.mes : mesAtual)
+  const mesExibido = faturaFocoMes || mesAtual
   const ehFocoProxima = Boolean(proximaFatura && mesExibido === proximaFatura.mes)
   const faturaFocoDados = ehFocoProxima ? proximaFatura : null
   const itensFaturaExibida = ehFocoProxima
